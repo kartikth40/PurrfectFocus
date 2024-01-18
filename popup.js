@@ -1,15 +1,6 @@
 const runBtn = document.querySelector('.run')
 const timer = document.querySelector('.timer')
 
-runBtn.addEventListener('click', () => {
-  let currentTime = 0
-
-  setInterval(() => {
-    timer.innerText = currentTime
-    currentTime += 1
-  }, 1000);
-})
-
 document.addEventListener('DOMContentLoaded', () => {
   runBtn.addEventListener('click', () => {
     chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
@@ -17,4 +8,10 @@ document.addEventListener('DOMContentLoaded', () => {
       window.close();
     });
   });
+});
+
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+  if (request.time) {
+    timer.innerText = request.time
+  }
 });

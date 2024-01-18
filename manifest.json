@@ -4,7 +4,8 @@
     "description": "Purrfect Focus: Cat & Pomodoro Pal",
     "permissions": ["storage", "tabs", "notifications"],
     "background": {
-      "service_worker": "background.js"
+      "service_worker": "background.js",
+      "type": "module"
     },
     "content_scripts": [
       {
@@ -15,7 +16,8 @@
     "web_accessible_resources": [
       {
         "resources": [
-          "assets/save.png"
+          "assets/save.png",
+          "utils.js"
         ],
         "matches":["<all_urls>"]
       }
