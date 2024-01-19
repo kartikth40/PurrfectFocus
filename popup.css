@@ -2,22 +2,70 @@ html{
   margin: 0;
   padding: 0;
 }
+*,*::after,*::before{
+  box-sizing:border-box;
+}
 body{
   margin:0;
   padding: 0;
   height: max-content;
-  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  --primary-color: rgb(97, 47, 121);
+  --secondary-color-1: rgb(232, 227, 255);
+  --secondary-color-2: rgb(196, 224, 207); 
+  font-size: 12px;
 }
 .container {
-  padding: 10px;
-  background-color: #343434;
-  color: #f0f8ff;
-  /* width: 200px; */
+  margin: 0;
+  padding: 10px 20px;
+  background-color: white;
+  /* background: linear-gradient(45deg, var(--secondary-color-1), var(--secondary-color-2)); */
+  color: var(--primary-color);
 }
 
 .title {
+  text-align: center;
   width: 100%;
   white-space: nowrap;
+  font-size: 15px;
+  font-weight: 400;
+  border: 2px solid var(--secondary-color-1);
+  margin-top: 0;
+  color: var(--primary-color);
+  padding: 5px;
+  border-radius: 5px;
+}
+
+h2 {
+  margin:0;
+  margin-block: 10px;
+  border-bottom: 1px solid var(--primary-color);
+  color: var(--primary-color);
+  font-weight: 500;
+  font-size: 16px;
+}
+
+p {
+  font-weight: 500;
+  margin-bottom: 10px;
+  display: block;
+}
+
+input, select {
+  border: 1px solid #000;
+  border-radius: 5px;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
+
+input:hover, select:hover {
+  background-color: var(--secondary-color-1);
+}
+
+.notification {
+  white-space: nowrap;
+  width: 100%;
+  display: block;
+  margin-left: 20px;
 }
 
 .time-container{
@@ -29,7 +77,6 @@ body{
 .timer {
   display: inline-block;
   text-align: center;
-  color: whitesmoke;
 }
 
 .run {
@@ -40,4 +87,37 @@ body{
   border-radius: 2px;
   background-color: antiquewhite;
   cursor: pointer;
+}
+
+.duration {
+  white-space: nowrap;
+}
+
+#focus-duration-input,
+#short-break-duration-input,
+#long-break-duration-input {
+  width: 40px;
+}
+
+#interval-input {
+  margin-block: 5px 10px;
+  margin-left: 20px;
+}
+
+.submit-btn {
+  width: 100%;
+  margin-top: 10px;
+  border-radius: 5px;
+  background-color: var(--secondary-color-1);
+  border: 1px solid var(--primary-color);
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: .15s all;
+  padding: 10px;
+}
+
+.submit-btn:hover {
+  border-radius: 30px;
 }

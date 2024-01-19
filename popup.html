@@ -1,11 +1,80 @@
-<link href="popup.css" rel="stylesheet" type="text/css" />
-<script type="module" src="popup.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Purrfect Focus</title>
+  <link href="popup.css" rel="stylesheet" type="text/css" />
+  <script type="module" src="popup.js"></script>
+</head>
+<body>
 
 <div class="container">
-    <div class="title">Purrfect Focus: Cat & Pomodoro Pal</div>
+    <h1 class="title">Purrfect Focus: Cat & Pomodoro Pal</h1>
     <div class="time-container">
       <div class="timer" id="timer">0:05</div>
       <div class="run">run</div>
     </div>
-    
+
+    <form id="settings-form">
+      <div class="focus-container">
+        <h2>Focus</h2>
+        <div class="duration">
+          <label for="focus-duration-input">Duration: <input type="number" id="focus-duration-input" value="25" required> minutes</label>
+        </div>
+        <div class="notification-container">
+          <p>When complete</p>
+          <label class="notification" for="focus-desktop-notification"><input type="checkbox" checked id="focus-desktop-notification"> Show desktop notifications</label>
+          <label class="notification" for="focus-new-tab-notification"><input type="checkbox" checked id="focus-new-tab-notification"> Show new tab notifications</label>
+        </div>
+      </div>
+      
+      <div class="short-break-container">
+        <h2>Short Break</h2>
+        <div class="duration">
+          <label for="short-break-duration-input">Duration: <input type="number" id="short-break-duration-input" value="5" required> minutes</label>
+        </div>
+        <div class="notification-container">
+          <p>When complete</p>
+          <label class="notification" for="short-break-desktop-notification"><input type="checkbox" checked id="short-break-desktop-notification"> Show desktop notifications</label>
+          <label class="notification" for="short-break-new-tab-notification"><input type="checkbox" checked id="short-break-new-tab-notification"> Show new tab notifications</label>
+        </div>
+      </div>
+  
+      <div class="long-break-container">
+        <h2>Long Break</h2>
+        <div class="long-break-interval">
+          <label for="interval-input">Take a long break:
+          <select name="interval" id="interval-input" required>
+            <option value="0">never</option> 
+            <option value="2">every 2nd break (alternating)</option> 
+            <option value="3">every 3rd break</option> 
+            <option value="4" selected>every 4th break</option> 
+            <option value="5">every 5th break</option> 
+            <option value="6">every 6th break</option> 
+            <option value="7">every 7th break</option> 
+            <option value="8">every 8th break</option> 
+            <option value="9">every 9th break</option> 
+            <option value="10">every 10th break</option>
+          </select>
+        </label>
+        </div>
+        <div class="duration">
+          <label for="long-break-duration-input">Duration: <input type="number" id="long-break-duration-input" value="15" required> minutes</label>
+        </div>
+        <div class="notification-container">
+          <p>When complete</p>
+          <label class="notification" for="long-break-desktop-notification"><input type="checkbox" checked id="long-break-desktop-notification"> Show desktop notifications</label>
+          <label class="notification" for="long-break-new-tab-notification"><input type="checkbox" checked id="long-break-new-tab-notification"> Show new tab notifications</label>
+        </div>
+      </div>
+      <div class="btn-container">
+        <button class="submit-btn">
+          Save
+        </button>
+      </div>
+    </form>
 </div>
+  
+</body>
+</html>

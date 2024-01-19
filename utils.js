@@ -5,14 +5,15 @@ export const startTimer = (chrome) => {
   var timer = 5;
   var intervalId = setInterval(function() {
     timer--;
-    chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-      chrome.runtime.sendMessage({time: getTimeString(timer)});
+    chrome.runtime.sendMessage({time: getTimeString(timer)}).catch((e) => {
+      console.log(e.message)
     });
     chrome.action.setBadgeText({text: getTimeString(timer)});
     if (timer === 0) {
       clearInterval(intervalId);
+      const notificationId = `my-notification-${Date.now()}`
       chrome.notifications.create(
-        'notif-create',
+        notificationId,
         {
           iconUrl:"assets/save.png",
           message:"Your 5 sec timer is over!",
@@ -26,14 +27,16 @@ export const startTimer = (chrome) => {
         ()=> {console.log('created')}
       )
       chrome.notifications.onButtonClicked.addListener((notifId, btnIdx) => {
-        if(notifId === 'notif-create' && btnIdx === 0){
+        if(notifId === notificationId && btnIdx === 0){
           startTimer(chrome)
-        } else if(notifId === 'notif-create' && btnIdx === 1){
+        } else if(notifId === notificationId && btnIdx === 1){
           // window.close()
         }
       })
       chrome.storage.local.set({timerRunning: false});
       chrome.action.setBadgeText({text: ''});
+        // change text on complete
+      
       chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]});
     }
   }, 1000);
