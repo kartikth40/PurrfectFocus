@@ -12,14 +12,13 @@ body{
   font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
   --primary-color: rgb(97, 47, 121);
   --secondary-color-1: rgb(232, 227, 255);
-  --secondary-color-2: rgb(196, 224, 207); 
+  --secondary-color-2: rgb(197, 184, 255); 
   font-size: 12px;
 }
 .container {
   margin: 0;
   padding: 10px 20px;
   background-color: white;
-  /* background: linear-gradient(45deg, var(--secondary-color-1), var(--secondary-color-2)); */
   color: var(--primary-color);
 }
 
@@ -34,11 +33,21 @@ body{
   color: var(--primary-color);
   padding: 5px;
   border-radius: 5px;
+  box-shadow: 0 0 5px var(--secondary-color-1);
+
+}
+
+h1 {
+  text-align: center;
+  font-weight: 400;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--primary-color);
 }
 
 h2 {
   margin:0;
   margin-block: 10px;
+  padding-bottom: 5px;
   border-bottom: 1px solid var(--primary-color);
   color: var(--primary-color);
   font-weight: 500;
@@ -61,11 +70,55 @@ input:hover, select:hover {
   background-color: var(--secondary-color-1);
 }
 
+.tab-btn-container {
+  width: 100%;
+  display: flex;
+  gap: 5px;
+}
+.tab-btn {
+  text-align: center;
+  user-select: none;
+  padding: 2px 5px;
+  border-radius: 5px;
+  width: 100%;
+  border: 1px solid var(--primary-color);
+  cursor: pointer;
+  transition: .15s all;
+}
+.tab-btn.active {
+  background-color: var(--secondary-color-2);
+  color: #000;
+  box-shadow: 0 2px 2px var(--primary-color);
+}
+.tab-btn:hover:not(.active) {
+  background-color: var(--secondary-color-1);
+  box-shadow: 0 0 2px var(--primary-color);
+}
+
+.tab:not(.active) {
+  display: none;
+}
+
+.focus-text {
+  padding-block: 5px;
+  text-align: center;
+}
+
+.focus-btn {
+  width: 100%;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 20px;
+  background: linear-gradient(45deg, var(--secondary-color-1), var(--secondary-color-2));
+  border: none;
+  cursor: pointer;
+}
+
 .notification {
   white-space: nowrap;
   width: 100%;
   display: block;
-  margin-left: 20px;
+  /* margin-left: 20px; */
 }
 
 .time-container{
@@ -77,6 +130,8 @@ input:hover, select:hover {
 .timer {
   display: inline-block;
   text-align: center;
+  width: 100%;
+  font-size: 30px;
 }
 
 .run {
