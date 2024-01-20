@@ -16,7 +16,7 @@
     "web_accessible_resources": [
       {
         "resources": [
-          "assets/save.png",
+          "assets/cat.png",
           "utils.js"
         ],
         "matches":["<all_urls>"]
@@ -24,9 +24,9 @@
     ],
     "action": {
       "default_icon": {
-        "16": "assets/save.png",
-        "24": "assets/save.png",
-        "32": "assets/save.png"
+        "16": "assets/cat.png",
+        "24": "assets/cat.png",
+        "32": "assets/cat.png"
       },
       "default_title": "Purrfect Focus",
       "default_popup": "popup.html"

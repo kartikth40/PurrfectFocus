@@ -15,14 +15,11 @@ const settingsTab = document.querySelector('.settings-tab')
 
 const settingsForm = document.querySelector('#settings-form')
 
-document.addEventListener('DOMContentLoaded', () => {
-  runBtn.addEventListener('click', () => {
-    chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-      chrome.runtime.sendMessage({startTimer: true});
-      // window.close();
-    });
-  });
-});
+let newSettings = {}
+
+chrome.storage.sync.get('settings').then(result=> newSettings = result)
+
+
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.time) {
@@ -45,7 +42,19 @@ tabs.forEach(({tab, btn}) => {
     tab.classList.add('active')
   })
 })
+
+document.addEventListener('DOMContentLoaded', () => {
+  runBtn.addEventListener('click', () => {
+    chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+      chrome.runtime.sendMessage({startTimer: true});
+      // window.close();
+    });
+  });
+});
  
 settingsForm.addEventListener('submit', (e) => {
   e.preventDefault()
+  chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+    chrome.runtime.sendMessage({saveSettings: true, settings: newSettings});
+  });
 })

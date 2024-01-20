@@ -15,7 +15,7 @@ export const startTimer = (chrome) => {
       chrome.notifications.create(
         notificationId,
         {
-          iconUrl:"assets/save.png",
+          iconUrl:"assets/cat.png",
           message:"Your 5 sec timer is over!",
           title:"Time Over!",
           type:"basic",
