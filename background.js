@@ -30,24 +30,35 @@ chrome.storage.sync.get('settings').then(store => {
 })
 
 chrome.storage.sync.set({
-  timer: {
-    focus: false,
-    shortBreak: false,
-    longBreak: false
+  timerStatus: {
+    timer: false,
+    status: 'off',
+    type: {
+      focus: false,
+      shortBreak: false,
+      longBreak: false
+    }
   }
 })
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.startTimer) {
     chrome.storage.sync.set({
-      timer: {
-        focus: true,
-        shortBreak: false,
-        longBreak: false
+      timerStatus: {
+        timer: true,
+        status: 'play',
+        type: {
+          focus: true,
+          shortBreak: false,
+          longBreak: false
+        }
       }
     })
     startTimer(chrome, request.time)
   }
+  // else if(request.pauseTimer) {
+
+  // }
   else if(request.saveSettings) {
     chrome.storage.sync.set(request.newSettings).then(() => {
       chrome.runtime.sendMessage({status: 'saved'})

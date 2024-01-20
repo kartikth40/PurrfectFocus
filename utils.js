@@ -1,12 +1,26 @@
+
+
 export const startTimer = (chrome, timer) => {
-  chrome.storage.local.set({timerRunning: true});
-  chrome.action.setBadgeText({text: '00:05'});
-  chrome.action.setBadgeBackgroundColor({color: [255, 0, 0, 230]});
+  chrome.storage.sync.set({
+    timerStatus: {
+      timer: true,
+      status: 'play',
+      type: {
+        focus: true,
+        shortBreak: false,
+        longBreak: false
+      }
+    }
+  })
   var intervalId = setInterval(function() {
     timer--;
-    chrome.runtime.sendMessage({time: getTimeString(timer)}).catch((e) => {
+    const timerString = getTimeString(timer)
+    chrome.action.setBadgeText({text: timerString});
+    chrome.action.setBadgeBackgroundColor({color: [255, 0, 0, 230]});
+    chrome.runtime.sendMessage({time: timerString}).catch((e) => {
     });
-    chrome.action.setBadgeText({text: getTimeString(timer)});
+    chrome.action.setBadgeText({text: timerString});
+    chrome.storage.sync.set({timer: timer})
     if (timer === 0) {
       clearInterval(intervalId);
       const notificationId = `my-notification-${Date.now()}`
@@ -31,13 +45,41 @@ export const startTimer = (chrome, timer) => {
           // window.close()
         }
       })
-      chrome.storage.local.set({timerRunning: false});
+      chrome.storage.sync.set({
+        timerStatus: {
+          timer: false,
+          status: 'off',
+          type: {
+            focus: false,
+            shortBreak: false,
+            longBreak: false
+          }
+        }
+      })
       chrome.action.setBadgeText({text: ''});
         // change text on complete
       
       chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]});
     }
   }, 1000);
+
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    if(request.pauseTimer) {
+      chrome.storage.sync.set({
+        timerStatus: {
+          timer: true,
+          status: 'pause',
+          type: {
+            focus: true,
+            shortBreak: false,
+            longBreak: false
+          }
+        },
+        timer: timer
+      })
+      clearInterval(intervalId)
+    }
+  })
 }
 
 

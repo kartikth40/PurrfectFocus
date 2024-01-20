@@ -129,7 +129,7 @@ input:hover, select:hover {
   text-align: center;
 }
 
-.focus-btn {
+.focus-btn, .focus-btns-int button {
   width: 100%;
   padding: 10px 20px;
   border-radius: 10px;
@@ -137,9 +137,57 @@ input:hover, select:hover {
   background: linear-gradient(45deg, var(--secondary-color-1), var(--secondary-color-2));
   border: none;
   cursor: pointer;
+  pointer-events: all;
+  transition: .5s all;
 }
-.focus-btn:hover {
+.focus-btn.active {
+  pointer-events: none;
+}
+.focus-btn:hover, .focus-btns-int button:hover {
   box-shadow: 0 0 5px var(--secondary-color-2);
+}
+.focus-btn.active:hover {
+  box-shadow: 0 0 0 transparent;
+}
+.focus-btns-int button {
+  background: rgb(177, 177, 177);
+  opacity: .1;
+  pointer-events: none;
+  transition: .5s all;
+}
+.focus-btns-int button.active {
+  background: linear-gradient(45deg, var(--secondary-color-1), var(--secondary-color-2));
+  opacity: 1;
+  pointer-events: all;
+}
+.focus-btns-int button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+}
+.focus-btns-int button img {
+  display: block;
+  width: 24px;
+  height:24px;
+}
+
+.focus-btns-int {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.focus-btn-pause .play {
+  display: none;
+}
+.focus-btn-pause.pause .play {
+  display: block;
+}
+.focus-btn-pause.pause .pause {
+  display: none;
 }
 
 .notification {
