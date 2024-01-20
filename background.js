@@ -23,12 +23,9 @@ const settings = {
 // let defaultSettings = true
 // let newSettings = {}
 
-chrome.storage.sync.get('settings').then(result => {
-  console.log('initiate settings')
-  console.log(result)
-  if(!Object.keys(result).length) {
+chrome.storage.sync.get('settings').then(store => {
+  if(!Object.keys(store).length) {
     chrome.storage.sync.set(settings)
-    console.log('set')
   }
 })
 
@@ -41,9 +38,7 @@ chrome.storage.sync.set({
 })
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-  console.log('message...')
   if (request.startTimer) {
-    console.log('start')
     chrome.storage.sync.set({
       timer: {
         focus: true,
@@ -51,11 +46,9 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         longBreak: false
       }
     })
-    startTimer(chrome)
+    startTimer(chrome, request.time)
   }
   else if(request.saveSettings) {
-    console.log('save settings')
-    console.log(request.newSettings)
     chrome.storage.sync.set(request.newSettings).then(() => {
       chrome.runtime.sendMessage({status: 'saved'})
     })

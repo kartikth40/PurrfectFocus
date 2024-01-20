@@ -1,12 +1,10 @@
-export const startTimer = (chrome) => {
+export const startTimer = (chrome, timer) => {
   chrome.storage.local.set({timerRunning: true});
   chrome.action.setBadgeText({text: '00:05'});
   chrome.action.setBadgeBackgroundColor({color: [255, 0, 0, 230]});
-  var timer = 5;
   var intervalId = setInterval(function() {
     timer--;
     chrome.runtime.sendMessage({time: getTimeString(timer)}).catch((e) => {
-      console.log(e.message)
     });
     chrome.action.setBadgeText({text: getTimeString(timer)});
     if (timer === 0) {
@@ -48,4 +46,43 @@ export const getTimeString = (t) => {
   let seconds = t % 60;
   let time = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
   return time
+}
+
+
+export const setFormValues = (data) => {
+  const settings = data.settings
+  document.querySelector('#focus-duration-input').value = settings.focus.time
+  document.querySelector('#focus-desktop-notification').checked = settings.focus.desktopNotifcations
+  document.querySelector('#focus-new-tab-notification').checked = settings.focus.newTabNotifications
+  document.querySelector('#short-break-duration-input').value = settings.shortBreak.time
+  document.querySelector('#short-break-desktop-notification').checked = settings.shortBreak.desktopNotifcations
+  document.querySelector('#short-break-new-tab-notification').checked = settings.shortBreak.newTabNotifications
+  document.querySelector('#interval-input').value = settings.longBreak.interval
+  document.querySelector('#long-break-duration-input').value = settings.longBreak.time
+  document.querySelector('#long-break-desktop-notification').checked = settings.longBreak.desktopNotifcations
+  document.querySelector('#long-break-new-tab-notification').checked = settings.longBreak.newTabNotifications
+}
+
+
+export const setNewSettings = (formValues) => {
+  return {
+    settings: {
+      focus: {
+        time: parseInt(formValues.focusDuration),
+        desktopNotifcations: formValues.focusDesktopNotification === 'on' ? true : false,
+        newTabNotifications: formValues.focusNewTabNotification === 'on' ? true : false
+      },
+      shortBreak: {
+        time: parseInt(formValues.shortBreakDuration),
+        desktopNotifcations: formValues.shortBreakDesktopNotification === 'on' ? true : false,
+        newTabNotifications: formValues.shortBreakNewTabNotification === 'on' ? true : false
+      },
+      longBreak: {
+        time: parseInt(formValues.longBreakDuration),
+        interval: formValues.longBreakInterval,
+        desktopNotifcations: formValues.longBreakDesktopNotification === 'on' ? true : false,
+        newTabNotifications: formValues.longBreakNewTabNotification === 'on' ? true : false
+      }
+    }
+  }
 }
