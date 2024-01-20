@@ -37,6 +37,31 @@ body{
 
 }
 
+.status-tag {
+  user-select: none;
+  pointer-events: none;
+  opacity: 0;
+  position: absolute;
+  left: 50%;
+  top: 0;
+  font-size: 20px;
+  font-weight: bold;
+  transform: translate(-50%, 0);
+  width: 90%;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 10px 50px;
+  border-radius: 20px;
+  background-color: rgb(99, 186, 109);
+  color: rgb(0, 14, 10);
+  border: 2px solid black;
+  transition: .5s all;
+}
+.status-tag.active {
+  top: 20px;
+  opacity: 1;
+}
+
 h1 {
   text-align: center;
   font-weight: 400;
@@ -175,7 +200,18 @@ input:hover, select:hover {
   transition: .15s all;
   padding: 10px;
 }
-
 .submit-btn:hover {
   border-radius: 30px;
+}
+.submit-btn.saved {
+  background-color: rgb(212, 255, 212);
+}
+.submit-btn:disabled {
+  background-color: rgb(177, 177, 177);
+  color: rgb(42, 42, 42);
+  border: 1px solid rgb(177, 177, 177);
+}
+.submit-btn:disabled:hover {
+  border-radius: 5px;
+  cursor: not-allowed;
 }

@@ -14,19 +14,21 @@ const settings = {
     },
     longBreak: {
       time: 15,
-      interval: 3,
+      interval: '3',
       desktopNotifcations: true,
       newTabNotifications: true
     }
   }
-  
 }
 // let defaultSettings = true
 // let newSettings = {}
 
 chrome.storage.sync.get('settings').then(result => {
+  console.log('initiate settings')
+  console.log(result)
   if(!Object.keys(result).length) {
     chrome.storage.sync.set(settings)
+    console.log('set')
   }
 })
 
@@ -39,7 +41,9 @@ chrome.storage.sync.set({
 })
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+  console.log('message...')
   if (request.startTimer) {
+    console.log('start')
     chrome.storage.sync.set({
       timer: {
         focus: true,
@@ -50,7 +54,11 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     startTimer(chrome)
   }
   else if(request.saveSettings) {
-    chrome.storage.sync.set(request.settings)
+    console.log('save settings')
+    console.log(request.newSettings)
+    chrome.storage.sync.set(request.newSettings).then(() => {
+      chrome.runtime.sendMessage({status: 'saved'})
+    })
   }
 });
 

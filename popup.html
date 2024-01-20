@@ -11,7 +11,7 @@
 
 <div class="container">
     <h1 class="title">Purrfect Focus: Cat & Pomodoro Pal</h1>
-    
+    <div class="status-tag">saved</div>
     <div class="tab-btn-container">
       <div class="tab-btn active focus-tab-btn">Focus</div>
       <div class="tab-btn settings-tab-btn">Settings</div>
@@ -31,24 +31,40 @@
       <div class="focus-container">
         <h2>Focus</h2>
         <div class="duration">
-          <label for="focus-duration-input">Duration: <input type="number" id="focus-duration-input" value="25" required> minutes</label>
+          <label for="focus-duration-input">Duration: <input type="number" id="focus-duration-input" name="focusDuration" value="25" required> minutes</label>
         </div>
         <div class="notification-container">
           <!-- <p>When complete</p> -->
-          <label class="notification" for="focus-desktop-notification"><input type="checkbox" checked id="focus-desktop-notification"> Show desktop notifications</label>
-          <label class="notification" for="focus-new-tab-notification"><input type="checkbox" checked id="focus-new-tab-notification"> Show new tab notifications</label>
+          <label class="notification" for="focus-desktop-notification">
+            <input type='hidden' value='off' name='focusDesktopNotification'>
+            <input type="checkbox" checked name="focusDesktopNotification" id="focus-desktop-notification"> 
+            Show desktop notifications
+          </label>
+          <label class="notification" for="focus-new-tab-notification">
+            <input type='hidden' value='off' name='focusNewTabNotification'>
+            <input type="checkbox" checked name="focusNewTabNotification" id="focus-new-tab-notification"> 
+            Show new tab notifications
+          </label>
         </div>
       </div>
       
       <div class="short-break-container">
         <h2>Short Break</h2>
         <div class="duration">
-          <label for="short-break-duration-input">Duration: <input type="number" id="short-break-duration-input" value="5" required> minutes</label>
+          <label for="short-break-duration-input">Duration: <input type="number" id="short-break-duration-input" name="shortBreakDuration" value="5" required> minutes</label>
         </div>
         <div class="notification-container">
           <!-- <p>When complete</p> -->
-          <label class="notification" for="short-break-desktop-notification"><input type="checkbox" checked id="short-break-desktop-notification"> Show desktop notifications</label>
-          <label class="notification" for="short-break-new-tab-notification"><input type="checkbox" checked id="short-break-new-tab-notification"> Show new tab notifications</label>
+          <label class="notification" for="short-break-desktop-notification">
+            <input type='hidden' value='off' name='shortBreakDesktopNotification'>
+            <input type="checkbox" checked name="shortBreakDesktopNotification" id="short-break-desktop-notification"> 
+            Show desktop notifications
+          </label>
+          <label class="notification" for="short-break-new-tab-notification">
+            <input type='hidden' value='off' name='shortBreakNewTabNotification'>
+            <input type="checkbox" checked name="shortBreakNewTabNotification" id="short-break-new-tab-notification"> 
+            Show new tab notifications
+          </label>
         </div>
       </div>
   
@@ -56,7 +72,7 @@
         <h2>Long Break</h2>
         <div class="long-break-interval">
           <label for="interval-input">Take a long break:
-          <select name="interval" id="interval-input" required>
+          <select name="longBreakInterval" id="interval-input" required>
             <option value="0">never</option> 
             <option value="2">every 2nd break (alternating)</option> 
             <option value="3">every 3rd break</option> 
@@ -71,16 +87,24 @@
         </label>
         </div>
         <div class="duration">
-          <label for="long-break-duration-input">Duration: <input type="number" id="long-break-duration-input" value="15" required> minutes</label>
+          <label for="long-break-duration-input">Duration: <input type="number" id="long-break-duration-input" name="longBreakDuration" value="15" required> minutes</label>
         </div>
         <div class="notification-container">
           <!-- <p>When complete</p> -->
-          <label class="notification" for="long-break-desktop-notification"><input type="checkbox" checked id="long-break-desktop-notification"> Show desktop notifications</label>
-          <label class="notification" for="long-break-new-tab-notification"><input type="checkbox" checked id="long-break-new-tab-notification"> Show new tab notifications</label>
+          <label class="notification" for="long-break-desktop-notification">
+            <input type='hidden' value='off' name='longBreakDesktopNotification'>
+            <input type="checkbox" checked name="longBreakDesktopNotification" id="long-break-desktop-notification"> 
+            Show desktop notifications
+          </label>
+          <label class="notification" for="long-break-new-tab-notification">
+            <input type='hidden' value='off' name='longBreakNewTabNotification'>
+            <input type="checkbox" checked name="longBreakNewTabNotification" id="long-break-new-tab-notification"> 
+            Show new tab notifications
+          </label>
         </div>
       </div>
       <div class="btn-container">
-        <button type="submit" class="submit-btn">
+        <button type="submit" class="submit-btn" disabled>
           Save
         </button>
       </div>
