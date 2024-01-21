@@ -198,16 +198,51 @@ input:hover, select:hover {
 }
 
 .time-container{
-  padding-block: 5px;
+  padding-block: 10px 20px;
   display: flex;
-  justify-content: space-between;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.timer-tag {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 90%;
+  aspect-ratio: 1;
+  background-color: #000;
+  padding: 10px;
+  border-radius: 150px;
+  color: var(--secondary-color-2);
+  overflow: hidden;
+  box-shadow:inset -10px 10px 20px var(--secondary-color-2), -5px 5px 20px var(--secondary-color-2);
 }
 
 .timer {
-  display: inline-block;
-  text-align: center;
-  width: 100%;
-  font-size: 30px;
+  position: relative;
+  font-size: 50px;
+  border-radius: 50px;
+  width: max-content;
+  padding: 5px 40px;
+  color: #000;
+  background-color: var(--secondary-color-1);
+  box-shadow:inset -10px 10px 20px var(--secondary-color-2), -5px 5px 20px var(--secondary-color-2);
+}
+
+
+@keyframes loading {
+  0% {
+    right: -100%;
+  }
+  50% {
+    right: 150%;
+  }
+  100% {
+    right: 150%;
+  }
 }
 
 .run {

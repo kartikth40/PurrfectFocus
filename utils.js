@@ -4,14 +4,14 @@ export const startTimer = (chrome, timer) => {
   chrome.storage.session.set({
     timerStatus: {
       started: true,
-      timer: timer,
       status: 'play',
       type: {
         focus: true,
         shortBreak: false,
         longBreak: false
       }
-    }
+    },
+    timer: timer,
   })
   var intervalId = setInterval(function() {
     timer--;
@@ -21,7 +21,7 @@ export const startTimer = (chrome, timer) => {
     chrome.runtime.sendMessage({time: timerString}).catch((e) => {
     });
     chrome.action.setBadgeText({text: timerString});
-    chrome.storage.sync.set({timer: timer})
+    chrome.storage.session.set({timer: timer})
     if (timer === 0) {
       clearInterval(intervalId);
       const notificationId = `my-notification-${Date.now()}`
@@ -49,14 +49,14 @@ export const startTimer = (chrome, timer) => {
       chrome.storage.session.set({
         timerStatus: {
           started: false,
-          timer: 0,
           status: 'off',
           type: {
             focus: false,
             shortBreak: false,
             longBreak: false
           }
-        }
+        },
+        timer: 0,
       })
       chrome.action.setBadgeText({text: ''});
         // change text on complete
@@ -71,13 +71,28 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         timerStatus: {
           started: true,
           status: 'pause',
-          timer: timer,
           type: {
             focus: true,
             shortBreak: false,
             longBreak: false
           }
-        }
+        },
+        timer: timer,
+      })
+      clearInterval(intervalId)
+    }
+    else if(request.stopTimer) {
+      chrome.storage.session.set({
+        timerStatus: {
+          started: false,
+          status: 'stop',
+          type: {
+            focus: false,
+            shortBreak: false,
+            longBreak: false
+          }
+        },
+        timer: 0,
       })
       clearInterval(intervalId)
     }

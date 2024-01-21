@@ -33,14 +33,14 @@ chrome.storage.sync.get('settings').then(store => {
 chrome.storage.session.set({
   timerStatus: {
     started: false,
-    status: 'off',
-    timer: 0,
+    status: 'stop',
     type: {
       focus: false,
       shortBreak: false,
       longBreak: false
     }
-  }
+  },
+  timer: 0,
 })
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
@@ -48,14 +48,14 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     chrome.storage.session.set({
       timerStatus: {
         started: true,
-        timer: request.time,
         status: 'play',
         type: {
           focus: true,
           shortBreak: false,
           longBreak: false
         }
-      }
+      },
+      timer: request.time,
     })
     startTimer(chrome, request.time)
   }
