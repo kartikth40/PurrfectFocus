@@ -1,9 +1,10 @@
 
 
 export const startTimer = (chrome, timer) => {
-  chrome.storage.sync.set({
+  chrome.storage.session.set({
     timerStatus: {
-      timer: true,
+      started: true,
+      timer: timer,
       status: 'play',
       type: {
         focus: true,
@@ -16,7 +17,7 @@ export const startTimer = (chrome, timer) => {
     timer--;
     const timerString = getTimeString(timer)
     chrome.action.setBadgeText({text: timerString});
-    chrome.action.setBadgeBackgroundColor({color: [255, 0, 0, 230]});
+    chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'});
     chrome.runtime.sendMessage({time: timerString}).catch((e) => {
     });
     chrome.action.setBadgeText({text: timerString});
@@ -45,9 +46,10 @@ export const startTimer = (chrome, timer) => {
           // window.close()
         }
       })
-      chrome.storage.sync.set({
+      chrome.storage.session.set({
         timerStatus: {
-          timer: false,
+          started: false,
+          timer: 0,
           status: 'off',
           type: {
             focus: false,
@@ -65,17 +67,17 @@ export const startTimer = (chrome, timer) => {
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if(request.pauseTimer) {
-      chrome.storage.sync.set({
+      chrome.storage.session.set({
         timerStatus: {
-          timer: true,
+          started: true,
           status: 'pause',
+          timer: timer,
           type: {
             focus: true,
             shortBreak: false,
             longBreak: false
           }
-        },
-        timer: timer
+        }
       })
       clearInterval(intervalId)
     }
@@ -93,6 +95,7 @@ export const getTimeString = (t) => {
 
 export const setFormValues = (data) => {
   const settings = data.settings
+  console.log('set')
   document.querySelector('#focus-duration-input').value = settings.focus.time
   document.querySelector('#focus-desktop-notification').checked = settings.focus.desktopNotifcations
   document.querySelector('#focus-new-tab-notification').checked = settings.focus.newTabNotifications

@@ -17,6 +17,7 @@ const tabs = tabNames.map(tabName => ({
 
 let settings = {}
 let settingsChanged = false
+let settingsSaved = false
 let isPaused = false
 
 // setup tabs system
@@ -37,6 +38,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
       saveBtn.classList.remove('saved')
       saveBtn.innerText = 'Save'
       settingsChanged = false
+      settingsSaved = true
       saveBtn.disabled = true
     }, 1500);
   }
@@ -45,41 +47,44 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 // on DOM loading
 document.addEventListener('DOMContentLoaded', () => {
   chrome.storage.sync.get('settings').then(store=> {
+    console.log(store)
     settings = store.settings
-    const timeInSeconds = settings.focus.time * 60
+    let timeInSeconds = settings.focus.time * 60
     timer.innerText = getTimeString(timeInSeconds)
-    chrome.storage.sync.get(['timerStatus','timer']).then(status => {
-      if((status?.timerStatus?.status === 'play' || status?.timerStatus?.status === 'pause') && status?.timer) {
-        timer.innerText = getTimeString(status.timer)
+    chrome.storage.session.get(['timerStatus','timer']).then(sessionStore => {
+      if((sessionStore?.timerStatus?.status === 'play' || sessionStore?.timerStatus?.status === 'pause') && sessionStore?.timerStatus?.started) {
+        timer.innerText = getTimeString(0)
         focusBtn.classList.add('active')
         focusBtn.innerText = 'Focusing'
         stopBtn.classList.add('active')
         pauseBtn.classList.add('active')
       }
-      if(status?.timerStatus?.status === 'pause' && status?.timer) {
+      if(sessionStore?.timerStatus?.status === 'pause' && sessionStore?.timerStatus?.started) {
         isPaused = true
+        timer.innerText = getTimeString(sessionStore.timerStatus.timer)
+        chrome.action.setBadgeText({text: getTimeString(sessionStore.timerStatus.timer)});
+        chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'});
         pauseBtn.classList.add('pause')
         focusBtn.innerText = 'Focusing paused'
       }
-    console.log(isPaused)
-
     })
+    setFormValues(store)
     runBtn.addEventListener('click', () => {
-      chrome.storage.sync.get('timerStatus').then(status => {
-        console.log(status)
-        if(status?.timerStatus?.timer) return
-        chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-          chrome.runtime.sendMessage({startTimer: true, time: timeInSeconds});
-        });
+      chrome.storage.session.get('timerStatus').then(status => {
+        if(status?.timerStatus?.started) return
+        chrome.storage.sync.get('settings').then(store=> {
+          settings = store.settings
+          timeInSeconds = settings.focus.time * 60
+          chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+            chrome.runtime.sendMessage({startTimer: true, time: timeInSeconds});
+          });
+        })
         console.log(focusBtn)
         focusBtn.classList.add('active')
         focusBtn.innerText = 'Focusing'
         stopBtn.classList.add('active')
         pauseBtn.classList.add('active')
-
-
       });
-      setFormValues(store)
     })
   })
 
@@ -89,13 +94,15 @@ document.addEventListener('DOMContentLoaded', () => {
       pauseBtn.classList.add('pause')
       chrome.runtime.sendMessage({pauseTimer: true})
       focusBtn.innerText = 'Focusing paused'
-    chrome.action.setBadgeText({text: '----'});
+      chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'});
     }else {
       isPaused = false
       focusBtn.innerText = 'Focusing'
       pauseBtn.classList.remove('pause')
       chrome.storage.sync.get('timer').then(timer => {
         console.log(timer)
+        chrome.action.setBadgeText({text: getTimeString(timer.timer)});
+        chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'});
         chrome.runtime.sendMessage({startTimer: true, time: timer.timer});
       })
     }
@@ -117,6 +124,8 @@ settingsForm.addEventListener('submit', (e) => {
   const formData = new FormData(e.target);
   const formValues = Object.fromEntries(formData);
   settings = setNewSettings(formValues)
+  const timeInSeconds = settings.settings.focus.time * 60
+  timer.innerText = getTimeString(timeInSeconds)
   chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
     chrome.runtime.sendMessage({saveSettings: true, newSettings: settings});
   });

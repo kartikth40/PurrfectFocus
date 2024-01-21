@@ -23,16 +23,18 @@ const settings = {
 // let defaultSettings = true
 // let newSettings = {}
 
+
 chrome.storage.sync.get('settings').then(store => {
   if(!Object.keys(store).length) {
     chrome.storage.sync.set(settings)
   }
 })
 
-chrome.storage.sync.set({
+chrome.storage.session.set({
   timerStatus: {
-    timer: false,
+    started: false,
     status: 'off',
+    timer: 0,
     type: {
       focus: false,
       shortBreak: false,
@@ -43,9 +45,10 @@ chrome.storage.sync.set({
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.startTimer) {
-    chrome.storage.sync.set({
+    chrome.storage.session.set({
       timerStatus: {
-        timer: true,
+        started: true,
+        timer: request.time,
         status: 'play',
         type: {
           focus: true,
