@@ -37,6 +37,7 @@ chrome.storage.session.set({
     type: FOCUS
   },
   timer: 0,
+  breakNo: 0
 })
 
 

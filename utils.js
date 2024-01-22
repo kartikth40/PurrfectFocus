@@ -12,8 +12,9 @@ let intervalId = ''
 
 
 
-export const startTimer = (chrome, timer) => {
+export const startTimer = (chrome, t) => {
   console.log('start timer started')
+  let timer = 5
   intervalId = setInterval(function() {
     timer--;
     if (timer < 0) {
@@ -91,6 +92,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
           type: FOCUS
         },
         timer: 0,
+        breakNo: 0
       })
       clearInterval(intervalId)
     }
@@ -103,44 +105,59 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 
 export const setNextTimer = () => {
   chrome.storage.sync.get('settings').then(settingsObj => {
-    chrome.storage.session.get('timerStatus').then(status => {
+    chrome.storage.session.get(['timerStatus', 'breakNo']).then(status => {
       console.log('setting next timer')
       console.log('current status -> ', status)
-      if(status?.timerStatus?.started) {
-        if(status?.timerStatus?.type === FOCUS) {
-          chrome.runtime.sendMessage({nextTimer: true}).catch((e) => {})
-          chrome.storage.session.set({
-            timerStatus: {
-              started: true,
-              status: PAUSE,
-              type: SHORTBREAK
-            },
-            timer: settingsObj.settings.shortBreak.time,
-          })
-        } else if(status?.timerStatus?.type === SHORTBREAK) {
-          chrome.runtime.sendMessage({nextTimer: true}).catch((e) => {})   
-          chrome.storage.session.set({
+      if(!status?.timerStatus?.started) return
+      if(status?.timerStatus?.type === FOCUS) {
+        chrome.storage.sync.get('settings').then(result => {
+          const interval = parseInt(result?.settings?.longBreak?.interval)
+          if(!interval || (interval && status.breakNo < interval)) {
+            chrome.storage.session.set({
+              timerStatus: {
+                started: true,
+                status: PAUSE,
+                type: SHORTBREAK
+              },
+              timer: settingsObj.settings.shortBreak.time,
+              breakNo: interval > 0 ? status.breakNo + 1 : 0
+            })
+          } else if(interval && interval > 0) {
+            chrome.storage.session.set({
               timerStatus: {
                 started: true,
                 status: PAUSE,
                 type: LONGBREAK
               },
               timer: settingsObj.settings.longBreak.time,
+              breakNo: 0
             })
-        } else if(status?.timerStatus?.type === LONGBREAK) {
-          chrome.runtime.sendMessage({nextTimer: true}).catch((e) => {}) 
+          }
+          chrome.runtime.sendMessage({nextTimer: true}).catch((e) => {})
+        })
+      } else if(status?.timerStatus?.type === SHORTBREAK) {
           chrome.storage.session.set({
             timerStatus: {
-              started: false,
+              started: true,
               status: PAUSE,
               type: FOCUS
             },
-            timer: settingsObj.settings.focus.timer,
+            timer: settingsObj.settings.focus.time,
+            breakNo: status.breakNo + 1
           })
+          chrome.runtime.sendMessage({nextTimer: true}).catch((e) => {})  
+      } else if(status?.timerStatus?.type === LONGBREAK) {
+        chrome.storage.session.set({
+          timerStatus: {
+            started: false,
+            status: PAUSE,
+            type: FOCUS
+          },
+          timer: settingsObj.settings.focus.timer,
+        })
+        chrome.runtime.sendMessage({nextTimer: true}).catch((e) => {}) 
       }
-      } 
     })
-
   })
 }
 
