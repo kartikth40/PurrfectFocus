@@ -20,6 +20,7 @@ body{
   padding: 10px 20px;
   background-color: white;
   color: var(--primary-color);
+  background-color: var(--secondary-color-1);
 }
 
 .title {
@@ -124,6 +125,11 @@ input:hover, select:hover {
   display: none;
 }
 
+.focus-title {
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 .focus-text {
   padding-block: 5px;
   text-align: center;
@@ -186,7 +192,6 @@ input:hover, select:hover {
   white-space: nowrap;
   width: 100%;
   display: block;
-  /* margin-left: 20px; */
 }
 
 .time-container{
@@ -210,7 +215,7 @@ input:hover, select:hover {
   border-radius: 150px;
   color: var(--secondary-color-2);
   overflow: hidden;
-  box-shadow:inset -10px 10px 20px var(--secondary-color-2), -5px 5px 20px var(--secondary-color-2);
+  box-shadow:inset -7px 7px 20px var(--secondary-color-2), -3px 3px 20px var(--secondary-color-2);
 }
 
 .timer {
@@ -221,7 +226,7 @@ input:hover, select:hover {
   padding: 5px 40px;
   color: #000;
   background-color: var(--secondary-color-1);
-  box-shadow:inset -10px 10px 20px var(--secondary-color-2), -5px 5px 20px var(--secondary-color-2);
+  box-shadow:inset -7px 7px 20px var(--secondary-color-2), -2px 2px 20px var(--secondary-color-2);
 }
 
 

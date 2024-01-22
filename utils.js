@@ -1,28 +1,23 @@
+// status
+export const STOP = 'Stop'
+export const PLAY = 'Play'
+export const PAUSE = 'Pause'
+
+// type
+export const FOCUS = 'Focus'
+export const SHORTBREAK = 'Short Break'
+export const LONGBREAK = 'Long Break'
+
+let intervalId = ''
+
 
 
 export const startTimer = (chrome, timer) => {
-  chrome.storage.session.set({
-    timerStatus: {
-      started: true,
-      status: 'play',
-      type: {
-        focus: true,
-        shortBreak: false,
-        longBreak: false
-      }
-    },
-    timer: timer,
-  })
-  var intervalId = setInterval(function() {
+  console.log('start timer started')
+  intervalId = setInterval(function() {
     timer--;
-    const timerString = getTimeString(timer)
-    chrome.action.setBadgeText({text: timerString});
-    chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'});
-    chrome.runtime.sendMessage({time: timerString}).catch((e) => {
-    });
-    chrome.action.setBadgeText({text: timerString});
-    chrome.storage.session.set({timer: timer})
-    if (timer === 0) {
+    if (timer < 0) {
+      console.log('start timer ends')
       clearInterval(intervalId);
       const notificationId = `my-notification-${Date.now()}`
       chrome.notifications.create(
@@ -37,7 +32,7 @@ export const startTimer = (chrome, timer) => {
             {title: 'Dismiss'}
           ]
         },
-        ()=> {console.log('created')}
+        ()=> {console.log('notify')}
       )
       chrome.notifications.onButtonClicked.addListener((notifId, btnIdx) => {
         if(notifId === notificationId && btnIdx === 0){
@@ -46,56 +41,106 @@ export const startTimer = (chrome, timer) => {
           // window.close()
         }
       })
-      chrome.storage.session.set({
-        timerStatus: {
-          started: false,
-          status: 'off',
-          type: {
-            focus: false,
-            shortBreak: false,
-            longBreak: false
-          }
-        },
-        timer: 0,
-      })
+
+      setNextTimer()
       chrome.action.setBadgeText({text: ''});
-        // change text on complete
-      
       chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]});
+    }else {
+      const timerString = getTimeString(timer)
+      chrome.action.setBadgeText({text: timerString});
+      chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'});
+      chrome.runtime.sendMessage({time: timerString}).catch((e) => {});
+      chrome.action.setBadgeText({text: timerString});
+      chrome.storage.session.set({timer: timer})
     }
   }, 1000);
-
+}
+  
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    if(request.pauseTimer) {
-      chrome.storage.session.set({
-        timerStatus: {
-          started: true,
-          status: 'pause',
-          type: {
-            focus: true,
-            shortBreak: false,
-            longBreak: false
-          }
+  if (request.startTimer) {
+    console.log('message received - start timer')
+    console.log('current status -> ', request)
+    chrome.storage.session.set({
+      timerStatus: {
+        started: true,
+        status: PLAY,
+        type: request.timerStatus.type === FOCUS ? FOCUS : request.timerStatus.type
+      },
+      timer: request.time,
+    })
+    startTimer(chrome, request.time)
+  }
+  else if(request.pauseTimer) {
+    console.log('message received - pause timer')
+    chrome.storage.session.set({
+      timerStatus: {
+        started: true,
+          status: PAUSE,
+          type: request.timerStatus.type
         },
-        timer: timer,
+        timer: request.time,
       })
       clearInterval(intervalId)
     }
     else if(request.stopTimer) {
+    console.log('message received - stop timer')
       chrome.storage.session.set({
         timerStatus: {
           started: false,
-          status: 'stop',
-          type: {
-            focus: false,
-            shortBreak: false,
-            longBreak: false
-          }
+          status: STOP,
+          type: FOCUS
         },
         timer: 0,
       })
       clearInterval(intervalId)
     }
+    if(request.saveSettings) {
+      chrome.storage.sync.set(request.newSettings).then(() => {
+        chrome.runtime.sendMessage({status: 'saved'}).catch((e) => {})
+      })
+    }
+  })
+
+export const setNextTimer = () => {
+  chrome.storage.sync.get('settings').then(settingsObj => {
+    chrome.storage.session.get('timerStatus').then(status => {
+      console.log('setting next timer')
+      console.log('current status -> ', status)
+      if(status?.timerStatus?.started) {
+        if(status?.timerStatus?.type === FOCUS) {
+          chrome.runtime.sendMessage({nextTimer: true}).catch((e) => {})
+          chrome.storage.session.set({
+            timerStatus: {
+              started: true,
+              status: PAUSE,
+              type: SHORTBREAK
+            },
+            timer: settingsObj.settings.shortBreak.time,
+          })
+        } else if(status?.timerStatus?.type === SHORTBREAK) {
+          chrome.runtime.sendMessage({nextTimer: true}).catch((e) => {})   
+          chrome.storage.session.set({
+              timerStatus: {
+                started: true,
+                status: PAUSE,
+                type: LONGBREAK
+              },
+              timer: settingsObj.settings.longBreak.time,
+            })
+        } else if(status?.timerStatus?.type === LONGBREAK) {
+          chrome.runtime.sendMessage({nextTimer: true}).catch((e) => {}) 
+          chrome.storage.session.set({
+            timerStatus: {
+              started: false,
+              status: PAUSE,
+              type: FOCUS
+            },
+            timer: settingsObj.settings.focus.timer,
+          })
+      }
+      } 
+    })
+
   })
 }
 
@@ -110,7 +155,6 @@ export const getTimeString = (t) => {
 
 export const setFormValues = (data) => {
   const settings = data.settings
-  console.log('set')
   document.querySelector('#focus-duration-input').value = settings.focus.time
   document.querySelector('#focus-desktop-notification').checked = settings.focus.desktopNotifcations
   document.querySelector('#focus-new-tab-notification').checked = settings.focus.newTabNotifications

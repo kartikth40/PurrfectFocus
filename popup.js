@@ -1,7 +1,8 @@
-import { setNewSettings, setFormValues, getTimeString } from "./utils.js"
+import { setNewSettings, setFormValues, getTimeString, PLAY, PAUSE, FOCUS, SHORTBREAK, LONGBREAK, setNextTimer, STOP } from "./utils.js"
 
 const timer = document.querySelector('.timer')
 const focusBtn = document.querySelector('.focus-btn')
+const focusTitle = document.querySelector('.focus-title')
 const stopBtn = document.querySelector('.focus-btn-stop')
 const nextBtn = document.querySelector('.focus-btn-next')
 
@@ -17,6 +18,7 @@ const tabs = tabNames.map(tabName => ({
 let settingsObj = {}
 let settingsChanged = false
 let isPaused = false
+let timerType = FOCUS
 
 // setup tabs system
 setupTabsSystem()
@@ -29,7 +31,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     timer.innerText = request.time
   }
   // settings status change
-  else if(request.status === 'saved') {
+  if(request.status === 'saved') {
     saveBtn.classList.add('saved')
     saveBtn.innerText = 'Saved'
     setTimeout(() => {
@@ -39,80 +41,158 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
       saveBtn.disabled = true
     }, 1500);
   }
+
+  if(request.nextTimer) {
+    console.log('message received - nextTimer')
+    updateNextTimer()
+  }
 });
+
+const updateNextTimer = () => {
+  console.log('udateNextTimer (UI change)')
+  chrome.storage.session.get('timerStatus').then(result => {
+    console.log('updated timerStatus -> ', result)
+    focusBtn.innerText = 'Start Focusing'
+    focusTitle.innerText = 'Start Focusing'
+    if(!result?.timerStatus?.started) return
+    focusBtn.innerText = 'Start ' + result.timerStatus.type
+    focusTitle.innerText = result.timerStatus.type
+    // to be continued
+  })
+}
+
+const timeInSeconds = (type, settings) => {
+  return type === SHORTBREAK ? settings.shortBreak.time * 60 
+          : type === LONGBREAK ? settings.longBreak.time * 60 
+          : settings.focus.time * 60
+}
 
 // on DOM loading
 document.addEventListener('DOMContentLoaded', () => {
   chrome.storage.sync.get('settings').then(store=> {
-    console.log(store)
     settingsObj = store
     let settings = store.settings
-    let timeInSeconds = settings.focus.time * 60
-    timer.innerText = getTimeString(timeInSeconds)
+    updateNextTimer()
     chrome.storage.session.get(['timerStatus','timer']).then(sessionStore => {
-      if((sessionStore?.timerStatus?.status === 'play' || sessionStore?.timerStatus?.status === 'pause') && sessionStore?.timer) {
-        timer.innerText = ''
-        focusBtn.innerText = 'Pause Focus'
+      timer.innerText = getTimeString(timeInSeconds(sessionStore?.timerStatus?.type, settings))
+      if((sessionStore?.timerStatus?.status === PLAY || sessionStore?.timerStatus?.status === PAUSE) && sessionStore?.timer) {
+        timer.innerText = getTimeString(sessionStore.timer)
+        focusBtn.innerText = getFocusText(sessionStore.timerStatus)
+        focusTitle.innerText = sessionStore.timerStatus.type
         stopBtn.classList.add('active')
         nextBtn.classList.add('active')
       }
-      if(sessionStore?.timerStatus?.status === 'pause' && sessionStore?.timer) {
+      if(sessionStore?.timerStatus?.status === PAUSE && sessionStore?.timer) {
         isPaused = true
         timer.innerText = getTimeString(sessionStore.timer)
         chrome.action.setBadgeText({text: getTimeString(sessionStore.timer)});
         chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'});
-        focusBtn.innerText = 'Resume Focus'
+        focusBtn.innerText = getFocusText(sessionStore.timerStatus)
+        focusTitle.innerText = sessionStore.timerStatus.type
       }
     })
     setFormValues(store)
     focusBtn.addEventListener('click', () => {
       chrome.storage.session.get('timerStatus').then(status => {
+        // if started already
         if(status?.timerStatus?.started) {
-          if(!isPaused) {
-            isPaused = true
-            chrome.runtime.sendMessage({pauseTimer: true})
-            focusBtn.innerText = 'Resume Focus'
-            chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'});
+          if(!isPaused && status.timerStatus.status !== PAUSE) {
+              // pause
+              pauseTimer(status.timerStatus)
+            }else {
+              // resume
+              resumeTimer(status.timerStatus)
+            }
           }else {
-            isPaused = false
-            focusBtn.innerText = 'Pause Focus'
-            chrome.storage.session.get('timer').then(timer => {
-              console.log(timer)
-              chrome.action.setBadgeText({text: getTimeString(timer.timer)});
-              chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'});
-              chrome.runtime.sendMessage({startTimer: true, time: timer.timer});
-            })
+            // initiate
+            initiateTimer(status.timerStatus)
           }
-        }else {
-          chrome.storage.sync.get('settings').then(store=> {
-            settingsObj = store
-            let settings = store.settings
-            timeInSeconds = settings.focus.time * 60
-            chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-              chrome.runtime.sendMessage({startTimer: true, time: timeInSeconds});
-            });
-          })
-          console.log(focusBtn)
-          focusBtn.innerText = 'Pause Focus'
-          stopBtn.classList.add('active')
-          nextBtn.classList.add('active')
-        }
-      });
+        });
+    })
+    stopBtn.addEventListener('click', () => {
+      stopTimer()
+    })
+    
+    nextBtn.addEventListener('click', () => {
+      chrome.storage.session.get('timerStatus').then(status => {
+        pauseTimer(status.timerStatus)
+        setNextTimer()
+      })
     })
   })
 
-  stopBtn.addEventListener('click', () => {
-    isPaused = false
-    focusBtn.innerText = 'Start Focusing'
-    stopBtn.classList.remove('active')
-    nextBtn.classList.remove('active')
-    timer.innerText = getTimeString(settingsObj.settings.focus.time * 60)
-    chrome.runtime.sendMessage({stopTimer: true})
-    chrome.action.setBadgeText({text: ''});
-    chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]});
-  })
+
 
 });
+
+const getFocusText = (status) => {
+  console.log('--------------------')
+  console.log(status)
+  let text = ''
+  if(!status.started || status.status === STOP) {
+    return 'Start Focusing'
+  }
+
+  if(status.status === PLAY) {
+    text += 'Pause'
+  }else if(status.status === PAUSE) {
+    text += 'Resume'
+  }
+  return text
+}
+
+const stopTimer = () => {
+  console.log('stop timer')
+  isPaused = false
+  focusBtn.innerText = 'Start Focusing'
+  focusTitle.innerText = 'Start Focusing'
+  stopBtn.classList.remove('active')
+  nextBtn.classList.remove('active')
+  timer.innerText = getTimeString(settingsObj.settings.focus.time * 60)
+  chrome.runtime.sendMessage({stopTimer: true}).catch((e) => {})
+  chrome.action.setBadgeText({text: ''});
+  chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]});
+}
+
+const pauseTimer = (timerStatus) => {
+  console.log('pause timer')
+  isPaused = true
+  chrome.storage.session.get('timer').then(timer => {
+    console.log('while pausing -> ', timer.timer)
+    chrome.runtime.sendMessage({pauseTimer: true, timerStatus: timerStatus, time: timer.timer}).catch((e) => {})
+  })
+  focusBtn.innerText = 'Resume'
+  focusTitle.innerText = timerStatus.type
+  chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'});
+}
+
+const resumeTimer = (timerStatus) => {
+  console.log('resume timer')
+  isPaused = false
+  focusBtn.innerText = 'Pause'
+  focusTitle.innerText = timerStatus.type
+  chrome.storage.session.get('timer').then(timer => {
+    console.log('while resuming -> ', timer.timer)
+    chrome.action.setBadgeText({text: getTimeString(timer.timer)});
+    chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'});
+    chrome.runtime.sendMessage({startTimer: true, timerStatus: timerStatus, time: timer.timer}).catch((e) => {});
+    // check pausing time lag
+  })
+}
+
+const initiateTimer = (timerStatus) => {
+  chrome.storage.sync.get('settings').then(store=> {
+    settingsObj = store
+    let settings = store.settings
+    chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+      chrome.runtime.sendMessage({startTimer: true, timerStatus: timerStatus, time: timeInSeconds(timerStatus?.type, settings)}).catch((e) => {});
+    });
+  })
+  focusBtn.innerText = 'Pause' 
+  focusTitle.innerText = timerStatus.type
+  stopBtn.classList.add('active')
+  nextBtn.classList.add('active')
+}
 
 // on settings change
 settingsForm.addEventListener('change', (e) => {
@@ -128,10 +208,12 @@ settingsForm.addEventListener('submit', (e) => {
   const formData = new FormData(e.target);
   const formValues = Object.fromEntries(formData);
   settingsObj = setNewSettings(formValues)
-  const timeInSeconds = settingsObj.settings.focus.time * 60
-  timer.innerText = getTimeString(timeInSeconds)
+  const settings = settingsObj.settings
+  chrome.storage.session.get('timerStatus').then(result => {
+    timer.innerText = getTimeString(timeInSeconds(timeInSeconds(result.timerStatus.type, settings), settings))
+  })
   chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-    chrome.runtime.sendMessage({saveSettings: true, newSettings: settings});
+    chrome.runtime.sendMessage({saveSettings: true, newSettings: settingsObj}).catch((e) => {});
   });
 })
 
