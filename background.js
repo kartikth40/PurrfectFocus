@@ -33,7 +33,7 @@ const settings = {
 
 export function printer() {
   const allLogs = false
-  const steps = false
+  const steps = true
   const helper = true
 
   return {
@@ -139,18 +139,17 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   }
 })
 
-export function startTimer(chrome, timer){
+export function startTimer(chrome, t){
   print.log('start timer started 🌠')
-  // let timer = 5
+  let timer = 5
   let intId = setInterval(function() {
     timer--;
     if (timer < 0) {
       print.log('start timer 🔚')
       clearInterval(intervalId.getState());
-      createNotification()
-      setNextTimer()
-      chrome.action.setBadgeText({text: ''});
-      chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]});
+      setNextTimer(true)
+      chrome.action.setBadgeText({text: getTimeString(0)});
+      chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'});
     }else {
       const timerString = getTimeString(timer)
       print.log('⏲ -> ' + timer +' '+ getTimeString(timer))
@@ -173,28 +172,72 @@ export function startTimer(chrome, timer){
   intervalId.setState(intId)
 }
   
-const createNotification = () => {
+function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
+  console.log('PREV TIMER -> ', prevTimer, 'NEXT TIMER -> ', nextTimer)
   chrome.storage.sync.get('settings').then(settingsObj => {
     chrome.storage.session.get('timer').then(status => {
-      const notificationId = `my-notification-${Date.now()}`
-      chrome.notifications.create(
-        notificationId,
-        {
-          iconUrl:"assets/cat.png",
-          message:"Take a short break",
-          title:"Break Time!",
-          type:"basic",
-          buttons:[
-            {title: 'Start'}
-          ]
-        },
-        ()=> {print.it('notify')}
-      )
-      chrome.notifications.onButtonClicked.addListener((notifId, btnIdx) => {
-        if(notifId === notificationId && btnIdx === 0){
-          resumeTimer()
-        }
-      })
+      console.log(settingsObj.settings.focus.desktopNotifcations)
+      if(prevTimer === FOCUS && settingsObj.settings.focus.desktopNotifcations) {
+        const notificationId = `my-notification-${Date.now()}`
+        chrome.notifications.create(
+          notificationId,
+          {
+            iconUrl:"assets/cat.png",
+            message:"Take a " + nextTimer,
+            title:"Break Time!",
+            type:"basic",
+            // buttons:[
+            //   {title: 'Start ' + nextTimer}
+            // ]
+          },
+          ()=> {print.it('notify')}
+        )
+        // chrome.notifications.onButtonClicked.addListener((notifId, btnIdx) => {
+        //   if(notifId === notificationId && btnIdx === 0){
+        //     resumeTimer()
+        //   }
+        // })
+      }else if(prevTimer === SHORTBREAK && settingsObj.settings.shortBreak.desktopNotifcations) {
+        const notificationId = `my-notification-${Date.now()}`
+        chrome.notifications.create(
+          notificationId,
+          {
+            iconUrl:"assets/cat.png",
+            message:"Start Focusing Again",
+            title:"FOCUS!",
+            type:"basic",
+            // buttons:[
+            //   {title: 'Start Focusing'}
+            // ]
+          },
+          ()=> {print.it('notify')}
+        )
+        // chrome.notifications.onButtonClicked.addListener((notifId, btnIdx) => {
+        //   if(notifId === notificationId && btnIdx === 0){
+        //     resumeTimer()
+        //   }
+        // })
+      }else if(prevTimer === LONGBREAK && settingsObj.settings.longBreak.desktopNotifcations) {
+        const notificationId = `my-notification-${Date.now()}`
+        chrome.notifications.create(
+          notificationId,
+          {
+            iconUrl:"assets/cat.png",
+            message:"Good work you completed a set.",
+            title:"Well Done!",
+            type:"basic",
+            // buttons:[
+            //   {title: 'Start Focusing'}
+            // ]
+          },
+          ()=> {print.it('notify')}
+        )
+        // chrome.notifications.onButtonClicked.addListener((notifId, btnIdx) => {
+        //   if(notifId === notificationId && btnIdx === 0){
+        //     resumeTimer()
+        //   }
+        // })
+      }
     })
   })
 }
@@ -224,17 +267,22 @@ export const timerDuration = (type, settings) => {
           : settings.focus.time
 }
 
-export function setNextTimer() {
+export function setNextTimer(timerEnds=false) {
   chrome.storage.sync.get('settings').then(settingsObj => {
     chrome.storage.session.get('timer').then(status => {
+      let nextTimer = FOCUS
+      let prevTimer = FOCUS
       print.log('setting next timer --------->')
       if(!status?.timer) return
       print.helper('NEXT ID  => ' + intervalId.getState())
       clearInterval(intervalId.getState())
+      chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'});
       if(status?.timer?.type === FOCUS) {
           const interval = parseInt(settingsObj?.settings?.longBreak?.interval)
           if(!interval || (interval && status.timer.counts < interval)) {
+            nextTimer = SHORTBREAK
           print.log('next is short break')
+            chrome.action.setBadgeText({text: getTimeString(settingsObj.settings.shortBreak.time * 60)});
             chrome.storage.session.set({
               timer: {
                 time: settingsObj.settings.shortBreak.time * 60,
@@ -244,7 +292,9 @@ export function setNextTimer() {
               }
             }).then(res => print.log('session -> focus -> short'))
           } else if(interval && interval > 0) {
+            nextTimer = LONGBREAK
           print.log('next is long break')
+            chrome.action.setBadgeText({text: getTimeString(settingsObj.settings.longBreak.time * 60)});
             chrome.storage.session.set({
               timer: {
                 time: settingsObj.settings.longBreak.time * 60,
@@ -256,18 +306,22 @@ export function setNextTimer() {
           }
           chrome.runtime.sendMessage({updateNextTimer: true}).catch((e) => {})
       } else if(status?.timer?.type === SHORTBREAK) {
+        prevTimer = SHORTBREAK
         print.log('next is focus after short one')
-          chrome.storage.session.set({
-            timer: {
-              time: settingsObj.settings.focus.time * 60,
-              status: PAUSE,
-              type: FOCUS,
-              counts: status.timer.counts + 1
-            },
-          }).then(res => print.log('session -> short -> focus'))
-          chrome.runtime.sendMessage({updateNextTimer: true}).catch((e) => {})  
+        chrome.action.setBadgeText({text: getTimeString(settingsObj.settings.focus.time * 60)});
+        chrome.storage.session.set({
+          timer: {
+            time: settingsObj.settings.focus.time * 60,
+            status: PAUSE,
+            type: FOCUS,
+            counts: status.timer.counts + 1
+          },
+        }).then(res => print.log('session -> short -> focus'))
+        chrome.runtime.sendMessage({updateNextTimer: true}).catch((e) => {})  
       } else if(status?.timer?.type === LONGBREAK) {
+        prevTimer = LONGBREAK
         print.log('next is focus after long one')
+        chrome.action.setBadgeText({text: getTimeString(settingsObj.settings.focus.time * 60)});
         chrome.storage.session.set({
           timer: {
             time: settingsObj.settings.focus.time * 60,
@@ -277,6 +331,9 @@ export function setNextTimer() {
           },
         }).then(res => print.log('session -> long -> focus'))
         chrome.runtime.sendMessage({updateNextTimer: true}).catch((e) => {}) 
+      }
+      if(timerEnds) {
+        createNotification(prevTimer, nextTimer)
       }
     })
   })

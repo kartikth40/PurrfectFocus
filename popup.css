@@ -285,3 +285,55 @@ input:hover, select:hover {
   border-radius: 5px;
   cursor: not-allowed;
 }
+
+.changingText {
+  transition: .15s all;
+  transform: translate(0, 0) scaleY(1);
+  opacity: 1;
+  animation: slideDown .2s forwards linear;
+}
+
+@keyframes slideDown {
+  0%{
+    opacity: 1;
+    transform: translate(0, 0) scaleY(1);
+  }
+  30% {
+    opacity: 0;
+    transform: translate(0, 0) scaleY(.5);
+  }
+  60%{
+    opacity: 0;
+    transform: translate(0, 0) scaleY(.5);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) scaleY(1);
+  }
+}
+
+.changingTimer {
+  transition: .15s all;
+  transform: translate(0, 0) scale(1);
+  opacity: 1;
+  animation: bubble .2s forwards linear;
+}
+
+@keyframes bubble {
+  0%{
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1.01) ;
+  }
+  60%{
+    opacity: 1;
+    transform: translate(0, 0) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
