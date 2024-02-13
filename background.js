@@ -139,9 +139,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   }
 })
 
-export function startTimer(chrome, t){
+export function startTimer(chrome, timer){
   print.log('start timer started 🌠')
-  let timer = 5
   let intId = setInterval(function() {
     timer--;
     if (timer < 0) {
@@ -175,9 +174,8 @@ export function startTimer(chrome, t){
 function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
   console.log('PREV TIMER -> ', prevTimer, 'NEXT TIMER -> ', nextTimer)
   chrome.storage.sync.get('settings').then(settingsObj => {
-    chrome.storage.session.get('timer').then(status => {
-      console.log(settingsObj.settings.focus.desktopNotifcations)
-      if(prevTimer === FOCUS && settingsObj.settings.focus.desktopNotifcations) {
+    if(prevTimer === FOCUS) {
+      if(settingsObj.settings.focus.desktopNotifcations) {
         const notificationId = `my-notification-${Date.now()}`
         chrome.notifications.create(
           notificationId,
@@ -185,19 +183,17 @@ function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
             iconUrl:"assets/cat.png",
             message:"Take a " + nextTimer,
             title:"Break Time!",
-            type:"basic",
-            // buttons:[
-            //   {title: 'Start ' + nextTimer}
-            // ]
+            type:"basic"
           },
           ()=> {print.it('notify')}
         )
-        // chrome.notifications.onButtonClicked.addListener((notifId, btnIdx) => {
-        //   if(notifId === notificationId && btnIdx === 0){
-        //     resumeTimer()
-        //   }
-        // })
-      }else if(prevTimer === SHORTBREAK && settingsObj.settings.shortBreak.desktopNotifcations) {
+      }
+      if(settingsObj.settings.focus.newTabNotifications) {
+        console.log('createeeee')
+        chrome.tabs.create({url:"over.html"})
+      }
+    }else if(prevTimer === SHORTBREAK) {
+      if(settingsObj.settings.shortBreak.desktopNotifcations) {
         const notificationId = `my-notification-${Date.now()}`
         chrome.notifications.create(
           notificationId,
@@ -205,19 +201,17 @@ function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
             iconUrl:"assets/cat.png",
             message:"Start Focusing Again",
             title:"FOCUS!",
-            type:"basic",
-            // buttons:[
-            //   {title: 'Start Focusing'}
-            // ]
+            type:"basic"
           },
           ()=> {print.it('notify')}
         )
-        // chrome.notifications.onButtonClicked.addListener((notifId, btnIdx) => {
-        //   if(notifId === notificationId && btnIdx === 0){
-        //     resumeTimer()
-        //   }
-        // })
-      }else if(prevTimer === LONGBREAK && settingsObj.settings.longBreak.desktopNotifcations) {
+      }
+      if(settingsObj.settings.shortBreak.newTabNotifications) {
+        chrome.tabs.create({url:"over.html"})
+      }
+      
+    }else if(prevTimer === LONGBREAK) {
+      if(settingsObj.settings.longBreak.desktopNotifcations) {
         const notificationId = `my-notification-${Date.now()}`
         chrome.notifications.create(
           notificationId,
@@ -225,20 +219,15 @@ function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
             iconUrl:"assets/cat.png",
             message:"Good work you completed a set.",
             title:"Well Done!",
-            type:"basic",
-            // buttons:[
-            //   {title: 'Start Focusing'}
-            // ]
+            type:"basic"
           },
           ()=> {print.it('notify')}
         )
-        // chrome.notifications.onButtonClicked.addListener((notifId, btnIdx) => {
-        //   if(notifId === notificationId && btnIdx === 0){
-        //     resumeTimer()
-        //   }
-        // })
       }
-    })
+      if(settingsObj.settings.longBreak.newTabNotifications) {
+        chrome.tabs.create({url:"over.html"})
+      }
+    }
   })
 }
   

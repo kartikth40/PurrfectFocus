@@ -1,0 +1,64 @@
+html{
+  margin: 0;
+  padding: 0;
+}
+*,*::after,*::before{
+  box-sizing:border-box;
+}
+body{
+  margin:0;
+  padding: 0;
+  height: 100vh;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  --primary-color: rgb(97, 47, 121);
+  --secondary-color-1: rgb(232, 227, 255);
+  --secondary-color-2: rgb(197, 184, 255); 
+  font-size: 12px;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+.container {
+  width: max-content;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 10px 50px;
+  height: 70vh;
+  color: var(--secondary-color-1);
+  background: linear-gradient(45deg, var(--primary-color), var(--secondary-color-2));
+  box-shadow:inset -7px 7px 10px var(--secondary-color-2),inset 5px -5px 20px var(--primary-color);
+  border-radius: 2em;
+}
+.focus-title {
+  width: 100%;
+  text-align: center;
+  font-size: 3em;
+  font-weight: lighter;
+  border-bottom: 1px solid var(--primary-color);
+  margin-bottom: .5em;
+  padding-bottom: .5em;
+}
+.reminder {
+  font-size: 1.5em;
+  font-weight: lighter;
+}
+.focus-btn {
+  background: linear-gradient(45deg, #000, var(--primary-color));
+  color: var(--secondary-color-2);
+  padding: 1em 2em;
+  margin-top: 1em;
+  font-size: 1.5em;
+  border: none;
+  border-radius: 2em;
+  box-shadow: 0 0 0  var(--primary-color);
+  transition: .15s all;
+  cursor: pointer;
+}
+.focus-btn:hover {
+  box-shadow: -1px -2px 5px var(--primary-color);
+  transform: translateY(2px) rotate(-2deg);
+}

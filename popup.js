@@ -240,7 +240,7 @@ settingsForm.addEventListener('submit', (e) => {
   settingsObj = setNewSettings(formValues)
   const settings = settingsObj.settings
   chrome.storage.session.get('timer').then(result => {
-    changeTextTo(timer, getTimeString(timerDuration(result.timer.type, settings)*60))
+    changeTextTo(timer, getTimeString(timerDuration(result.timer?.type ?? FOCUS, settings)*60))
   })
   chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
     chrome.runtime.sendMessage({saveSettings: true, newSettings: settingsObj}).then(res => {
