@@ -139,8 +139,9 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   }
 })
 
-export function startTimer(chrome, timer){
+export function startTimer(chrome, t){
   print.log('start timer started 🌠')
+  let timer = 5
   let intId = setInterval(function() {
     timer--;
     if (timer < 0) {

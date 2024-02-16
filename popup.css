@@ -133,35 +133,32 @@ input:hover, select:hover {
   cursor: pointer;
   pointer-events: all;
   transition: .25s all;
-  filter: hue-rotate(0deg);
 }
 .focus-btn:hover {
   box-shadow:inset -5px 5px 20px var(--primary-color);
-}
-.focus-btns-int button:hover {
-  box-shadow:inset -2px 2px 15px var(--primary-color);
 }
 .focus-btn.active:hover {
   box-shadow: 0 0 0 transparent;
 }
 .focus-btns-int button {
-  box-shadow: 0 0 0 transparent;
+  box-shadow: inset 2px -2px 15px var(--primary-color);
   border: none;
   background: rgb(59, 59, 59);
   opacity: .25;
   pointer-events: none;
-  transition: .5s all;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+}
+.focus-btns-int button:hover {
+  box-shadow:inset -2px 5px 15px var(--primary-color);
+  animation: bubble .15s forwards;
 }
 .focus-btns-int button.active {
   background: linear-gradient(45deg, var(--secondary-color-1), var(--secondary-color-2));
   opacity: 1;
   pointer-events: all;
-}
-.focus-btns-int button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 5px 10px;
 }
 .focus-btns-int button img {
   display: block;
@@ -204,7 +201,7 @@ input:hover, select:hover {
   color: var(--secondary-color-2);
   overflow: hidden;
   background: linear-gradient(45deg, var(--primary-color), var(--secondary-color-2));
-  box-shadow:inset -7px 7px 10px var(--secondary-color-2),inset 5px -5px 20px var(--primary-color);
+  box-shadow:inset -7px 7px 10px var(--secondary-color-2),inset 5px -5px 20px var(--primary-color), -5px 5px 50px var(--primary-color);
 }
 
 .timer {

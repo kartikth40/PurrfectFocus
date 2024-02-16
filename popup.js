@@ -85,9 +85,7 @@ const updateNextTimer = () => {
     changeTextTo(focusBtnText, 'Start Focusing')
     changeTextTo(focusTitle, 'Start Focusing')
     chrome.storage.sync.get('settings').then(settingsObj => {
-      changeTextTo(untilLongBreakCount, parseInt(settingsObj.settings.longBreak.interval) - (result.timer ? result.timer.counts : 0) + 1)
-      if(result?.timer?.type === LONGBREAK) focusText.style.opacity = 0
-      else focusText.style.opacity = 1
+      handleUntilLongBreakCount(settingsObj.settings, result.timer)
       if(!result?.timer) return
       console.log('change')
       changeTextTo(focusBtnText, 'Start ' + result.timer.type)
@@ -95,6 +93,22 @@ const updateNextTimer = () => {
       // to be continued
     })
   })
+}
+
+function handleUntilLongBreakCount(settings, timer, tryOnce=false) {
+  console.log(tryOnce)
+  if(parseInt(settings.longBreak.interval) !== 0 && timer?.type !== LONGBREAK){
+    changeTextTo(untilLongBreakCount, parseInt(settings.longBreak.interval) - (timer ? timer.counts : 0) + 1)
+    focusText.style.visibility = 'visible'
+  }else if(parseInt(settings.longBreak.interval) === 0){
+    focusText.style.visibility = 'hidden'
+  }
+  if(!timer && !tryOnce) {
+    chrome.storage.session.get('timer').then(sessionStore => {
+      if(sessionStore.timer)
+      handleUntilLongBreakCount(settings, sessionStore.timer, true)
+    }) 
+  }
 }
 
 
@@ -107,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // updateNextTimer()
     chrome.storage.session.get('timer').then(sessionStore => {
       changeTextTo(timer, getTimeString(timerDuration(sessionStore?.timer?.type, settings)*60))
-      changeTextTo(untilLongBreakCount, parseInt(settings.longBreak.interval) - (sessionStore.timer ? sessionStore.timer.counts : 0) + 1)
+      handleUntilLongBreakCount(settings, sessionStore.timer)
       if(sessionStore?.timer?.type === LONGBREAK) changeTextTo( focusText, '')
       if(sessionStore?.timer && (sessionStore?.timer?.status === PLAY || sessionStore?.timer?.status === PAUSE)) {
         changeTextTo(timer, getTimeString(sessionStore.timer.time))
@@ -178,11 +192,11 @@ const stopTimer = (settings) => {
   changeTextTo(focusTitle, 'Start Focusing')
   stopBtn.classList.remove('active')
   nextBtn.classList.remove('active')
-  changeTextTo(timer, getTimeString(settingsObj.settings.focus.time * 60))
+  changeTextTo(timer, getTimeString(settings.focus.time * 60))
   chrome.runtime.sendMessage({stopTimer: true}).catch((e) => {})
   chrome.action.setBadgeText({text: ''})
   chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]})
-  changeTextTo(untilLongBreakCount, parseInt(settings.longBreak.interval) + 1)
+  handleUntilLongBreakCount(settings, null)
 }
 
 const pause = (timer) => {

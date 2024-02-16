@@ -1,12 +1,10 @@
-import { FOCUS, SHORTBREAK } from "./background"
+import { FOCUS, SHORTBREAK } from "./background.js"
 
-const focusTitle = document.querySelector('.focus-tite')
+const focusTitle = document.querySelector('.focus-title')
 const focusBtn = document.querySelector('.focus-btn')
-
+const reminderCount = document.querySelector('.reminder-count')
 
 chrome.storage.session.get('timer').then(timer => {
-  console.log('------------||||||||||||||')
-  console.log(timer)
   if(!timer?.timer || timer?.timer?.type === FOCUS) {
     focusTitle.innerText = 'Start Focusing'
     focusBtn.innerText = 'Start Focusing'
@@ -18,4 +16,8 @@ chrome.storage.session.get('timer').then(timer => {
     focusTitle.innerText = 'Take a Long Break'
     focusBtn.innerText = 'Start Long Break'
   }
+  chrome.storage.sync.get('settings').then(settings => {
+    reminderCount.innerText = parseInt(settings.settings.longBreak.interval) - (timer.timer ? timer.timer.counts : 0) + 1
+  })
 })
+
