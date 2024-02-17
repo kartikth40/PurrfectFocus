@@ -232,7 +232,7 @@ function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
   })
 }
   
-export const resumeTimer = () => {
+export const resumeTimer = (callback) => {
   chrome.storage.session.get('timer').then(result => {
     chrome.action.setBadgeText({text: getTimeString(result.timer.time)});
     chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'});
@@ -246,7 +246,11 @@ export const resumeTimer = () => {
       }
       print.log('new timer -> ')
       print.log(timerObj)
-      chrome.runtime.sendMessage({startTimer: true, timer: timerObj}).catch((e) => {});
+      chrome.runtime.sendMessage({startTimer: true, timer: timerObj}).then(()=> {
+        if(typeof callback === 'function') {
+          callback()
+        }
+      }).catch((e) => {});
     })
   })
 }

@@ -141,9 +141,9 @@ input:hover, select:hover {
   box-shadow: 0 0 0 transparent;
 }
 .focus-btns-int button {
-  box-shadow: inset 2px -2px 15px var(--primary-color);
+  box-shadow: inset 10px -10px 25px var(--primary-color);
   border: none;
-  background: rgb(59, 59, 59);
+  background: var(--secondary-color-2);
   opacity: .25;
   pointer-events: none;
   display: flex;
@@ -152,11 +152,9 @@ input:hover, select:hover {
   padding: 5px 10px;
 }
 .focus-btns-int button:hover {
-  box-shadow:inset -2px 5px 15px var(--primary-color);
-  animation: bubble .15s forwards;
+  box-shadow: inset 5px -5px 40px var(--primary-color);
 }
 .focus-btns-int button.active {
-  background: linear-gradient(45deg, var(--secondary-color-1), var(--secondary-color-2));
   opacity: 1;
   pointer-events: all;
 }
