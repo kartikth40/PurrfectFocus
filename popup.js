@@ -1,4 +1,4 @@
-import { setNewSettings, setFormValues, getTimeString, PLAY, PAUSE, FOCUS, STOP, resumeTimer , timerDuration, printer, SHORTBREAK, LONGBREAK} from "./background.js"
+import { setNewSettings, setFormValues, getTimeString, PLAY, PAUSE, FOCUS, STOP, resumeTimer , timerDuration, printer, SHORTBREAK, LONGBREAK, SIMPLETIMERSTYLE} from "./background.js"
 
 const timerContainer = document.querySelector('.time-container')
 const timer = document.querySelector('.timer')
@@ -9,6 +9,7 @@ const untilLongBreakCount = document.querySelector('#until-long')
 const focusText = document.querySelector('.focus-text')
 const stopBtn = document.querySelector('.focus-btn-stop')
 const nextBtn = document.querySelector('.focus-btn-next')
+const timerTag = document.querySelector('.timer-tag')
 
 const settingsForm = document.querySelector('#settings-form')
 const saveBtn = document.querySelector('.submit-btn')
@@ -119,6 +120,13 @@ document.addEventListener('DOMContentLoaded', () => {
     settingsObj = store
     let settings = store.settings
     // updateNextTimer()
+    if(settings?.timerStyle === SIMPLETIMERSTYLE) {
+      timerTag.classList.remove('cat-walk')
+      timerTag.classList.add('simple')
+    }else {
+      timerTag.classList.remove('simple')
+      timerTag.classList.add('cat-walk')
+    }
     chrome.storage.session.get('timer').then(sessionStore => {
       changeTextTo(timer, getTimeString(timerDuration(sessionStore?.timer?.type, settings)*60))
       handleUntilLongBreakCount(settings, sessionStore.timer)
@@ -136,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'});
       }
     })
+    console.log(store)
     setFormValues(store)
     focusBtn.addEventListener('click', () => {
       chrome.storage.session.get('timer').then(status => {
@@ -253,6 +262,13 @@ settingsForm.addEventListener('submit', (e) => {
   const formValues = Object.fromEntries(formData);
   settingsObj = setNewSettings(formValues)
   const settings = settingsObj.settings
+  if(settings?.timerStyle === SIMPLETIMERSTYLE) {
+    timerTag.classList.remove('cat-walk')
+    timerTag.classList.add('simple')
+  }else {
+    timerTag.classList.remove('simple')
+    timerTag.classList.add('cat-walk')
+  }
   chrome.storage.session.get('timer').then(result => {
     changeTextTo(timer, getTimeString(timerDuration(result.timer?.type ?? FOCUS, settings)*60))
   })

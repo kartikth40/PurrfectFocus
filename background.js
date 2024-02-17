@@ -8,27 +8,37 @@ export const FOCUS = 'Focus'
 export const SHORTBREAK = 'Short Break'
 export const LONGBREAK = 'Long Break'
 
+// defaults
+const defaultFocusTime = 25
+const defaultShortBreakTime = 5
+const defaultLongBreakTime = 15
+const defaultInterval = 3
+
+// timer styles
+export const CATWALKTIMERSTYLE = 'catWalk'
+export const SIMPLETIMERSTYLE = 'simple'
+
 let intervalId = createState(0)
-let tabId = createState(0)
 
 const settings = {
   settings: {
     focus: {
-      time: 25,
+      time: defaultFocusTime,
       desktopNotifcations: true,
       newTabNotifications: true
     },
     shortBreak: {
-      time: 5,
+      time: defaultShortBreakTime,
       desktopNotifcations: true,
       newTabNotifications: true
     },
     longBreak: {
-      time: 15,
-      interval: '3',
+      time: defaultLongBreakTime,
+      interval: defaultInterval.toString(),
       desktopNotifcations: true,
       newTabNotifications: true
-    }
+    },
+    timerStyle: CATWALKTIMERSTYLE
   }
 }
 
@@ -121,7 +131,7 @@ function stopActualTimer() {
     if(res.newTabId) {
       chrome.tabs.remove(res.newTabId).then(()=> {
         chrome.storage.session.set({newTabId: null})
-      })
+      }).catch(e=> console.log(e))
     }
   })
 }
@@ -147,9 +157,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   }
 })
 
-export function startTimer(chrome, t){
+export function startTimer(chrome, timer){
   print.log('start timer started 🌠')
-  let timer = 5
   let intId = setInterval(function() {
     timer--;
     if (timer < 0) {
@@ -370,6 +379,9 @@ export const setFormValues = (data) => {
   document.querySelector('#long-break-duration-input').value = settings.longBreak.time
   document.querySelector('#long-break-desktop-notification').checked = settings.longBreak.desktopNotifcations
   document.querySelector('#long-break-new-tab-notification').checked = settings.longBreak.newTabNotifications
+  document.querySelector('#cat-walk-style').checked = settings.timerStyle === CATWALKTIMERSTYLE || settings.timerStyle !== SIMPLETIMERSTYLE
+  document.querySelector('#simple-style').checked = settings.timerStyle === SIMPLETIMERSTYLE
+  console.log(settings.timerStyle, settings.timerStyle === CATWALKTIMERSTYLE)
 }
 
 
@@ -391,7 +403,8 @@ export const setNewSettings = (formValues) => {
         interval: formValues.longBreakInterval,
         desktopNotifcations: formValues.longBreakDesktopNotification === 'on' ? true : false,
         newTabNotifications: formValues.longBreakNewTabNotification === 'on' ? true : false
-      }
+      },
+      timerStyle: formValues.timerStyle
     }
   }
 }

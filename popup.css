@@ -17,7 +17,9 @@ body{
 }
 .container {
   margin: 0;
+  min-width: 270px;
   padding: 10px 20px;
+  padding-top: 30px;
   background-color: #000;
   color: var(--secondary-color-1);
   position: relative;
@@ -37,18 +39,21 @@ body{
 }
 
 .title {
+  position: absolute;
+  top:0;
+  left:50%;
+  transform: translateX(-50%);
   text-align: center;
   width: 100%;
   white-space: nowrap;
   font-size: 14px;
-  font-weight: 400;
+  font-weight: 100;
   margin-top: 0;
-  color: black;
+  color: var(--secondary-color-2);
   padding: 5px 15px;
-  border-radius: 20px;
   border: none;
-  background: linear-gradient(-45deg, var(--secondary-color-2), var(--primary-color));
-  box-shadow:inset 5px -5px 10px var(--primary-color), inset -5px 5px 10px var(--secondary-color-2);
+  /* background: linear-gradient(-45deg, black, var(--primary-color)); */
+  /* box-shadow:inset 5px -5px 10px var(--primary-color), inset -5px 5px 10px var(--secondary-color-2); */
 }
 
 h1 {
@@ -106,7 +111,7 @@ input:hover, select:hover {
   border-bottom: 2px solid var(--secondary-color-2);
 }
 .tab-btn:hover:not(.active) {
-  
+  border-bottom: 2px solid #323232;
 }
 
 .tab:not(.active) {
@@ -186,6 +191,7 @@ input:hover, select:hover {
   width: 100%;
   align-items: center;
   justify-content: center;
+  transform: skew(0deg);
 }
 
 .timer-tag {
@@ -200,8 +206,23 @@ input:hover, select:hover {
   border-radius: 150px;
   color: var(--secondary-color-2);
   overflow: hidden;
+  background-image: url('assets/cat.png');
+  background-size: 10% 10%;
+  background-position: center center;
+  border: 5px solid var(--secondary-color-2);
+}
+.timer-tag.simple{
+  border: none;
   background: linear-gradient(45deg, var(--primary-color), var(--secondary-color-2));
   box-shadow:inset -7px 7px 10px var(--secondary-color-2),inset 5px -5px 20px var(--primary-color), -5px 5px 50px var(--primary-color);
+}
+
+.changingTimer:has(.simple) {
+  animation: jiggle .1s forwards linear;
+}
+
+.changingTimer .timer-tag.cat-walk {
+  animation: catWalk .1s forwards linear;
 }
 
 .timer {
@@ -211,6 +232,7 @@ input:hover, select:hover {
   width: max-content;
   padding: 5px 40px;
   color: #000;
+  backdrop-filter: blur(6px);
 }
 
 
@@ -280,6 +302,15 @@ input:hover, select:hover {
   animation: slideDown .2s forwards linear;
 }
 
+.timer-style-input-container{
+  display: flex;
+  gap: 10px;
+}
+.timer-style{
+  display: flex;
+  align-items: center;
+}
+
 @keyframes slideDown {
   0%{
     opacity: 1;
@@ -299,29 +330,38 @@ input:hover, select:hover {
   }
 }
 
-.changingTimer {
+/* .changingTimer {
   transition: .15s all;
-  transform: skewX(0deg) ;
-  opacity: 1;
-  animation: bubble .1s forwards linear;
+  animation: catWalk .4s forwards linear;
   transform-origin: center center;
-}
+} */
 
-@keyframes bubble {
+@keyframes catWalk {
   0%{
-    opacity: 1;
-    transform: skewX(0deg);
+    background-position: 100%;
   }
   30% {
-    opacity: 1;
-    transform: skewX(5deg);
+    background-position: 50%;
   }
   60%{
-    opacity: 1;
-    transform: skewX(-5deg);
+    background-position: 50%;
   }
   100% {
-    opacity: 1;
-    transform: skewX(0deg);
+    background-position: 100%;
+  }
+}
+
+@keyframes jiggle {
+  0%{
+    transform: skew(0deg);
+  }
+  30% {
+    transform: skew(5deg);
+  }
+  60%{
+    transform: skew(-5deg);
+  }
+  100% {
+    transform: skew(0deg);
   }
 }

@@ -20,7 +20,7 @@
       <h1 class="focus-title">Start Focusing</h1>
       <p class="focus-text"><span id="until-long">2</span> pomodoros until long break</p>
       <div class="time-container">
-        <div class="timer-tag">
+        <div class="timer-tag cat-walk">
           <div class="timer" id="timer">0:00</div>
         </div>
       </div>
@@ -29,7 +29,6 @@
         <div class="focus-btns-int">
         <button class="focus-btn-stop"><img  src="assets/stop.png" alt="stop"></button>
         <button class="focus-btn-next"><img  src="assets/next.png" alt="next"></button>
-        <!-- <button class="focus-btn-pause"><img class="play" src="assets/play.png" alt="play"><img class="pause" src="assets/pause.png" alt="pause"></button> -->
         </div>
       </div>
     </div>
@@ -41,7 +40,7 @@
         <div class="duration">
           <label for="focus-duration-input">Duration: <input type="number" id="focus-duration-input" name="focusDuration" value="25" required> minutes</label>
         </div>
-        <div class="notification-container">
+        <div class="settings-checkbox-container">
           <!-- <p>When complete</p> -->
           <label class="notification" for="focus-desktop-notification">
             <input type='hidden' value='off' name='focusDesktopNotification'>
@@ -61,7 +60,7 @@
         <div class="duration">
           <label for="short-break-duration-input">Duration: <input type="number" id="short-break-duration-input" name="shortBreakDuration" value="5" required> minutes</label>
         </div>
-        <div class="notification-container">
+        <div class="settings-checkbox-container">
           <!-- <p>When complete</p> -->
           <label class="notification" for="short-break-desktop-notification">
             <input type='hidden' value='off' name='shortBreakDesktopNotification'>
@@ -97,7 +96,7 @@
         <div class="duration">
           <label for="long-break-duration-input">Duration: <input type="number" id="long-break-duration-input" name="longBreakDuration" value="15" required> minutes</label>
         </div>
-        <div class="notification-container">
+        <div class="settings-checkbox-container">
           <!-- <p>When complete</p> -->
           <label class="notification" for="long-break-desktop-notification">
             <input type='hidden' value='off' name='longBreakDesktopNotification'>
@@ -108,6 +107,20 @@
             <input type='hidden' value='off' name='longBreakNewTabNotification'>
             <input type="checkbox" checked name="longBreakNewTabNotification" id="long-break-new-tab-notification"> 
             Show new tab notifications
+          </label>
+        </div>
+      </div>
+
+      <div class="timer-style-container">
+        <h2>Timer Style</h2>
+        <div class="settings-checkbox-container timer-style-input-container">
+          <label class="timer-style" for="cat-walk-style">
+            <input type="radio" checked name="timerStyle" id="cat-walk-style" value="catWalk"> 
+            Cat Walk
+          </label>
+          <label class="timer-style" for="simple-style">
+            <input type="radio" name="timerStyle" id="simple-style" value="simple"> 
+            Simple
           </label>
         </div>
       </div>
