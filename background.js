@@ -9,6 +9,7 @@ export const SHORTBREAK = 'Short Break'
 export const LONGBREAK = 'Long Break'
 
 let intervalId = createState(0)
+let tabId = createState(0)
 
 const settings = {
   settings: {
@@ -116,6 +117,13 @@ function stopActualTimer() {
   print.log('message received - stop timer')
   clearInterval(intervalId.getState())
   chrome.storage.session.set({timer: null})
+  chrome.storage.session.get('newTabId').then(res => {
+    if(res.newTabId) {
+      chrome.tabs.remove(res.newTabId).then(()=> {
+        chrome.storage.session.set({newTabId: null})
+      })
+    }
+  })
 }
 
   
@@ -190,8 +198,9 @@ function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
         )
       }
       if(settingsObj.settings.focus.newTabNotifications) {
-        console.log('createeeee')
-        chrome.tabs.create({url:"over.html"})
+        chrome.tabs.create({url:"over.html"},function(tab){
+          chrome.storage.session.set({newTabId: tab.id}).then(()=> console.log(tab.id))
+        })
       }
     }else if(prevTimer === SHORTBREAK) {
       if(settingsObj.settings.shortBreak.desktopNotifcations) {
@@ -208,7 +217,9 @@ function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
         )
       }
       if(settingsObj.settings.shortBreak.newTabNotifications) {
-        chrome.tabs.create({url:"over.html"})
+        chrome.tabs.create({url:"over.html"}, function(tab){
+          chrome.storage.session.set({newTabId: tab.id})
+        })
       }
       
     }else if(prevTimer === LONGBREAK) {
@@ -226,17 +237,23 @@ function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
         )
       }
       if(settingsObj.settings.longBreak.newTabNotifications) {
-        chrome.tabs.create({url:"over.html"})
+        chrome.tabs.create({url:"over.html"}, function(tab){
+          chrome.storage.session.set({newTabId: tab.id})
+        })
       }
     }
   })
 }
   
 export const resumeTimer = (callback) => {
-  chrome.storage.session.get('timer').then(result => {
+  chrome.storage.session.get(['timer', 'newTabId']).then(result => {
+    if(result?.newTabId && typeof callback !== 'function') {
+      chrome.tabs.remove(result.newTabId).then(()=> {
+        chrome.storage.session.set({newTabId: null})
+      })
+    }
     chrome.action.setBadgeText({text: getTimeString(result.timer.time)});
     chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'});
-    chrome.storage.sync.get('settings').then(store=> {
       print.log('====> ▶')
       const timerObj = {
           time:  result.timer.time,
@@ -251,7 +268,6 @@ export const resumeTimer = (callback) => {
           callback()
         }
       }).catch((e) => {});
-    })
   })
 }
 

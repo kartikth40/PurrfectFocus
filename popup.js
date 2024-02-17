@@ -61,10 +61,10 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if(request.status === 'saved') {
     saveBtn.classList.add('saved')
     changeTextTo(saveBtn, 'Saved')
+    settingsChanged = false
     setTimeout(() => {
       saveBtn.classList.remove('saved')
       changeTextTo(saveBtn, 'Save')
-      settingsChanged = false
       saveBtn.disabled = true
     }, 1500);
   }

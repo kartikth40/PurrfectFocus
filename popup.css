@@ -40,14 +40,15 @@ body{
   text-align: center;
   width: 100%;
   white-space: nowrap;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 400;
   margin-top: 0;
-  color: var(--primary-color);
-  padding: 5px;
-  border-radius: 5px;
+  color: black;
+  padding: 5px 15px;
+  border-radius: 20px;
   border: none;
-  background-color: var(--secondary-color-2);
+  background: linear-gradient(-45deg, var(--secondary-color-2), var(--primary-color));
+  box-shadow:inset 5px -5px 10px var(--primary-color), inset -5px 5px 10px var(--secondary-color-2);
 }
 
 h1 {
@@ -74,7 +75,8 @@ p {
 }
 
 input, select {
-  border: 1px solid #000;
+  background-color: var(--secondary-color-2);
+  border: 1px solid var(--secondary-color-2);
   border-radius: 5px;
   font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
 }
@@ -92,19 +94,19 @@ input:hover, select:hover {
   text-align: center;
   user-select: none;
   padding: 2px 5px;
-  border-radius: 5px;
   width: 100%;
-  border: 1px solid var(--primary-color);
+  border: none;
+  border-bottom: 2px solid transparent;
   cursor: pointer;
-  transition: .15s all;
+  background-color: transparent;
+  color: var(--secondary-color-1);
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
 }
 .tab-btn.active {
-  background-color: var(--primary-color);
-  box-shadow: 0 0px 2px var(--primary-color);
+  border-bottom: 2px solid var(--secondary-color-2);
 }
 .tab-btn:hover:not(.active) {
-  opacity: .7;
-  box-shadow: 0 0 2px var(--primary-color);
+  
 }
 
 .tab:not(.active) {
@@ -245,11 +247,11 @@ input:hover, select:hover {
   width: 100%;
   margin-top: 10px;
   border-radius: 5px;
-  background-color: var(--primary-color);
+  background-color: var(--secondary-color-2);
   border:none;
   font-size: 15px;
   font-weight: 500;
-  color: var(--secondary-color-2);
+  color: black;
   cursor: pointer;
   transition: .15s all;
   padding: 10px;
@@ -258,7 +260,7 @@ input:hover, select:hover {
   opacity: .9;
 }
 .submit-btn.saved {
-  background-color: var(--secondary-color-2);
+  background-color: var(--primary-color);
   color: #000;
 }
 .submit-btn:disabled {
