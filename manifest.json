@@ -4,20 +4,19 @@
     "description": "Purrfect Focus: Cat & Pomodoro Pal",
     "permissions": ["storage", "tabs", "notifications"],
     "background": {
-      "service_worker": "background.js",
+      "service_worker": "modules/background.js",
       "type": "module"
     },
     "content_scripts": [
       {
-        "js": ["contentScript.js"],
+        "js": ["modules/contentScript.js"],
         "matches":["<all_urls>"]
       }
     ],
     "web_accessible_resources": [
       {
         "resources": [
-          "assets/cat.png",
-          "utils.js"
+          "assets/cat.png"
         ],
         "matches":["<all_urls>"]
       }
@@ -29,7 +28,7 @@
         "32": "assets/cat.png"
       },
       "default_title": "Purrfect Focus",
-      "default_popup": "popup.html"
+      "default_popup": "modules/popup/popup.html"
     },
     "manifest_version": 3
 }

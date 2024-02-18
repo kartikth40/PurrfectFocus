@@ -195,7 +195,6 @@ export function startTimer(chrome, timer){
 }
   
 function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
-  console.log('PREV TIMER -> ', prevTimer, 'NEXT TIMER -> ', nextTimer)
   chrome.storage.sync.get('settings').then(settingsObj => {
     if(prevTimer === FOCUS) {
       if(settingsObj.settings.focus.desktopNotifcations) {
@@ -203,7 +202,7 @@ function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
         chrome.notifications.create(
           notificationId,
           {
-            iconUrl:"assets/cat.png",
+            iconUrl:"../assets/cat.png",
             message:"Take a " + nextTimer,
             title:"Break Time!",
             type:"basic"
@@ -212,7 +211,7 @@ function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
         )
       }
       if(settingsObj.settings.focus.newTabNotifications) {
-        chrome.tabs.create({url:"over.html"},function(tab){
+        chrome.tabs.create({url:"modules/newTab/over.html"},function(tab){
           chrome.storage.session.set({newTabId: tab.id}).then(()=> console.log(tab.id))
         })
       }
@@ -222,7 +221,7 @@ function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
         chrome.notifications.create(
           notificationId,
           {
-            iconUrl:"assets/cat.png",
+            iconUrl:"../assets/cat.png",
             message:"Start Focusing Again",
             title:"FOCUS!",
             type:"basic"
@@ -231,7 +230,7 @@ function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
         )
       }
       if(settingsObj.settings.shortBreak.newTabNotifications) {
-        chrome.tabs.create({url:"over.html"}, function(tab){
+        chrome.tabs.create({url:"modules/newTab/over.html"}, function(tab){
           chrome.storage.session.set({newTabId: tab.id})
         })
       }
@@ -242,7 +241,7 @@ function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
         chrome.notifications.create(
           notificationId,
           {
-            iconUrl:"assets/cat.png",
+            iconUrl:"../assets/cat.png",
             message:"Good work you completed a set.",
             title:"Well Done!",
             type:"basic"
@@ -251,7 +250,7 @@ function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
         )
       }
       if(settingsObj.settings.longBreak.newTabNotifications) {
-        chrome.tabs.create({url:"over.html"}, function(tab){
+        chrome.tabs.create({url:"modules/newTab/over.html"}, function(tab){
           chrome.storage.session.set({newTabId: tab.id})
         })
       }
@@ -387,12 +386,10 @@ export const setFormValues = (data) => {
   document.querySelector('#cat-walk-style').checked = settings.timerStyle === CATWALKTIMERSTYLE 
   document.querySelector('#simple-style').checked = settings.timerStyle === SIMPLETIMERSTYLE || settings.timerStyle !== CATWALKTIMERSTYLE
   document.querySelector('#app-theme').checked = settings.theme === LIGHTTHEME
-  console.log(settings)
 }
 
 
 export const setNewSettings = (formValues) => {
-  console.log(formValues)
   return {
     settings: {
       focus: {

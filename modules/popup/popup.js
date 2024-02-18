@@ -1,4 +1,4 @@
-import { setNewSettings, setFormValues, getTimeString, PLAY, PAUSE, FOCUS, STOP, resumeTimer , timerDuration, printer, SHORTBREAK, LONGBREAK, SIMPLETIMERSTYLE, LIGHTTHEME} from "./background.js"
+import { setNewSettings, setFormValues, getTimeString, PLAY, PAUSE, FOCUS, STOP, resumeTimer , timerDuration, printer, SHORTBREAK, LONGBREAK, SIMPLETIMERSTYLE, LIGHTTHEME} from "../background.js"
 
 const container = document.querySelector('.container')
 const timerContainer = document.querySelector('.time-container')

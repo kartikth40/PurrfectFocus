@@ -1,4 +1,4 @@
-import { FOCUS, SHORTBREAK, resumeTimer } from "./background.js"
+import { FOCUS, SHORTBREAK, resumeTimer } from "../background.js"
 
 const focusTitle = document.querySelector('.focus-title')
 const focusBtn = document.querySelector('.focus-btn')
