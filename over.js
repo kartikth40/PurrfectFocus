@@ -30,7 +30,7 @@ focusBtn.addEventListener('click', () => {
   resumeTimer(function() {
     chrome.tabs.getCurrent(function(tab) {
       chrome.tabs.remove(tab.id, function() {
-       });
+       }).catch(e=> console.log(e));
     });
   })
 })

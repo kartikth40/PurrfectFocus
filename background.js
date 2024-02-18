@@ -18,6 +18,10 @@ const defaultInterval = 3
 export const CATWALKTIMERSTYLE = 'catWalk'
 export const SIMPLETIMERSTYLE = 'simple'
 
+// themes
+export const DARKTHEME = 'dark'
+export const LIGHTTHEME = 'light'
+
 let intervalId = createState(0)
 
 const settings = {
@@ -38,7 +42,8 @@ const settings = {
       desktopNotifcations: true,
       newTabNotifications: true
     },
-    timerStyle: CATWALKTIMERSTYLE
+    timerStyle: SIMPLETIMERSTYLE,
+    theme: DARKTHEME
   }
 }
 
@@ -259,7 +264,7 @@ export const resumeTimer = (callback) => {
     if(result?.newTabId && typeof callback !== 'function') {
       chrome.tabs.remove(result.newTabId).then(()=> {
         chrome.storage.session.set({newTabId: null})
-      })
+      }).catch(e=> console.log(e))
     }
     chrome.action.setBadgeText({text: getTimeString(result.timer.time)});
     chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'});
@@ -379,13 +384,15 @@ export const setFormValues = (data) => {
   document.querySelector('#long-break-duration-input').value = settings.longBreak.time
   document.querySelector('#long-break-desktop-notification').checked = settings.longBreak.desktopNotifcations
   document.querySelector('#long-break-new-tab-notification').checked = settings.longBreak.newTabNotifications
-  document.querySelector('#cat-walk-style').checked = settings.timerStyle === CATWALKTIMERSTYLE || settings.timerStyle !== SIMPLETIMERSTYLE
-  document.querySelector('#simple-style').checked = settings.timerStyle === SIMPLETIMERSTYLE
-  console.log(settings.timerStyle, settings.timerStyle === CATWALKTIMERSTYLE)
+  document.querySelector('#cat-walk-style').checked = settings.timerStyle === CATWALKTIMERSTYLE 
+  document.querySelector('#simple-style').checked = settings.timerStyle === SIMPLETIMERSTYLE || settings.timerStyle !== CATWALKTIMERSTYLE
+  document.querySelector('#app-theme').checked = settings.theme === LIGHTTHEME
+  console.log(settings)
 }
 
 
 export const setNewSettings = (formValues) => {
+  console.log(formValues)
   return {
     settings: {
       focus: {
@@ -404,7 +411,8 @@ export const setNewSettings = (formValues) => {
         desktopNotifcations: formValues.longBreakDesktopNotification === 'on' ? true : false,
         newTabNotifications: formValues.longBreakNewTabNotification === 'on' ? true : false
       },
-      timerStyle: formValues.timerStyle
+      timerStyle: formValues.timerStyle,
+      theme: formValues.theme === 'on' ? LIGHTTHEME : DARKTHEME
     }
   }
 }

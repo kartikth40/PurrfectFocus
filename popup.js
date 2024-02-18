@@ -1,5 +1,6 @@
-import { setNewSettings, setFormValues, getTimeString, PLAY, PAUSE, FOCUS, STOP, resumeTimer , timerDuration, printer, SHORTBREAK, LONGBREAK, SIMPLETIMERSTYLE} from "./background.js"
+import { setNewSettings, setFormValues, getTimeString, PLAY, PAUSE, FOCUS, STOP, resumeTimer , timerDuration, printer, SHORTBREAK, LONGBREAK, SIMPLETIMERSTYLE, LIGHTTHEME} from "./background.js"
 
+const container = document.querySelector('.container')
 const timerContainer = document.querySelector('.time-container')
 const timer = document.querySelector('.timer')
 const focusBtn = document.querySelector('.focus-btn')
@@ -88,7 +89,6 @@ const updateNextTimer = () => {
     chrome.storage.sync.get('settings').then(settingsObj => {
       handleUntilLongBreakCount(settingsObj.settings, result.timer)
       if(!result?.timer) return
-      console.log('change')
       changeTextTo(focusBtnText, 'Start ' + result.timer.type)
       changeTextTo(focusTitle, result.timer.type)
       // to be continued
@@ -97,7 +97,6 @@ const updateNextTimer = () => {
 }
 
 function handleUntilLongBreakCount(settings, timer, tryOnce=false) {
-  console.log(tryOnce)
   if(parseInt(settings.longBreak.interval) !== 0 && timer?.type !== LONGBREAK){
     changeTextTo(untilLongBreakCount, parseInt(settings.longBreak.interval) - (timer ? timer.counts : 0) + 1)
     focusText.style.visibility = 'visible'
@@ -120,6 +119,9 @@ document.addEventListener('DOMContentLoaded', () => {
     settingsObj = store
     let settings = store.settings
     // updateNextTimer()
+    if(settings?.theme === LIGHTTHEME) {
+      container.classList.add('light')
+    }else container.classList.remove('light')
     if(settings?.timerStyle === SIMPLETIMERSTYLE) {
       timerTag.classList.remove('cat-walk')
       timerTag.classList.add('simple')
@@ -144,7 +146,6 @@ document.addEventListener('DOMContentLoaded', () => {
         chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'});
       }
     })
-    console.log(store)
     setFormValues(store)
     focusBtn.addEventListener('click', () => {
       chrome.storage.session.get('timer').then(status => {
@@ -262,6 +263,9 @@ settingsForm.addEventListener('submit', (e) => {
   const formValues = Object.fromEntries(formData);
   settingsObj = setNewSettings(formValues)
   const settings = settingsObj.settings
+  if(settings?.theme === LIGHTTHEME) {
+    container.classList.add('light')
+  }else container.classList.remove('light')
   if(settings?.timerStyle === SIMPLETIMERSTYLE) {
     timerTag.classList.remove('cat-walk')
     timerTag.classList.add('simple')

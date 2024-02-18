@@ -114,16 +114,21 @@
       <div class="timer-style-container">
         <h2>Timer Style</h2>
         <div class="settings-checkbox-container timer-style-input-container">
+          <label class="timer-style" for="simple-style">
+            <input type="radio" name="timerStyle" id="simple-style" value="simple"> 
+            Basic
+          </label>
           <label class="timer-style" for="cat-walk-style">
             <input type="radio" checked name="timerStyle" id="cat-walk-style" value="catWalk"> 
             Cat Walk
           </label>
-          <label class="timer-style" for="simple-style">
-            <input type="radio" name="timerStyle" id="simple-style" value="simple"> 
-            Simple
-          </label>
         </div>
       </div>
+      <label class="theme-label" for="app-theme">
+        <input type='hidden' value='off' name='theme'>
+        <input type="checkbox" name="theme" id="app-theme"> 
+        Light Mode
+      </label>
       <div class="btn-container">
         <button type="submit" class="submit-btn" disabled>
           Save

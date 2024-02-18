@@ -25,6 +25,9 @@ body{
   position: relative;
   z-index: 1;
 }
+.container.light {
+  background: linear-gradient(-45deg, var(--secondary-color-2), var(--primary-color));
+}
 .container::after{
   content: '';
   position:absolute;
@@ -52,8 +55,6 @@ body{
   color: var(--secondary-color-2);
   padding: 5px 15px;
   border: none;
-  /* background: linear-gradient(-45deg, black, var(--primary-color)); */
-  /* box-shadow:inset 5px -5px 10px var(--primary-color), inset -5px 5px 10px var(--secondary-color-2); */
 }
 
 h1 {
@@ -113,6 +114,9 @@ input:hover, select:hover {
 .tab-btn:hover:not(.active) {
   border-bottom: 2px solid #323232;
 }
+.container.light .tab-btn:hover:not(.active) {
+  border-bottom: 2px solid #9b76c3;
+}
 
 .tab:not(.active) {
   display: none;
@@ -141,8 +145,15 @@ input:hover, select:hover {
   pointer-events: all;
   transition: .25s all;
 }
+.container.light .focus-btn, .container.light .focus-btns-int button {
+  background: transparent;
+  box-shadow:inset -3px 3px 10px var(--secondary-color-2),inset 5px -5px 20px var(--primary-color);
+}
 .focus-btn:hover {
   box-shadow:inset -5px 5px 20px var(--primary-color);
+}
+.container.light .focus-btn:hover {
+  opacity: .7;
 }
 .focus-btn.active:hover {
   box-shadow: 0 0 0 transparent;
@@ -158,8 +169,14 @@ input:hover, select:hover {
   justify-content: center;
   padding: 5px 10px;
 }
+.container.light .focus-btns-int button {
+  border: 1px solid var(--primary-color);
+}
 .focus-btns-int button:hover {
   box-shadow: inset 5px -5px 40px var(--primary-color);
+}
+.container.light .focus-btns-int button:hover {
+  opacity: .7;
 }
 .focus-btns-int button.active {
   opacity: 1;
@@ -294,6 +311,13 @@ input:hover, select:hover {
   border-radius: 5px;
   cursor: not-allowed;
 }
+.container.light .submit-btn {
+  background-color: var(--secondary-color-1);
+}
+.container.light .submit-btn:disabled {
+  background-color: rgb(231, 231, 231);
+  color: rgb(186, 186, 186);
+}
 
 .changingText {
   transition: .15s all;
@@ -306,7 +330,7 @@ input:hover, select:hover {
   display: flex;
   gap: 10px;
 }
-.timer-style{
+.timer-style, .theme-label{
   display: flex;
   align-items: center;
 }
