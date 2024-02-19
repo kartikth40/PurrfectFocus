@@ -1,11 +1,16 @@
 import { FOCUS, SHORTBREAK, resumeTimer } from "../background.js"
+import { SETTINGSKEY, TIMERKEY } from "../constants.js"
+import { getSessionStorage, getSyncStorage } from "../utils.js"
 
 const focusTitle = document.querySelector('.focus-title')
 const focusBtn = document.querySelector('.focus-btn')
 const reminderCount = document.querySelector('.reminder-count')
 const reminder = document.querySelector('.reminder')
 
-chrome.storage.session.get('timer').then(timer => {
+await init()
+
+async function init() {
+  const timer = await getSessionStorage(TIMERKEY)
   if(!timer?.timer || timer?.timer?.type === FOCUS) {
     reminder.style.visibility = 'visible'
     focusTitle.innerText = 'Start Focusing'
@@ -20,17 +25,19 @@ chrome.storage.session.get('timer').then(timer => {
     focusTitle.innerText = 'Take a Long Break'
     focusBtn.innerText = 'Start Long Break'
   }
-  chrome.storage.sync.get('settings').then(settings => {
-    reminderCount.innerText = parseInt(settings.settings.longBreak.interval) - (timer.timer ? timer.timer.counts : 0) + 1
+  const settings = await getSyncStorage(SETTINGSKEY)
+  const interval = parseInt(settings.settings.longBreak.interval)
+  const timerCounts = timer.timer ? timer.timer.counts : 0
+  reminderCount.innerText = interval - timerCounts + 1
+  
+  focusBtn.addEventListener('click', async () => {
+    await resumeTimer(function() {
+      chrome.tabs.getCurrent(function(tab) {
+        chrome.tabs.remove(tab.id, function() {
+         }).catch(e=> console.log(e))
+      })
+    })
   })
-})
+}
 
 
-focusBtn.addEventListener('click', () => {
-  resumeTimer(function() {
-    chrome.tabs.getCurrent(function(tab) {
-      chrome.tabs.remove(tab.id, function() {
-       }).catch(e=> console.log(e));
-    });
-  })
-})

@@ -7,20 +7,6 @@
       "service_worker": "modules/background.js",
       "type": "module"
     },
-    "content_scripts": [
-      {
-        "js": ["modules/contentScript.js"],
-        "matches":["<all_urls>"]
-      }
-    ],
-    "web_accessible_resources": [
-      {
-        "resources": [
-          "assets/cat.png"
-        ],
-        "matches":["<all_urls>"]
-      }
-    ],
     "action": {
       "default_icon": {
         "16": "assets/cat.png",

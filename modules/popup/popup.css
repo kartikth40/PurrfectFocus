@@ -266,6 +266,9 @@ input:hover, select:hover {
   width: max-content;
   padding: 5px 40px;
   color: #000;
+}
+
+.timer-tag.cat-walk .timer {
   backdrop-filter: blur(6px);
 }
 
