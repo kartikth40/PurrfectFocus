@@ -31,6 +31,7 @@ export const NEWTABIDKEY = 'newTabId'
 export const tabNames = ['focus', 'settings']
 
 export const defaultSettings = {
+  settings: {
     focus: {
       time: defaultFocusTime,
       desktopNotifcations: true,
@@ -49,4 +50,6 @@ export const defaultSettings = {
     },
     timerStyle: SIMPLETIMERSTYLE,
     theme: DARKTHEME
+  }
+    
 }

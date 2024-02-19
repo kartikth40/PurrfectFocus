@@ -1,14 +1,20 @@
-import { createNotification, createState, getSessionStorage, getSyncStorage, initBackgroundJs, printer, setSessionStorage, setSyncStorage, storageChangesLogger, getTimeString } from "./utils.js"
+import {
+  createNotification,
+  createState,
+  getSessionStorage,
+  getSyncStorage,
+  initBackgroundJs,
+  printer,
+  setSessionStorage,
+  setSyncStorage,
+  storageChangesLogger,
+  getTimeString } from "./utils.js"
 import {
   PLAY,
   PAUSE,
   FOCUS,
   SHORTBREAK,
   LONGBREAK,
-  CATWALKTIMERSTYLE,
-  SIMPLETIMERSTYLE,
-  DARKTHEME,
-  LIGHTTHEME,
   NEWTABIDKEY,
   TIMERKEY,
   SETTINGSKEY
@@ -17,8 +23,11 @@ import {
 let intervalId = createState(0)
 const print = printer()
 
-await initBackgroundJs()
-storageChangesLogger()
+
+oninstall = async (event) => {
+  await initBackgroundJs()
+  storageChangesLogger()
+};
 
 async function startActualTimer(timer) {
   print.log('message received - start timer')
@@ -31,6 +40,7 @@ async function startActualTimer(timer) {
     }
   }
   await setSessionStorage(timerObj)
+  console.log('set')
   startTimer(chrome, timer?.time ?? 0)
 }
 
@@ -57,8 +67,8 @@ async function stopActualTimer() {
   await setSessionStorage({[TIMERKEY]: null})
   const res = await getSessionStorage(NEWTABIDKEY)
   if(res?.newTabId) {
-    await chrome.tabs.remove(res.newTabId)
     try{
+      await chrome.tabs.remove(res.newTabId)
       await setSessionStorage({[NEWTABIDKEY]: null})
     }catch{e=> console.log(e)}
   }
@@ -79,12 +89,13 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
   }
   if(request.saveSettings) {
     await setSyncStorage(request.newSettings)
-    chrome.runtime.sendMessage({status: 'saved'}).catch((e) => {})
+    try{
+      await chrome.runtime.sendMessage({status: 'saved'})
+    }catch{e=>console.warn(e)}
   }
 })
 
-export function startTimer(chrome, t){
-  let timer = 5
+const startTimer =(chrome, timer) => {
   print.log('start timer started 🌠')
   let intId = setInterval(async function() {
     timer--
@@ -100,8 +111,8 @@ export function startTimer(chrome, t){
       chrome.action.setBadgeText({text: timerString})
       chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'})
       try{
-        chrome.runtime.sendMessage({time: timerString})
-      } catch{(e) => print.helper('error -> '+e)}
+        await chrome.runtime.sendMessage({time: timerString})
+      } catch{(e) => console.warn(e)}
       const result = await getSessionStorage(TIMERKEY)
       const timerToStore = {
         timer: {
@@ -118,35 +129,9 @@ export function startTimer(chrome, t){
   intervalId.setState(intId)
 }
   
-export async function resumeTimer(callback) {
-  const result = await getSessionStorage(['timer', 'newTabId'])
-  if(result?.newTabId && typeof callback !== 'function') {
-    await chrome.tabs.remove(result.newTabId)
-    try{
-      await setSessionStorage({[NEWTABIDKEY]: null})
-    } catch{e => console.log(e)}
-  }
-  chrome.action.setBadgeText({text: getTimeString(result.timer.time)})
-  chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'})
-    print.log('====> ▶')
-    const timerObj = {
-        time:  result.timer.time,
-        status: PLAY,
-        type: result.timer.type,
-        counts: result.timer.counts
-    }
-    print.log('new timer -> ')
-    print.log(timerObj)
-    await chrome.runtime.sendMessage({startTimer: true, timer: timerObj})
-    
-    try{
-      if(typeof callback === 'function') {
-        callback()
-      }
-    } catch{e => console.log(e)}
-}
 
-export async function setNextTimer(timerEnds=false) {
+
+const setNextTimer = async (timerEnds=false) => {
   const settingsObj = await getSyncStorage(SETTINGSKEY)
   const status = await getSessionStorage(TIMERKEY)
   let nextTimer = FOCUS
@@ -188,7 +173,9 @@ export async function setNextTimer(timerEnds=false) {
       await setSessionStorage(timerToStore)
       print.log('session -> focus -> long')
     }
-    chrome.runtime.sendMessage({updateNextTimer: true}).catch((e) => {})
+    try{
+      await chrome.runtime.sendMessage({updateNextTimer: true})
+    }catch{e=>console.warn(e)}
   } else if(status?.timer?.type === SHORTBREAK) {
     prevTimer = SHORTBREAK
     print.log('next is focus after short one')
@@ -203,7 +190,9 @@ export async function setNextTimer(timerEnds=false) {
     }
     await setSessionStorage(timerToStore)
     print.log('session -> short -> focus')
-    chrome.runtime.sendMessage({updateNextTimer: true}).catch((e) => {})  
+    try{
+      await chrome.runtime.sendMessage({updateNextTimer: true})
+    }catch{e=>console.warn(e)}
   } else if(status?.timer?.type === LONGBREAK) {
     prevTimer = LONGBREAK
     print.log('next is focus after long one')
@@ -218,7 +207,9 @@ export async function setNextTimer(timerEnds=false) {
     }
     await setSessionStorage(timerToStore)
     print.log('session -> long -> focus')
-    chrome.runtime.sendMessage({updateNextTimer: true}).catch((e) => {}) 
+    try{
+      await chrome.runtime.sendMessage({updateNextTimer: true})
+    }catch{e=>console.warn(e)}
   }
   if(timerEnds) {
     await createNotification(prevTimer, nextTimer)

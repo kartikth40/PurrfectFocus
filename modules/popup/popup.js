@@ -1,4 +1,3 @@
-import { resumeTimer } from "../background.js"
 import {
   printer,
   timerDuration,
@@ -8,12 +7,12 @@ import {
   changeTextTo,
   getSessionStorage,
   getSyncStorage,
-  getFocusText } from "../utils.js"
+  getFocusText,
+  resumeTimer } from "../utils.js"
 import {
   PLAY,
   PAUSE,
   FOCUS,
-  SHORTBREAK,
   LONGBREAK,
   SIMPLETIMERSTYLE,
   LIGHTTHEME,
@@ -23,7 +22,6 @@ import {
  } from "../constants.js"
 
 const container = document.querySelector('.container')
-const timerContainer = document.querySelector('.time-container')
 const timer = document.querySelector('.timer')
 const focusBtn = document.querySelector('.focus-btn')
 const focusBtnText = document.querySelector('#focus-btn-text')
@@ -92,10 +90,11 @@ const updateNextTimer = async () => {
 }
 
 async function handleUntilLongBreakCount(settings, timer, tryOnce=false) {
+  console.log('until -> ', timer?.type)
   if(parseInt(settings.longBreak.interval) !== 0 && timer?.type !== LONGBREAK){
     changeTextTo(untilLongBreakCount, parseInt(settings.longBreak.interval) - (timer ? timer.counts : 0) + 1)
     focusText.style.visibility = 'visible'
-  }else if(parseInt(settings.longBreak.interval) === 0){
+  }else{
     focusText.style.visibility = 'hidden'
   }
   if(!timer && !tryOnce) {
@@ -138,15 +137,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   setFormValues(store)
   focusBtn.addEventListener('click', async () => {
+    const timer = await getSessionStorage(TIMERKEY)
     // if started already
-    if(sessionStore?.timer) {
-      print.log('Start -> ' + sessionStore)
-      if(!isPaused && sessionStore.timer.status !== PAUSE) {
+    if(timer?.timer) {
+      print.log('Start -> ' + timer)
+      if(!isPaused && timer.timer.status !== PAUSE) {
           // pause
-          await pause(sessionStore.timer)
+          await pause(timer.timer)
         }else {
           // resume
-          await resume(sessionStore.timer)
+          await resume(timer.timer)
         }
     }else {
       // initiate
@@ -157,13 +157,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     stopTimer(settings)
   })
   
-  nextBtn.addEventListener('click', () => {
-    nextTimer()
+  nextBtn.addEventListener('click', async () => {
+    await nextTimer()
   })
 })
 
-function nextTimer() {
-  chrome.runtime.sendMessage({nextTimer: true}).catch((e) => {})
+async function nextTimer() {
+  try{
+    await chrome.runtime.sendMessage({nextTimer: true})
+  }catch{e=>console.warn(e)}
 }
 
 const stopTimer = async (settings) => {
@@ -174,7 +176,9 @@ const stopTimer = async (settings) => {
   stopBtn.classList.remove('active')
   nextBtn.classList.remove('active')
   changeTextTo(timer, getTimeString(settings.focus.time * 60))
-  chrome.runtime.sendMessage({stopTimer: true}).catch((e) => {})
+  try{
+    await chrome.runtime.sendMessage({stopTimer: true})
+  }catch{e=>console.warn(e)}
   chrome.action.setBadgeText({text: ''})
   chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]})
   await handleUntilLongBreakCount(settings, null)
@@ -183,8 +187,10 @@ const stopTimer = async (settings) => {
 const pause = async (timer) => {
   print.log('pause timer')
   isPaused = true
-  const timer = await getSessionStorage(TIMERKEY)
-  chrome.runtime.sendMessage({pauseTimer: true, timer: timer.timer}).catch((e) => {})
+  const timerObj = await getSessionStorage(TIMERKEY)
+  try{
+    await chrome.runtime.sendMessage({pauseTimer: true, timer: timerObj.timer})
+  }catch{e=>console.warn(e)}
   changeTextTo(focusBtnText, 'Resume')
   changeTextTo(focusTitle, timer.type)
   chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'})
@@ -199,17 +205,19 @@ const resume = async (timer) => {
 }
 
 const initiateTimer = async () => {
-  const store = await getSessionStorage(TIMERKEY)
+  const store = await getSyncStorage(SETTINGSKEY)
   settingsObj = store
   let settings = store.settings
-  chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+  chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {
     const timerObj = {
       time: timerDuration(FOCUS, settings)*60,
       status: PLAY,
       type: FOCUS,
       counts: 0
     }
-    chrome.runtime.sendMessage({startTimer: true, timer: timerObj}).catch((e) => {})
+    try{
+      await chrome.runtime.sendMessage({startTimer: true, timer: timerObj})
+    }catch{e=>console.warn(e)}
   })
   changeTextTo(focusBtnText, 'Pause')
   changeTextTo(focusTitle, timer?.type ?? FOCUS)
@@ -244,14 +252,10 @@ settingsForm.addEventListener('submit', async (e) => {
   }
   const result = await getSessionStorage(TIMERKEY)
   changeTextTo(timer, getTimeString(timerDuration(result.timer?.type ?? FOCUS, settings)*60))
-  chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {
+  try {
+    await stopTimer(settingsObj.settings)
     await chrome.runtime.sendMessage({saveSettings: true, newSettings: settingsObj})
-    try {
-      const settingsObj = await getSyncStorage(SETTINGSKEY)
-      await stopTimer(settingsObj.settings)
-    }
-    catch{(e) => {console.log(e)}}
-  })
+  }catch{(e) => {console.warn(e)}}
 })
 
 function setupTabsSystem() {

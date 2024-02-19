@@ -1,6 +1,5 @@
-import { FOCUS, SHORTBREAK, resumeTimer } from "../background.js"
-import { SETTINGSKEY, TIMERKEY } from "../constants.js"
-import { getSessionStorage, getSyncStorage } from "../utils.js"
+import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK } from "../constants.js"
+import { getSessionStorage, getSyncStorage, resumeTimer } from "../utils.js"
 
 const focusTitle = document.querySelector('.focus-title')
 const focusBtn = document.querySelector('.focus-btn')

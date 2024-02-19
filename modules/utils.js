@@ -1,4 +1,20 @@
-import { DARKTHEME, FOCUS, LIGHTTHEME, LONGBREAK, SETTINGSKEY, SHORTBREAK, defaultSettings } from "./constants"
+import {
+  CATWALKTIMERSTYLE,
+  DARKTHEME,
+  FOCUS,
+  LIGHTTHEME,
+  LONGBREAK,
+  NEWTABIDKEY,
+  SETTINGSKEY,
+  SHORTBREAK,
+  SIMPLETIMERSTYLE,
+  TIMERKEY,
+  STOP,
+  PLAY,
+  PAUSE,
+  defaultSettings } from "./constants.js"
+
+const print = printer()
 
 export function printer() {
   const allLogs = false
@@ -29,28 +45,38 @@ export function createState(initialState) {
 }
 
 export async function initBackgroundJs() {
-  const store = await getSettingsFromSyncStorage()
+  const store = await getSyncStorage(SETTINGSKEY)
   if(!Object.keys(store).length) {
-    await setSettingsToSyncStorage(defaultSettings)
+    await setSyncStorage(defaultSettings)
   }
 }
 
 export function storageChangesLogger() {
   chrome.storage.onChanged.addListener(
     (changes, storageType) => {
+      let oldValue = null
+      let newValue = null
       if(storageType === 'session') {
         if(changes?.timer) {
           print.helper('-> TIMER UPDATED -> ')
-          print.helper("OLD VALUE" + changes.timer.oldValue)
-          print.helper("NEW VALUE" + changes.timer.newValue)
+          oldValue = changes.timer.oldValue
+          newValue = changes.timer.newValue
         }
       }
       else if(storageType === 'sync') {
-        if(changes.settings) {
+        if(changes?.settings) {
           print.helper('-> SETTINGS UPDATED -> ')
-          print.helper("OLD VALUE" + changes.settings.oldValue)
-          print.helper("NEW VALUE" + changes.settings.newValue)
+          oldValue = changes.settings.oldValue
+          newValue = changes.settings.newValue
         }
+      }
+      if(oldValue) {
+        oldValue.which = 'OLD VALUE'
+        print.helper(oldValue)
+      } 
+      if(newValue) {
+        newValue.which = 'NEW VALUE'
+        print.helper(newValue)
       }
     }
   )
@@ -69,7 +95,7 @@ export async function setSessionStorage(obj) {
   try {
     return await chrome.storage.session.set(obj)
   } catch (error) {
-    console.error('Error storing '+ Object.keys() +' in session storage: ', error)
+    console.error('Error storing in session storage: ', error)
     return null
   }
 }
@@ -87,7 +113,7 @@ export async function setSyncStorage(obj) {
   try {
     return await chrome.storage.sync.set(obj)
   } catch (error) {
-    console.error('Error storing '+ Object.keys() +' in sync storage: ', error)
+    console.error('Error storing in sync storage: ', error)
     return null
   }
 }
@@ -110,7 +136,7 @@ export async function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
     }
     if(settingsObj.settings.focus.newTabNotifications) {
       chrome.tabs.create({url:"modules/newTab/over.html"},async function(tab){
-        await setSessionStorage({[newTabId]: tab.id})
+        await setSessionStorage({[NEWTABIDKEY]: tab.id})
       })
     }
   }else if(prevTimer === SHORTBREAK) {
@@ -129,7 +155,7 @@ export async function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
     }
     if(settingsObj.settings.shortBreak.newTabNotifications) {
       chrome.tabs.create({url:"modules/newTab/over.html"},async function(tab){
-        await setSessionStorage({[newTabId]: tab.id})
+        await setSessionStorage({[NEWTABIDKEY]: tab.id})
       })
     }
     
@@ -149,10 +175,38 @@ export async function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
     }
     if(settingsObj.settings.longBreak.newTabNotifications) {
       chrome.tabs.create({url:"modules/newTab/over.html"}, async function(tab){
-        await setSessionStorage({[newTabId]: tab.id})
+        await setSessionStorage({[NEWTABIDKEY]: tab.id})
       })
     }
   }
+}
+
+export async function resumeTimer (callback) {
+  const result = await getSessionStorage([TIMERKEY, NEWTABIDKEY])
+  if(result?.newTabId && typeof callback !== 'function') {
+    try{
+      await chrome.tabs.remove(result.newTabId)
+      await setSessionStorage({[NEWTABIDKEY]: null})
+    } catch{e => console.log(e)}
+  }
+  chrome.action.setBadgeText({text: getTimeString(result.timer.time)})
+  chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'})
+    print.log('====> ▶')
+    const timerObj = {
+        time:  result.timer.time,
+        status: PLAY,
+        type: result.timer.type,
+        counts: result.timer.counts
+    }
+    print.log('new timer -> ')
+    print.log(timerObj)
+    try {
+      await chrome.runtime.sendMessage({startTimer: true, timer: timerObj})
+    }catch{e=>console.warn(e)}
+    if(typeof callback === 'function') {
+      try{callback()}
+      catch{e => console.log(e)}
+    }
 }
 
 export const timerDuration = (type, settings) => {
@@ -161,7 +215,7 @@ export const timerDuration = (type, settings) => {
           : settings.focus.time
 }
 
-export const getTimeString = (t) => {
+export function getTimeString(t) {
   let minutes = Math.floor(t / 60)
   let seconds = t % 60
   let minutesString = (minutes < 10 ? '0' : '') + minutes
@@ -214,6 +268,7 @@ export const setFormValues = (data) => {
 
 export function changeTextTo(element, text) {
   if(element.innerText.toString().toLowerCase() === text.toString().toLowerCase()) return
+  const timerContainer = document.querySelector('.time-container')
   if(element === timer) {
     timerContainer.classList.add('changingTimer')
     setTimeout(() => {
