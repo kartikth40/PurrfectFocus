@@ -79,14 +79,15 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
 
 const updateNextTimer = async () => {
   print.log('udateNextTimer (UI change)')
-  const result = await getSessionStorage(TIMERKEY)
   changeTextTo(focusBtnText, 'Start Focusing')
   changeTextTo(focusTitle, 'Start Focusing')
+  const result = await getSessionStorage(TIMERKEY)
   const settingsObj = await getSyncStorage(SETTINGSKEY)
   await handleUntilLongBreakCount(settingsObj.settings, result.timer)
   if(!result?.timer) return
   changeTextTo(focusBtnText, 'Start ' + result.timer.type)
   changeTextTo(focusTitle, result.timer.type)
+  changeTextTo(timer, getTimeString(timerDuration(result.timer.type, settingsObj?.settings)*60))
 }
 
 async function handleUntilLongBreakCount(settings, timer, tryOnce=false) {
