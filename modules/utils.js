@@ -12,23 +12,37 @@ import {
   STOP,
   PLAY,
   PAUSE,
-  defaultSettings } from "./constants.js"
+  defaultSettings, 
+  ALLLOGTYPE,
+  STEPSLOGTYPE,
+  HELPERLOGTYPE,
+  STACKTRACELOGTYPE} from "./constants.js"
 
 const print = printer()
 
 export function printer() {
-  const allLogs = false
-  const steps = true
-  const helper = true
-
+  function print(message) {
+    if(!STACKTRACELOGTYPE) console.log(message)
+    else {
+      const stackTrace = new Error().stack.split("\n")[3].trim()
+      const time = new Date().toLocaleTimeString()
+      if(typeof message === 'object') {
+        console.log(`[${time}]: ${JSON.stringify(message)} | ${stackTrace}`)
+      }else{
+        console.log(`[${time}]: ${message} | ${stackTrace}`)
+      }
+    }
+  }
   return {
-    log: (value) => {
-      if(allLogs || steps) console.log(value)
+    log: (message) => {
+      if(ALLLOGTYPE || STEPSLOGTYPE) print(message)
     },
-    helper: (value) => {
-      if(allLogs || helper) console.log(value)
+    helper: (message) => {
+      if(ALLLOGTYPE || HELPERLOGTYPE) print(message)
     },
-    it: (value) => console.log(value)
+    it: (message) => {
+      if(ALLLOGTYPE) print(message)
+    }
   }
 }
 

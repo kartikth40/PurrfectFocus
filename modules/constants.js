@@ -1,3 +1,9 @@
+// logs
+export const ALLLOGTYPE = true
+export const STEPSLOGTYPE = true
+export const HELPERLOGTYPE = true
+export const STACKTRACELOGTYPE = true
+
 // status
 export const STOP = 'Stop'
 export const PLAY = 'Play'

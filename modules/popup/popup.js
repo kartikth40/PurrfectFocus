@@ -90,7 +90,6 @@ const updateNextTimer = async () => {
 }
 
 async function handleUntilLongBreakCount(settings, timer, tryOnce=false) {
-  console.log('until -> ', timer?.type)
   if(parseInt(settings.longBreak.interval) !== 0 && timer?.type !== LONGBREAK){
     changeTextTo(untilLongBreakCount, parseInt(settings.longBreak.interval) - (timer ? timer.counts : 0) + 1)
     focusText.style.visibility = 'visible'
