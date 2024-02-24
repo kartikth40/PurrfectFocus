@@ -225,13 +225,6 @@ export async function handleNewTabNotification() {
 
 export async function resumeTimer (callback) {
   const result = await getSessionStorage([TIMERKEY, NEWTABIDKEY])
-  // if(result?.newTabId && typeof callback !== 'function' 
-  //   && result?.timer?.type !== SHORTBREAK && result?.timer?.type !== LONGBREAK) {
-  //   try{
-  //     await chrome.tabs.remove(result.newTabId)
-  //     await setSessionStorage({[NEWTABIDKEY]: null})
-  //   } catch{e => console.log(e)}
-  // }
   chrome.action.setBadgeText({text: getTimeString(result.timer.time)})
   chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'})
     print.log('====> ▶')
@@ -248,7 +241,7 @@ export async function resumeTimer (callback) {
     }catch{e=>console.warn(e)}
     if(typeof callback === 'function') {
       try{callback()}
-      catch{e => console.log(e)}
+      catch{e => print.log(e)}
     }
 }
 

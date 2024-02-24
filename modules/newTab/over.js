@@ -3,6 +3,7 @@ import { changeTextTo, getFocusText, getRandomBreakQuote, getRandomFocusQuote, g
 
 const container = document.querySelector('.container')
 const focusTitle = document.querySelector('.focus-title')
+const focusBtn = document.querySelector('.focus-btn')
 const focusBtnText = document.querySelector('.focus-btn-text')
 const timerTag = document.querySelector('.timer-tag')
 const timerEle = document.querySelector('.timer')
@@ -17,7 +18,6 @@ const quote = document.querySelector('.quote')
 const print = printer()
 let isPaused = false
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('clicked - dom loaded')
   addEventListeners()
   await init()
 })
@@ -98,35 +98,29 @@ function addEventListeners() {
     }
   })
 
-  focusBtnText.addEventListener('click', async (event) => {
+  focusBtn.addEventListener('click', async (event) => {
     event.stopPropagation()
-    console.log('clicked')
     const timer = await getSessionStorage(TIMERKEY)
     // if started already
     if(timer?.timer) {
       print.log('Start -> ' + timer.timer.status)
       if(!isPaused && timer.timer.status !== PAUSE) {
-    console.log('clicked - pause')
           // pause
           await pause(timer.timer)
         }else {
-    console.log('clicked - resume')
           // resume
           await resume(timer.timer)
         }
     }else {
       // initiate
-    console.log('clicked - init')
       await initiateTimer()
     }
   })
   stopBtn.addEventListener('click',async () => {
-    console.log('stop click')
     const store = await getSyncStorage(SETTINGSKEY)
     stopTimer(store.settings)
   })
   nextBtn.addEventListener('click', async () => {
-    console.log('next click')
     await nextTimer()
   })
 }
@@ -223,7 +217,6 @@ async function handleUntilLongBreakCount(settings, timer, tryOnce=false) {
 }
 
 const pause = async (timer) => {
-  console.log('pause click')
   isPaused = true
   print.log('pause timer - new tab')
   changeTextTo(focusBtnText, 'Resume')
@@ -235,7 +228,6 @@ const pause = async (timer) => {
 }
 
 const resume = async (timer) => {
-  console.log('resume click')
   isPaused = false
   print.log('resume timer - new tab')
   changeTextTo(focusBtnText, 'Pause')

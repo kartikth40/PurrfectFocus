@@ -41,7 +41,6 @@ async function startActualTimer(timer) {
     }
   }
   await setSessionStorage(timerObj)
-  console.log('set')
   startTimer(chrome, timer?.time ?? 0)
 }
 
@@ -66,13 +65,6 @@ async function stopActualTimer() {
   print.log('message received - stop timer')
   clearInterval(intervalId.getState())
   await setSessionStorage({[TIMERKEY]: null})
-  const res = await getSessionStorage(NEWTABIDKEY)
-  // if(res?.newTabId) {
-  //   try{
-  //     await chrome.tabs.remove(res.newTabId)
-  //     await setSessionStorage({[NEWTABIDKEY]: null})
-  //   }catch{e=> console.log(e)}
-  // }
 }
   
 chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {

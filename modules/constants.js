@@ -1,8 +1,8 @@
 // logs
-export const ALLLOGTYPE = true
-export const STEPSLOGTYPE = true
-export const HELPERLOGTYPE = true
-export const STACKTRACELOGTYPE = true
+export const ALLLOGTYPE = false
+export const STEPSLOGTYPE = false
+export const HELPERLOGTYPE = false
+export const STACKTRACELOGTYPE = false
 
 // env
 export const DEVELOPING = false

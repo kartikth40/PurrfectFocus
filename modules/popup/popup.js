@@ -89,7 +89,6 @@ const updateNextTimer = async () => {
   if(!result?.timer || result?.timer?.type === FOCUS) return
   changeTextTo(focusBtnText, 'Start ' + result.timer.type)
   changeTextTo(focusTitle, result.timer.type)
-  console.log('change timer ------------')
 }
 
 async function handleUntilLongBreakCount(settings, timer, tryOnce=false) {

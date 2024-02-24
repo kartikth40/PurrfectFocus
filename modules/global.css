@@ -163,7 +163,7 @@ input:hover, select:hover {
 }
 
 .changingTimer .timer-tag.cat-walk {
-  animation: catWalk .1s forwards linear;
+  animation: catWalk .8s forwards cubic-bezier(0.6, 0.04, 0.98, 0.335);
 }
 
 .timer {
@@ -224,11 +224,8 @@ input:hover, select:hover {
   0%{
     background-position: 100%;
   }
-  30% {
-    background-position: 50%;
-  }
-  60%{
-    background-position: 50%;
+  50% {
+    background-position: -100%;
   }
   100% {
     background-position: 100%;
