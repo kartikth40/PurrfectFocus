@@ -148,79 +148,129 @@ export async function setSyncStorage(obj) {
 export async function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
   const settingsObj = await getSyncStorage(SETTINGSKEY)
   if(prevTimer === FOCUS) {
-    if(settingsObj.settings.focus.desktopNotifcations) {
+    if(settingsObj.settings.focus.notifications) {
+      await createNewTabForTimers()
       const notificationId = `my-notification-${Date.now()}`
-      chrome.notifications.create(
+      await chrome.notifications.create(
         notificationId,
         {
           iconUrl:"../assets/cat.png",
           message:"Take a " + nextTimer,
           title:"Break Time!",
-          type:"basic"
+          type:"basic",
+          silent: true,
+          buttons:[
+           { title: "Take a Break"}
+          ]
         },
         ()=> {print.it('notify')}
       )
-    }
-    if(settingsObj.settings.focus.newTabNotifications) {
-      handleNewTabNotification()
+      await chrome.notifications.onButtonClicked.addListener(async function(notifId, btnIdx) {
+        if (notifId === notificationId) {
+            if (btnIdx === 0) {
+              await chrome.windows.getCurrent({ populate: true },async function(currentWindow) {
+                await chrome.windows.update(currentWindow.id, { focused: true }, async function() {})
+              })
+            }
+        }
+    })
     }
   }else if(prevTimer === SHORTBREAK) {
-    if(settingsObj.settings.shortBreak.desktopNotifcations) {
+    if(settingsObj.settings.shortBreak.notifications) {
+      await createNewTabForTimers()
       const notificationId = `my-notification-${Date.now()}`
-      chrome.notifications.create(
+      await chrome.notifications.create(
         notificationId,
         {
           iconUrl:"../assets/cat.png",
           message:"Start Focusing Again",
           title:"FOCUS!",
-          type:"basic"
+          type:"basic",
+          silent: true,
+          buttons:[
+            { title: "Start Focusing"}
+           ]
         },
         ()=> {print.it('notify')}
       )
+      await chrome.notifications.onButtonClicked.addListener(async function(notifId, btnIdx) {
+        if (notifId === notificationId) {
+            if (btnIdx === 0) {
+              await chrome.windows.getCurrent({ populate: true }, async function(currentWindow) {
+                await chrome.windows.update(currentWindow.id, { focused: true }, async function() {})
+              })
+            }
+        }
+    })
     }
-    if(settingsObj.settings.shortBreak.newTabNotifications) {
-      handleNewTabNotification()
-    }
-    
   }else if(prevTimer === LONGBREAK) {
-    if(settingsObj.settings.longBreak.desktopNotifcations) {
+    if(settingsObj.settings.longBreak.notifications) {
+      await createNewTabForTimers()
       const notificationId = `my-notification-${Date.now()}`
-      chrome.notifications.create(
+      await chrome.notifications.create(
         notificationId,
         {
           iconUrl:"../assets/cat.png",
           message:"Good work you completed a set.",
           title:"Well Done!",
-          type:"basic"
+          type:"basic",
+          silent: true,
+          buttons:[
+            { title: "Take a Break"}
+           ]
         },
         ()=> {print.it('notify')}
       )
-    }
-    if(settingsObj.settings.longBreak.newTabNotifications) {
-      await handleNewTabNotification()
+      await chrome.notifications.onButtonClicked.addListener(async function(notifId, btnIdx) {
+        if (notifId === notificationId) {
+            if (btnIdx === 0) {
+              await chrome.windows.getCurrent({ populate: true }, async function(currentWindow) {
+                await chrome.windows.update(currentWindow.id, { focused: true }, async function() {})
+              })
+            }
+        }
+    })
     }
   }
 }
 
-export async function handleNewTabNotification() {
+export async function createNewTabForTimers(notify=true) {
   const res = await getSessionStorage(NEWTABIDKEY)
-  function callback() {
+  async function callback() {
     if (chrome.runtime.lastError) {
-        chrome.tabs.create({url:"modules/newTab/over.html"}, async function(tab){
-          await setSessionStorage({[NEWTABIDKEY]: tab.id})
-        })
+      await chrome.tabs.create({url:"modules/newTab/over.html", active: true}, async function(tab){
+        await setSessionStorage({[NEWTABIDKEY]: tab.id})
+        if(notify) {
+          await chrome.storage.session.set({notificationTriggered:true})
+          try {
+            await chrome.runtime.sendMessage({notificationTriggered: true})
+          }catch{e=>console.warn(e)}
+        }
+      })
     } else {
-        // Tab exists
-        chrome.tabs.update(res?.newTabId, {active: true}, (tab) => { });
+      // Tab exists
+      await chrome.tabs.update(res?.newTabId, {active: true}, async (tab) => { 
+        if(notify) {
+          try {
+              await chrome.runtime.sendMessage({notificationTriggered: true})
+            }catch{e=>console.warn(e)}
+          }
+        })
+      }
+    } 
+    if(res?.newTabId) {
+      await chrome.tabs.get(res?.newTabId,callback);
+    }else {
+      await chrome.tabs.create({url:"modules/newTab/over.html", active: true}, async function(tab){
+        await setSessionStorage({[NEWTABIDKEY]: tab.id})
+        if(notify) {
+          await chrome.storage.session.set({notificationTriggered:true})
+          try {
+            await chrome.runtime.sendMessage({notificationTriggered: true})
+          }catch{e=>console.warn(e)}
+        }
+      })
     }
-  } 
-  if(res?.newTabId) {
-    chrome.tabs.get(res?.newTabId,callback);
-  }else {
-    chrome.tabs.create({url:"modules/newTab/over.html"}, async function(tab){
-      await setSessionStorage({[NEWTABIDKEY]: tab.id})
-    })
-  }
 }
 
 export async function resumeTimer (callback) {
@@ -265,19 +315,19 @@ export const setNewSettings = (formValues) => {
     settings: {
       focus: {
         time: parseInt(formValues.focusDuration),
-        desktopNotifcations: formValues.focusDesktopNotification === 'on' ? true : false,
-        newTabNotifications: formValues.focusNewTabNotification === 'on' ? true : false
+        notifications: formValues.focusDesktopNotification === 'on' ? true : false,
+        sound: formValues.focusTimerSound
       },
       shortBreak: {
         time: parseInt(formValues.shortBreakDuration),
-        desktopNotifcations: formValues.shortBreakDesktopNotification === 'on' ? true : false,
-        newTabNotifications: formValues.shortBreakNewTabNotification === 'on' ? true : false
+        notifications: formValues.shortBreakDesktopNotification === 'on' ? true : false,
+        sound: formValues.shortBreakTimerSound
       },
       longBreak: {
         time: parseInt(formValues.longBreakDuration),
         interval: formValues.longBreakInterval,
-        desktopNotifcations: formValues.longBreakDesktopNotification === 'on' ? true : false,
-        newTabNotifications: formValues.longBreakNewTabNotification === 'on' ? true : false
+        notifications: formValues.longBreakDesktopNotification === 'on' ? true : false,
+        sound: formValues.longBreakTimerSound
       },
       timerStyle: formValues.timerStyle,
       theme: formValues.theme === 'on' ? LIGHTTHEME : DARKTHEME
@@ -288,15 +338,15 @@ export const setNewSettings = (formValues) => {
 export const setFormValues = (data) => {
   const settings = data.settings
   document.querySelector('#focus-duration-input').value = settings.focus.time
-  document.querySelector('#focus-desktop-notification').checked = settings.focus.desktopNotifcations
-  document.querySelector('#focus-new-tab-notification').checked = settings.focus.newTabNotifications
+  document.querySelector('#focus-desktop-notification').checked = settings.focus.notifications
+  document.querySelector('#focus-timer-sound').value = settings.focus.sound
   document.querySelector('#short-break-duration-input').value = settings.shortBreak.time
-  document.querySelector('#short-break-desktop-notification').checked = settings.shortBreak.desktopNotifcations
-  document.querySelector('#short-break-new-tab-notification').checked = settings.shortBreak.newTabNotifications
+  document.querySelector('#short-break-desktop-notification').checked = settings.shortBreak.notifications
+  document.querySelector('#short-break-timer-sound').value = settings.shortBreak.sound
   document.querySelector('#interval-input').value = settings.longBreak.interval
   document.querySelector('#long-break-duration-input').value = settings.longBreak.time
-  document.querySelector('#long-break-desktop-notification').checked = settings.longBreak.desktopNotifcations
-  document.querySelector('#long-break-new-tab-notification').checked = settings.longBreak.newTabNotifications
+  document.querySelector('#long-break-desktop-notification').checked = settings.longBreak.notifications
+  document.querySelector('#long-break-timer-sound').value = settings.longBreak.sound
   document.querySelector('#cat-walk-style').checked = settings.timerStyle === CATWALKTIMERSTYLE 
   document.querySelector('#simple-style').checked = settings.timerStyle === SIMPLETIMERSTYLE || settings.timerStyle !== CATWALKTIMERSTYLE
   document.querySelector('#app-theme').checked = settings.theme === LIGHTTHEME

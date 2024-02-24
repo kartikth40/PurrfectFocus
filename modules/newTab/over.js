@@ -13,16 +13,16 @@ const stopBtn = document.querySelector('.focus-btn-stop')
 const nextBtn = document.querySelector('.focus-btn-next')
 const quote = document.querySelector('.quote')
 
-
-
 const print = printer()
 let isPaused = false
 document.addEventListener('DOMContentLoaded', async () => {
+  handleNotificationTone(true)
   addEventListeners()
   await init()
 })
 
 async function init() {
+
   const timer = await getSessionStorage(TIMERKEY)
   if(!timer?.timer || timer?.timer?.type === FOCUS) {
     untilLongBreak.style.visibility = 'visible'
@@ -71,6 +71,9 @@ function addEventListeners() {
     // tick with timer
     if (request.time) {
       changeTextTo(timerEle, request.time)
+    }
+    if(request.notificationTriggered) {
+      handleNotificationTone()
     }
     if(request.timerStarted){
       changeTextTo(focusBtnText, 'Pause')
@@ -123,6 +126,7 @@ function addEventListeners() {
   nextBtn.addEventListener('click', async () => {
     await nextTimer()
   })
+
 }
 
 function loadSettings(settings) {
@@ -213,7 +217,7 @@ async function handleUntilLongBreakCount(settings, timer, tryOnce=false) {
     const sessionStore = await getSessionStorage(TIMERKEY)
     if(sessionStore.timer)
     await handleUntilLongBreakCount(settings, sessionStore.timer, true)
-  }
+}
 }
 
 const pause = async (timer) => {
@@ -241,4 +245,43 @@ const updateBreakQuote = () => {
 
 const updateFocusQuote = () => {
   quote.innerText = getRandomFocusQuote()
+}
+
+async function handleNotificationTone(fromSession=false) {
+  let stopHere = false
+  let timer = null
+  let sound = 'Alarm Clock Old'
+  await chrome.storage.session.get(['notificationTriggered', 'timer']).then( async res => {
+    if(fromSession) {
+      if(res.notificationTriggered) {
+        await chrome.storage.session.set({notificationTriggered:false})
+      }
+      else stopHere = true
+    }
+    if(res?.timer) {
+      timer = res.timer
+    }
+  })
+  if(stopHere) return
+  
+  await chrome.storage.sync.get('settings').then( async res => {
+    if(timer.type === FOCUS && res.settings.focus.notifications) {
+      sound = res.settings.focus.sound
+    }else if(timer.type === SHORTBREAK && res.settings.shortBreak.notifications) {
+      sound = res.settings.shortBreak.sound
+    }else if(timer.type === LONGBREAK && res.settings.longBreak.notifications) {
+      sound = res.settings.longBreak.sound
+    }
+    else stopHere = true
+  }) 
+  if(stopHere || sound === 'None') return
+
+  const notificationTone = new Audio(`/assets/audio/${sound}.mp3`)
+  notificationTone.play()
+
+  window.addEventListener('focus', function() {
+    notificationTone.pause()
+    notificationTone.currentTime = 0
+  })
+
 }

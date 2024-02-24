@@ -88,7 +88,8 @@
 .notification {
   white-space: nowrap;
   width: 100%;
-  display: block;
+  display: flex;
+  align-items: center;
 }
 
 
@@ -147,11 +148,6 @@
   background-color: rgb(231, 231, 231);
   color: rgb(186, 186, 186);
 }
-
-.timer-style-input-container{
-  display: flex;
-  gap: 10px;
-}
 .timer-style, .theme-label{
   display: flex;
   align-items: center;
@@ -173,4 +169,14 @@
 }
 .timer-tag.simple:hover, .timer-tag.simple:focus-visible {
   box-shadow:inset -7px 7px 5px var(--secondary-color-2),inset 5px -5px 10px var(--primary-color), 0 0 10px var(--primary-color);
+}
+
+.settings-checkbox-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+}
+.sound-select {
+  font-size: 12px;
 }

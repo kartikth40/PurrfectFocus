@@ -45,13 +45,36 @@
           <!-- <p>When complete</p> -->
           <label class="notification" for="focus-desktop-notification">
             <input type='hidden' value='off' name='focusDesktopNotification'>
-            <input type="checkbox" checked name="focusDesktopNotification" id="focus-desktop-notification"> 
-            Show desktop notifications
+            <input type="checkbox" class="notification-checkbox" checked name="focusDesktopNotification" id="focus-desktop-notification"> 
+            notifications
           </label>
-          <label class="notification" for="focus-new-tab-notification">
-            <input type='hidden' value='off' name='focusNewTabNotification'>
-            <input type="checkbox" checked name="focusNewTabNotification" id="focus-new-tab-notification"> 
-            Show new tab notifications
+          <label class="notification" for="focus-timer-sound">
+              <select name="focusTimerSound" id="focus-timer-sound" class="sound-select" required>
+                <option value="None">None</option> 
+                <option value="Alarm Clock Old">Alarm Clock Old</option> 
+                <option value="Among Us">Among Us</option> 
+                <option value="Analog Alarm Clock">Analog Alarm Clock</option> 
+                <option value="Beedo">Beedo</option> 
+                <option value="Bike Horn">Bike Horn</option> 
+                <option value="Computer Magic">Computer Magic</option> 
+                <option value="Digital Watch">Digital Watch</option> 
+                <option value="Ding">Ding</option>
+                <option value="Dong" selected>Dong</option>
+                <option value="Ding Dong">Ding Dong</option> 
+                <option value="Reception Bell">Reception Bell</option>
+                <option value="Gong 1">Gong 1</option>
+                <option value="Gong 2">Gong 2</option>
+                <option value="Train Horn">Train Horn</option>
+                <option value="Toaster Oven">Toaster Oven</option>
+                <option value="Cat Vicious">Cat Vicious</option> 
+                <option value="Scooby Doo">Scooby Doo</option>
+                <option value="Hellono">Hellono</option>
+                <option value="Minions">Minions</option>
+                <option value="Music Tone">Music Tone</option>
+                <option value="Papoi">Papoi</option>
+                <option value="Yiiiiii">Yiiiiii</option>
+                <option value="Extreme Alarm Clock">Extreme Alarm Clock!!!</option>
+              </select>
           </label>
         </div>
       </div>
@@ -65,13 +88,36 @@
           <!-- <p>When complete</p> -->
           <label class="notification" for="short-break-desktop-notification">
             <input type='hidden' value='off' name='shortBreakDesktopNotification'>
-            <input type="checkbox" checked name="shortBreakDesktopNotification" id="short-break-desktop-notification"> 
-            Show desktop notifications
+            <input type="checkbox" class="notification-checkbox" checked name="shortBreakDesktopNotification" id="short-break-desktop-notification"> 
+            notifications
           </label>
-          <label class="notification" for="short-break-new-tab-notification">
-            <input type='hidden' value='off' name='shortBreakNewTabNotification'>
-            <input type="checkbox" checked name="shortBreakNewTabNotification" id="short-break-new-tab-notification"> 
-            Show new tab notifications
+          <label class="notification" for="short-break-timer-sound">
+              <select name="shortBreakTimerSound" id="short-break-timer-sound" class="sound-select" required>
+                <option value="None">None</option> 
+                <option value="Alarm Clock Old">Alarm Clock Old</option> 
+                <option value="Among Us">Among Us</option> 
+                <option value="Analog Alarm Clock">Analog Alarm Clock</option> 
+                <option value="Beedo">Beedo</option> 
+                <option value="Bike Horn">Bike Horn</option> 
+                <option value="Computer Magic">Computer Magic</option> 
+                <option value="Digital Watch">Digital Watch</option> 
+                <option value="Ding">Ding</option>
+                <option value="Dong">Dong</option>
+                <option value="Ding Dong" selected>Ding Dong</option> 
+                <option value="Reception Bell">Reception Bell</option>
+                <option value="Gong 1">Gong 1</option>
+                <option value="Gong 2">Gong 2</option>
+                <option value="Train Horn">Train Horn</option>
+                <option value="Toaster Oven">Toaster Oven</option>
+                <option value="Cat Vicious">Cat Vicious</option> 
+                <option value="Scooby Doo">Scooby Doo</option>
+                <option value="Hellono">Hellono</option>
+                <option value="Minions">Minions</option>
+                <option value="Music Tone">Music Tone</option>
+                <option value="Papoi">Papoi</option>
+                <option value="Yiiiiii">Yiiiiii</option>
+                <option value="Extreme Alarm Clock">Extreme Alarm Clock!!!</option>
+              </select>
           </label>
         </div>
       </div>
@@ -101,20 +147,43 @@
           <!-- <p>When complete</p> -->
           <label class="notification" for="long-break-desktop-notification">
             <input type='hidden' value='off' name='longBreakDesktopNotification'>
-            <input type="checkbox" checked name="longBreakDesktopNotification" id="long-break-desktop-notification"> 
-            Show desktop notifications
+            <input type="checkbox" class="notification-checkbox" checked name="longBreakDesktopNotification" id="long-break-desktop-notification"> 
+            notifications
           </label>
-          <label class="notification" for="long-break-new-tab-notification">
-            <input type='hidden' value='off' name='longBreakNewTabNotification'>
-            <input type="checkbox" checked name="longBreakNewTabNotification" id="long-break-new-tab-notification"> 
-            Show new tab notifications
+          <label class="notification" for="long-break-timer-sound">
+              <select name="longBreakTimerSound" id="long-break-timer-sound" class="sound-select" required>
+                <option value="None">None</option> 
+                <option value="Alarm Clock Old" selected>Alarm Clock Old</option> 
+                <option value="Among Us">Among Us</option> 
+                <option value="Analog Alarm Clock">Analog Alarm Clock</option> 
+                <option value="Beedo">Beedo</option> 
+                <option value="Bike Horn">Bike Horn</option> 
+                <option value="Computer Magic" selected>Computer Magic</option> 
+                <option value="Digital Watch">Digital Watch</option> 
+                <option value="Ding">Ding</option>
+                <option value="Dong">Dong</option>
+                <option value="Ding Dong">Ding Dong</option> 
+                <option value="Reception Bell">Reception Bell</option>
+                <option value="Gong 1">Gong 1</option>
+                <option value="Gong 2">Gong 2</option>
+                <option value="Train Horn">Train Horn</option>
+                <option value="Toaster Oven">Toaster Oven</option>
+                <option value="Cat Vicious">Cat Vicious</option> 
+                <option value="Scooby Doo">Scooby Doo</option>
+                <option value="Hellono">Hellono</option>
+                <option value="Minions">Minions</option>
+                <option value="Music Tone">Music Tone</option>
+                <option value="Papoi">Papoi</option>
+                <option value="Yiiiiii">Yiiiiii</option>
+                <option value="Extreme Alarm Clock">Extreme Alarm Clock!!!</option>
+              </select>
           </label>
         </div>
       </div>
 
       <div class="timer-style-container">
         <h2>Timer Style</h2>
-        <div class="settings-checkbox-container timer-style-input-container">
+        <div class="settings-checkbox-container">
           <label class="timer-style" for="simple-style">
             <input type="radio" name="timerStyle" id="simple-style" value="simple"> 
             Basic

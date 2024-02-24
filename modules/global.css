@@ -16,6 +16,18 @@ body{
   font-size: 12px;
 }
 
+::-webkit-scrollbar {
+  width: 5px;
+  height: 15px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 0.5rem;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color);
+}
+
 h1 {
   text-align: center;
   font-weight: 400;
@@ -44,6 +56,7 @@ input, select {
   border: 1px solid var(--secondary-color-2);
   border-radius: 5px;
   font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  margin-left: 0;
 }
 .container.light input, .container.light select {
   background-color: var(--secondary-color-1);

@@ -9,7 +9,7 @@ import {
   getSyncStorage,
   getFocusText,
   resumeTimer, 
-  handleNewTabNotification} from "../utils.js"
+  createNewTabForTimers} from "../utils.js"
 import {
   PLAY,
   PAUSE,
@@ -32,6 +32,8 @@ const untilLongBreak = document.querySelector('.until-long')
 const stopBtn = document.querySelector('.focus-btn-stop')
 const nextBtn = document.querySelector('.focus-btn-next')
 const timerTag = document.querySelector('.timer-tag')
+const notificationCheckboxes = document.querySelectorAll('.notification-checkbox')
+const soundSelects = document.querySelectorAll('.sound-select')
 
 const settingsForm = document.querySelector('#settings-form')
 const saveBtn = document.querySelector('.submit-btn')
@@ -164,7 +166,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   })
 
   timerTag.addEventListener('click', async () => {
-    await handleNewTabNotification()
+    await createNewTabForTimers(false)
+  })
+
+  notificationCheckboxes.forEach((notificationCheckbox, index) => {
+    notificationCheckbox.addEventListener('change', function() {
+      if(this.checked) {
+        soundSelects[index].disabled = false
+      }else{
+        soundSelects[index].disabled = true
+      }
+    })
+  })
+
+  soundSelects.forEach(soundSelect => {
+    let notificationTone = null
+    soundSelect.addEventListener('change', async function(e) {
+      if(notificationTone) {
+        notificationTone.pause()
+        notificationTone.currentTime = 0
+      }
+      if(e.target.value === 'None') return
+      notificationTone = new Audio(`/assets/audio/${e.target.value}.mp3`)
+      notificationTone.play()
+    })
   })
 })
 
