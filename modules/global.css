@@ -1,0 +1,251 @@
+html{
+  margin: 0;
+  padding: 0;
+}
+*,*::after,*::before{
+  box-sizing:border-box;
+}
+body{
+  margin:0;
+  padding: 0;
+  height: max-content;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  --primary-color: rgb(97, 47, 121);
+  --secondary-color-1: rgb(232, 227, 255);
+  --secondary-color-2: rgb(197, 184, 255); 
+  font-size: 12px;
+}
+
+h1 {
+  text-align: center;
+  font-weight: 400;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--primary-color);
+}
+
+h2 {
+  margin:0;
+  margin-block: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--primary-color);
+  color: var(--secondary-color-2);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+p {
+  font-weight: 500;
+  margin-bottom: 10px;
+  display: block;
+}
+
+input, select {
+  background-color: var(--secondary-color-2);
+  border: 1px solid var(--secondary-color-2);
+  border-radius: 5px;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
+.container.light input, .container.light select {
+  background-color: var(--secondary-color-1);
+}
+
+input:hover, select:hover {
+  background-color: var(--secondary-color-1);
+}
+
+.focus-title {
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.until-long {
+  padding-block: 5px;
+  text-align: center;
+}
+
+.focus-btn, .focus-btns-int button {
+  width: 100%;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 20px;
+  border: 2px solid black;
+  color: #000;
+  background: linear-gradient(45deg, var(--primary-color), var(--secondary-color-2));
+  box-shadow:inset -3px 3px 10px var(--secondary-color-2),inset 5px -5px 20px var(--primary-color);
+  cursor: pointer;
+  pointer-events: all;
+  transition: .25s all;
+}
+.container.light .focus-btn, .container.light .focus-btns-int button {
+  border: 2px solid black;
+  background: var(--secondary-color-2);
+  box-shadow:inset -3px 3px 30px var(--secondary-color-2),inset 5px -5px 20px var(--secondary-color-2);
+}
+.focus-btn:hover {
+  box-shadow:inset -5px 5px 20px var(--primary-color);
+}
+.container.light .focus-btn:hover {
+  box-shadow:inset -2px 2px 10px var(--secondary-color-2),inset 2px -2px 20px var(--secondary-color-2), 0 0 7px var(--primary-color);
+}
+.focus-btn.active:hover {
+  box-shadow: 0 0 0 transparent;
+}
+.focus-btns-int button {
+  box-shadow: inset 10px -10px 25px var(--primary-color);
+  border: 2px solid black;
+  background: var(--secondary-color-2);
+  opacity: .25;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+}
+.focus-btns-int button:hover {
+  box-shadow: inset 5px -5px 40px var(--primary-color);
+}
+.container.light .focus-btns-int button:hover {
+  box-shadow:inset -2px 2px 10px var(--secondary-color-2),inset 2px -2px 20px var(--secondary-color-2), 0 0 5px var(--primary-color);
+}
+.focus-btns-int button.active {
+  opacity: 1;
+  pointer-events: all;
+}
+.focus-btns-int button img {
+  display: block;
+  width: 24px;
+  height:24px;
+}
+
+.focus-btns-int {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.time-container{
+  padding-block: 10px 20px;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  transform: skew(0deg);
+}
+
+.timer-tag {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 90%;
+  aspect-ratio: 1;
+  padding: 10px;
+  border-radius: 150px;
+  color: var(--secondary-color-2);
+  overflow: hidden;
+  background-image: url('../../assets/cat.png');
+  background-size: 10% 10%;
+  background-position: center center;
+  border: 5px solid var(--secondary-color-2);
+  box-shadow:inset 0 0 5px black;
+}
+.timer-tag.simple{
+  border: none;
+  background: linear-gradient(45deg, var(--primary-color), var(--secondary-color-2));
+  box-shadow:inset -7px 7px 10px var(--secondary-color-2),inset 5px -5px 20px var(--primary-color), -5px 5px 50px var(--primary-color);
+}
+
+.changingTimer:has(.simple) {
+  animation: jiggle .1s forwards linear;
+}
+
+.changingTimer .timer-tag.cat-walk {
+  animation: catWalk .1s forwards linear;
+}
+
+.timer {
+  position: relative;
+  font-size: 50px;
+  border-radius: 50px;
+  width: max-content;
+  padding: 5px 40px;
+  color: #000;
+}
+
+.timer-tag.cat-walk .timer {
+  padding: 5px 30px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 0 15px rgb(154, 154, 154), inset 0 0 5px rgb(159, 159, 159);
+}
+
+
+@keyframes loading {
+  0% {
+    right: -100%;
+  }
+  50% {
+    right: 150%;
+  }
+  100% {
+    right: 150%;
+  }
+}
+
+.changingText {
+  transition: .15s all;
+  transform: scaleY(1);
+  opacity: 1;
+  animation: slideDown .2s forwards linear;
+}
+
+@keyframes slideDown {
+  0%{
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  30% {
+    opacity: 0;
+    transform: scaleY(.5);
+  }
+  60%{
+    opacity: 0;
+    transform: scaleY(.5);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes catWalk {
+  0%{
+    background-position: 100%;
+  }
+  30% {
+    background-position: 50%;
+  }
+  60%{
+    background-position: 50%;
+  }
+  100% {
+    background-position: 100%;
+  }
+}
+
+@keyframes jiggle {
+  0%{
+    transform: skew(0deg);
+  }
+  30% {
+    transform: skew(5deg);
+  }
+  60%{
+    transform: skew(-5deg);
+  }
+  100% {
+    transform: skew(0deg);
+  }
+}

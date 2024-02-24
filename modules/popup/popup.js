@@ -8,7 +8,8 @@ import {
   getSessionStorage,
   getSyncStorage,
   getFocusText,
-  resumeTimer } from "../utils.js"
+  resumeTimer, 
+  handleNewTabNotification} from "../utils.js"
 import {
   PLAY,
   PAUSE,
@@ -26,8 +27,8 @@ const timer = document.querySelector('.timer')
 const focusBtn = document.querySelector('.focus-btn')
 const focusBtnText = document.querySelector('#focus-btn-text')
 const focusTitle = document.querySelector('.focus-title')
-const untilLongBreakCount = document.querySelector('#until-long')
-const focusText = document.querySelector('.focus-text')
+const untilLongBreakCount = document.querySelector('#until-long-count')
+const untilLongBreak = document.querySelector('.until-long')
 const stopBtn = document.querySelector('.focus-btn-stop')
 const nextBtn = document.querySelector('.focus-btn-next')
 const timerTag = document.querySelector('.timer-tag')
@@ -57,14 +58,14 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
     print.log('UI --> ' + request.time)
   }
   // settings status change
-  if(request.status === 'saved') {
+  if(request.settingsSaved) {
     saveBtn.classList.add('saved')
     changeTextTo(saveBtn, 'Saved')
+    saveBtn.disabled = true
     settingsChanged = false
     setTimeout(() => {
       saveBtn.classList.remove('saved')
       changeTextTo(saveBtn, 'Save')
-      saveBtn.disabled = true
     }, 1500)
   }
 
@@ -84,18 +85,19 @@ const updateNextTimer = async () => {
   const result = await getSessionStorage(TIMERKEY)
   const settingsObj = await getSyncStorage(SETTINGSKEY)
   await handleUntilLongBreakCount(settingsObj.settings, result.timer)
-  if(!result?.timer) return
+  changeTextTo(timer, getTimeString(timerDuration(result.timer.type, settingsObj?.settings)*60))
+  if(!result?.timer || result?.timer?.type === FOCUS) return
   changeTextTo(focusBtnText, 'Start ' + result.timer.type)
   changeTextTo(focusTitle, result.timer.type)
-  changeTextTo(timer, getTimeString(timerDuration(result.timer.type, settingsObj?.settings)*60))
+  console.log('change timer ------------')
 }
 
 async function handleUntilLongBreakCount(settings, timer, tryOnce=false) {
   if(parseInt(settings.longBreak.interval) !== 0 && timer?.type !== LONGBREAK){
     changeTextTo(untilLongBreakCount, parseInt(settings.longBreak.interval) - (timer ? timer.counts : 0) + 1)
-    focusText.style.visibility = 'visible'
+    untilLongBreak.style.visibility = 'visible'
   }else{
-    focusText.style.visibility = 'hidden'
+    untilLongBreak.style.visibility = 'hidden'
   }
   if(!timer && !tryOnce) {
     const sessionStore = await getSessionStorage(TIMERKEY)
@@ -122,7 +124,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const sessionStore = await getSessionStorage(TIMERKEY)
   changeTextTo(timer, getTimeString(timerDuration(sessionStore?.timer?.type, settings)*60))
   await handleUntilLongBreakCount(settings, sessionStore.timer)
-  if(sessionStore?.timer?.type === LONGBREAK) changeTextTo( focusText, '')
+  if(sessionStore?.timer?.type === LONGBREAK) changeTextTo( untilLongBreak, '')
   if(sessionStore?.timer && (sessionStore?.timer?.status === PLAY || sessionStore?.timer?.status === PAUSE)) {
     changeTextTo(timer, getTimeString(sessionStore.timer.time))
     changeTextTo(focusBtnText, getFocusText(sessionStore.timer, settings))
@@ -153,12 +155,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       await initiateTimer()
     }
   })
-  stopBtn.addEventListener('click', () => {
-    stopTimer(settings)
+  stopBtn.addEventListener('click',async () => {
+    const store = await getSyncStorage(SETTINGSKEY)
+    stopTimer(store.settings)
   })
   
   nextBtn.addEventListener('click', async () => {
     await nextTimer()
+  })
+
+  timerTag.addEventListener('click', async () => {
+    await handleNewTabNotification()
   })
 })
 
@@ -176,12 +183,12 @@ const stopTimer = async (settings) => {
   stopBtn.classList.remove('active')
   nextBtn.classList.remove('active')
   changeTextTo(timer, getTimeString(settings.focus.time * 60))
-  try{
-    await chrome.runtime.sendMessage({stopTimer: true})
-  }catch{e=>console.warn(e)}
   chrome.action.setBadgeText({text: ''})
   chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]})
   await handleUntilLongBreakCount(settings, null)
+  try{
+    await chrome.runtime.sendMessage({stopTimer: true})
+  }catch{e=>console.warn(e)}
 }
 
 const pause = async (timer) => {

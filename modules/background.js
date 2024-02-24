@@ -17,7 +17,8 @@ import {
   LONGBREAK,
   NEWTABIDKEY,
   TIMERKEY,
-  SETTINGSKEY
+  SETTINGSKEY,
+  DEVELOPING
  } from "./constants.js"
 
 let intervalId = createState(0)
@@ -66,36 +67,49 @@ async function stopActualTimer() {
   clearInterval(intervalId.getState())
   await setSessionStorage({[TIMERKEY]: null})
   const res = await getSessionStorage(NEWTABIDKEY)
-  if(res?.newTabId) {
-    try{
-      await chrome.tabs.remove(res.newTabId)
-      await setSessionStorage({[NEWTABIDKEY]: null})
-    }catch{e=> console.log(e)}
-  }
+  // if(res?.newTabId) {
+  //   try{
+  //     await chrome.tabs.remove(res.newTabId)
+  //     await setSessionStorage({[NEWTABIDKEY]: null})
+  //   }catch{e=> console.log(e)}
+  // }
 }
   
 chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
   if (request.startTimer) {
     await startActualTimer(request?.timer)
+    try{
+      await chrome.runtime.sendMessage({timerStarted: true})
+    }catch{e=>console.warn(e)}
   }
   else if(request.pauseTimer) {
     await pauseActualTimer(request?.timer)
+    try{
+      await chrome.runtime.sendMessage({timerPaused: true})
+    }catch{e=>console.warn(e)}
   }
   else if(request.stopTimer) {
     await stopActualTimer()
+    try{
+      await chrome.runtime.sendMessage({timerStopped: true})
+    }catch{e=>console.warn(e)}
   }
   else if(request.nextTimer) {
     await setNextTimer()
+    try{
+      await chrome.runtime.sendMessage({timerNext: true})
+    }catch{e=>console.warn(e)}
   }
   if(request.saveSettings) {
     await setSyncStorage(request.newSettings)
     try{
-      await chrome.runtime.sendMessage({status: 'saved'})
+      await chrome.runtime.sendMessage({settingsSaved: true})
     }catch{e=>console.warn(e)}
   }
 })
 
 const startTimer =(chrome, timer) => {
+  if(DEVELOPING) timer = 5
   print.log('start timer started 🌠')
   let intId = setInterval(async function() {
     timer--

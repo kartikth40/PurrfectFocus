@@ -1,64 +1,97 @@
-html{
-  margin: 0;
-  padding: 0;
-}
-*,*::after,*::before{
-  box-sizing:border-box;
-}
 body{
-  margin:0;
-  padding: 0;
-  height: 100vh;
-  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-  --primary-color: rgb(97, 47, 121);
-  --secondary-color-1: rgb(232, 227, 255);
-  --secondary-color-2: rgb(197, 184, 255); 
-  font-size: 12px;
   background: #000;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
+  min-height: 100vh;
+}
+body.light {
+  background: radial-gradient(var(--secondary-color-1), var(--secondary-color-2));
 }
 .container {
-  width: max-content;
-  margin: auto;
+  min-width: 500px;
+  margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
   padding: 10px 50px;
-  height: 70vh;
   color: var(--secondary-color-1);
-  background: linear-gradient(45deg, var(--primary-color), var(--secondary-color-2));
-  box-shadow:inset -7px 7px 10px var(--secondary-color-2),inset 5px -5px 20px var(--primary-color);
   border-radius: 2em;
 }
+
+body.light .focus-title, body.light .until-long {
+  color: black;
+}
+
 .focus-title {
-  width: 100%;
-  text-align: center;
-  font-size: 3em;
-  font-weight: lighter;
-  border-bottom: 1px solid var(--primary-color);
-  margin-bottom: .5em;
-  padding-bottom: .5em;
+  font-size: 50px;
+  margin-block: .2em;
 }
-.reminder {
-  font-size: 1.5em;
-  font-weight: lighter;
+
+.timer-tag {
+  width: 80vh;
+  aspect-ratio: 2/1;
+  border-radius: 1em;
+  background-size: 5% 10%;
+  border: 3px solid black;
+  box-shadow:inset 0 0 5px black;
 }
-.focus-btn {
-  background: linear-gradient(45deg, #000, var(--primary-color));
-  color: var(--secondary-color-2);
-  padding: 1em 2em;
-  margin-top: 1em;
-  font-size: 1.5em;
+body.light .timer-tag.simple {
+  border: 1px solid black;
+  background: linear-gradient(45deg, var(--secondary-color-2), var(--secondary-color-2), var(--primary-color));
+  box-shadow: inset -5px 5px 70px var(--primary-color), inset 5px -5px 70px var(--primary-color), 2px 2px 0 5px black; 
+}
+.timer-tag.simple{
   border: none;
-  border-radius: 2em;
-  box-shadow: 0 0 0  var(--primary-color);
-  transition: .15s all;
-  cursor: pointer;
+  box-shadow: 0 0 20px var(--primary-color);
 }
-.focus-btn:hover {
-  box-shadow: -1px -2px 5px var(--primary-color);
-  transform: translateY(2px) rotate(-2deg);
+.timer-tag.cat-walk .timer{
+  border-radius: 10px;
+  box-shadow: 0 0 5px black;
+  border: 1px solid black;
+  backdrop-filter: blur(5px);
+}
+.timer{
+  font-size: 70px;
+}
+
+.changingTimer:has(.simple) {
+  animation: none;
+}
+
+.changingTimer .timer-tag.simple .timer {
+  animation: slideDown .2s forwards linear;
+}
+.bottom {
+  display: flex;
+  width: 80vh;
+}
+.btns-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.focus-btn-text{
+  white-space: nowrap;
+}
+.quote-container {
+  width: 90%;
+  border: 2px solid black;
+  padding: 10px;
+  border-radius: 10px;
+  margin-left: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(var(--secondary-color-2), var(--primary-color));
+  box-shadow: inset 5px 5px 30px var(--primary-color);
+}
+.light .quote-container{
+  box-shadow: 2px 2px 0 5px black;
+  background: radial-gradient(var(--secondary-color-1), var(--secondary-color-2));
+}
+.quote {
+  color: black;
 }

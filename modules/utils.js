@@ -16,20 +16,24 @@ import {
   ALLLOGTYPE,
   STEPSLOGTYPE,
   HELPERLOGTYPE,
-  STACKTRACELOGTYPE} from "./constants.js"
+  STACKTRACELOGTYPE,
+  DEVELOPING,
+  breakQuotes,
+  focusQuotes} from "./constants.js"
 
 const print = printer()
 
 export function printer() {
   function print(message) {
+    if(!DEVELOPING) return
     if(!STACKTRACELOGTYPE) console.log(message)
     else {
       const stackTrace = new Error().stack.split("\n")[3].trim()
-      const time = new Date().toLocaleTimeString()
+      const time = getTime()
       if(typeof message === 'object') {
-        console.log(`[${time}]: ${JSON.stringify(message)} | ${stackTrace}`)
+        console.log(`${JSON.stringify(message)} \n - ${stackTrace} - |${time}|`)
       }else{
-        console.log(`[${time}]: ${message} | ${stackTrace}`)
+        console.log(`${message} \n - ${stackTrace} - |${time}|`)
       }
     }
   }
@@ -44,6 +48,15 @@ export function printer() {
       if(ALLLOGTYPE) print(message)
     }
   }
+}
+
+function getTime() {
+  let date = new Date();
+  let hours = date.getHours().toString().padStart(2, '0')
+  let minutes = date.getMinutes().toString().padStart(2, '0')
+  let seconds = date.getSeconds().toString().padStart(2, '0')
+  let milliseconds = date.getMilliseconds().toString().padStart(3, '0')
+  return `${hours}:${minutes}:${seconds}.${milliseconds}`
 }
 
 export function createState(initialState) {
@@ -149,9 +162,7 @@ export async function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
       )
     }
     if(settingsObj.settings.focus.newTabNotifications) {
-      chrome.tabs.create({url:"modules/newTab/over.html"},async function(tab){
-        await setSessionStorage({[NEWTABIDKEY]: tab.id})
-      })
+      handleNewTabNotification()
     }
   }else if(prevTimer === SHORTBREAK) {
     if(settingsObj.settings.shortBreak.desktopNotifcations) {
@@ -168,9 +179,7 @@ export async function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
       )
     }
     if(settingsObj.settings.shortBreak.newTabNotifications) {
-      chrome.tabs.create({url:"modules/newTab/over.html"},async function(tab){
-        await setSessionStorage({[NEWTABIDKEY]: tab.id})
-      })
+      handleNewTabNotification()
     }
     
   }else if(prevTimer === LONGBREAK) {
@@ -188,21 +197,41 @@ export async function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
       )
     }
     if(settingsObj.settings.longBreak.newTabNotifications) {
-      chrome.tabs.create({url:"modules/newTab/over.html"}, async function(tab){
-        await setSessionStorage({[NEWTABIDKEY]: tab.id})
-      })
+      await handleNewTabNotification()
     }
+  }
+}
+
+export async function handleNewTabNotification() {
+  const res = await getSessionStorage(NEWTABIDKEY)
+  function callback() {
+    if (chrome.runtime.lastError) {
+        chrome.tabs.create({url:"modules/newTab/over.html"}, async function(tab){
+          await setSessionStorage({[NEWTABIDKEY]: tab.id})
+        })
+    } else {
+        // Tab exists
+        chrome.tabs.update(res?.newTabId, {active: true}, (tab) => { });
+    }
+  } 
+  if(res?.newTabId) {
+    chrome.tabs.get(res?.newTabId,callback);
+  }else {
+    chrome.tabs.create({url:"modules/newTab/over.html"}, async function(tab){
+      await setSessionStorage({[NEWTABIDKEY]: tab.id})
+    })
   }
 }
 
 export async function resumeTimer (callback) {
   const result = await getSessionStorage([TIMERKEY, NEWTABIDKEY])
-  if(result?.newTabId && typeof callback !== 'function') {
-    try{
-      await chrome.tabs.remove(result.newTabId)
-      await setSessionStorage({[NEWTABIDKEY]: null})
-    } catch{e => console.log(e)}
-  }
+  // if(result?.newTabId && typeof callback !== 'function' 
+  //   && result?.timer?.type !== SHORTBREAK && result?.timer?.type !== LONGBREAK) {
+  //   try{
+  //     await chrome.tabs.remove(result.newTabId)
+  //     await setSessionStorage({[NEWTABIDKEY]: null})
+  //   } catch{e => console.log(e)}
+  // }
   chrome.action.setBadgeText({text: getTimeString(result.timer.time)})
   chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'})
     print.log('====> ▶')
@@ -313,4 +342,14 @@ export const getFocusText = (timer, settings) => {
     else if(timer.type === LONGBREAK && timer.time === settings.longBreak.time*60) return 'Start Long Break'
     return 'Resume'
   }
+}
+
+export const getRandomBreakQuote = () => {
+  const quotes = breakQuotes
+  return quotes[Math.floor(Math.random()*quotes.length)]
+}
+
+export const getRandomFocusQuote = () => {
+  const quotes = focusQuotes
+  return quotes[Math.floor(Math.random()*quotes.length)]
 }

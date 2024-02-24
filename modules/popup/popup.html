@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Purrfect Focus</title>
+  <link rel="stylesheet" href="../global.css">
   <link href="popup.css" rel="stylesheet" type="text/css" />
-  <script type="module" src="popup.js"></script>
+  <script type="module" defer src="popup.js"></script>
 </head>
 <body>
 
@@ -18,17 +19,17 @@
     
     <div class="focus-tab tab active">
       <h1 class="focus-title">Start Focusing</h1>
-      <p class="focus-text"><span id="until-long">_</span> pomodoros until long break</p>
+      <p class="until-long"><span id="until-long-count">_</span> pomodoros until long break</p>
       <div class="time-container">
-        <div class="timer-tag cat-walk">
+        <button class="timer-tag simple">
           <div class="timer" id="timer">00:00</div>
-        </div>
+        </button>
       </div>
       <div>
         <button class="focus-btn"><span id="focus-btn-text">Start Focusing</span></button>
         <div class="focus-btns-int">
-        <button class="focus-btn-stop"><img  src="../../assets/stop.png" alt="stop"></button>
-        <button class="focus-btn-next"><img  src="../../assets/next.png" alt="next"></button>
+          <button class="focus-btn-stop"><img  src="../../assets/stop.png" alt="stop"></button>
+          <button class="focus-btn-next"><img  src="../../assets/next.png" alt="next"></button>
         </div>
       </div>
     </div>

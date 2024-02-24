@@ -4,6 +4,9 @@ export const STEPSLOGTYPE = true
 export const HELPERLOGTYPE = true
 export const STACKTRACELOGTYPE = true
 
+// env
+export const DEVELOPING = false
+
 // status
 export const STOP = 'Stop'
 export const PLAY = 'Play'
@@ -59,3 +62,42 @@ export const defaultSettings = {
   }
     
 }
+
+
+export const breakQuotes = [
+  "Relax, Recharge and Reflect. Sometimes it's OK to do nothing.",
+  "In this game, everyone needs a break to refuel, recharge, and jump back in full throttle.",
+  "Almost everything will work again if you unplug it for a few minutes, including you.",
+  "The opportunity to step away from everything and take a break is something that shouldn't be squandered.",
+  "Is there a place you can go to break away for a little while? If you haven't yet built your tree house, it's never too late to start",
+  "Try to pause each day and take a walk to view nature.",
+  "Taking a break can lead to breakthroughs.",
+  "When things are not happening as planned just stop worrying and take an unplanned break to regain yourself.",
+  "Sometimes doing nothing makes way for everything.",
+  "Birds chirping around you is a beautiful realisation that life in incredibly good. Let this sound be a gentle break in your routine.",
+  "Don't underestimate the power of resting. It builds you back unlike anything.",
+  "Resting is immensely powerful to ignite the glorious star within you. Power yourself by powering up your relaxing game.",
+]
+
+export const focusQuotes = [
+  "The secret of getting ahead is getting started.",
+  "The future depends on what you do today.",
+  "Don't watch the clock; do what it does. Keep going.",
+  "Focus on being productive instead of busy.",
+  "Don't wait. The time will never be just right.",
+  "The journey of a thousand miles begins with one step.",
+  "Believe you can and you're halfway there.",
+  "Don't be pushed around by the fears in your mind. Be led by the dreams in your heart.",
+  "Productivity is never an accident. It is always the result of a commitment to excellence, intelligent planning, and focused effort.",
+  "The bad news is time flies. The good news is you're the pilot.",
+  "It does not matter how slowly you go as long as you do not stop.",
+  "If there is no struggle, there is no progress.",
+  "Concentrate all your thoughts upon the work at hand. The sun's rays do not burn until brought to a focus.",
+  "What you stay focused on will grow.",
+  "Stay focused on the mission.",
+  "What you focus on expands. So focus on what you want, not what you do not want.",
+  "The successful warrior is the average man, with laser-like focus.",
+  "The mind is like water. When it's turbulent, it's challenging to see. When it's calm, everything becomes clear.",
+  "Complexity means distracted effort. Simplicity means focused effort.",
+  "Time and energy are limited. Any successful person has to decide what to do in part by deciding what not to do.",
+]

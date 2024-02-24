@@ -4,14 +4,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Time's Up - Purrfect Focus</title>
+  <link rel="stylesheet" href="../global.css">
   <link rel="stylesheet" href="over.css">
-  <script type="module" src="over.js"></script>
+  <script type="module" defer src="over.js"></script>
 </head>
 <body>
   <div class="container">
     <h1 class="focus-title">Start Focusing</h1>
-    <p class="reminder"><span class="reminder-count">_</span> pomodoros before long break</p>
-    <button class="focus-btn">Start Focusing</button>
+    <p class="until-long"><span id="until-long-count">_</span> pomodoros until long break</p>
+    <div class="time-container">
+      <div class="timer-tag simple">
+        <div class="timer" id="timer">00:00</div>
+      </div>
+    </div>
+    <div class="bottom">
+      <div class="btns-container">
+        <button class="focus-btn"><span class="focus-btn-text">Start Focusing</span></button>
+        <div class="focus-btns-int">
+          <button class="focus-btn-stop"><img  src="../../assets/stop.png" alt="stop"></button>
+          <button class="focus-btn-next"><img  src="../../assets/next.png" alt="next"></button>
+        </div>
+      </div>
+      <div class="quote-container"><span class="quote"></span></div>
+    </div>
   </div>
 </body>
 </html>

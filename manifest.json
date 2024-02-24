@@ -1,8 +1,8 @@
 {
     "name": "Purrfect Focus",
-    "version": "0.1",
+    "version": "0.1.1",
     "description": "Purrfect Focus: Cat & Pomodoro Pal",
-    "permissions": ["storage", "tabs", "notifications"],
+    "permissions": ["storage", "notifications"],
     "background": {
       "service_worker": "modules/background.js",
       "type": "module"
