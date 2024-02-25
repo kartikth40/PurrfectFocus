@@ -32,6 +32,9 @@ h1 {
   text-align: center;
   font-weight: 400;
   padding-bottom: 5px;
+  border-bottom: 1px solid var(--secondary-color-2);
+}
+.container.light h1 {
   border-bottom: 1px solid var(--primary-color);
 }
 

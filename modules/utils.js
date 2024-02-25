@@ -250,7 +250,7 @@ export async function createNewTabForTimers(notify=true) {
       })
     } else {
       // Tab exists
-      await chrome.tabs.update(res?.NEWTABTIMERIDKEY, {active: true}, async (tab) => { 
+      await chrome.tabs.update(res[NEWTABTIMERIDKEY], {active: true}, async (tab) => { 
         if(notify) {
           try {
               await chrome.runtime.sendMessage({notificationTriggered: true})
@@ -260,7 +260,7 @@ export async function createNewTabForTimers(notify=true) {
       }
     } 
     if(res[NEWTABTIMERIDKEY]) {
-      await chrome.tabs.get(res?.NEWTABTIMERIDKEY,callback);
+      await chrome.tabs.get(res[NEWTABTIMERIDKEY],callback);
     }else {
       await chrome.tabs.create({url:"modules/newTab/over.html", active: true}, async function(tab){
         await setSessionStorage({[NEWTABTIMERIDKEY]: tab.id})
@@ -276,6 +276,13 @@ export async function createNewTabForTimers(notify=true) {
 
 export async function createNewTabForSettings() {
   const res = await getSessionStorage(NEWTABSETTINGSIDKEY)
+  if(res[NEWTABSETTINGSIDKEY]) {
+    await chrome.tabs.get(res[NEWTABSETTINGSIDKEY],callback);
+  }else {
+    await chrome.tabs.create({url:"modules/settings/settings.html", active: true}, async function(tab){
+      await setSessionStorage({[NEWTABSETTINGSIDKEY]: tab.id})
+    })
+  }
   async function callback() {
     if (chrome.runtime.lastError) {
       await chrome.tabs.create({url:"modules/settings/settings.html", active: true}, async function(tab){
@@ -283,16 +290,9 @@ export async function createNewTabForSettings() {
       })
     } else {
       // Tab exists
-      await chrome.tabs.update(res?.NEWTABSETTINGSIDKEY, {active: true}, async (tab) => {})
+      await chrome.tabs.update(res[NEWTABSETTINGSIDKEY], {active: true}, async (tab) => {})
       }
     } 
-    if(res?.NEWTABSETTINGSIDKEY) {
-      await chrome.tabs.get(res?.NEWTABSETTINGSIDKEY,callback);
-    }else {
-      await chrome.tabs.create({url:"modules/settings/settings.html", active: true}, async function(tab){
-        await setSessionStorage({[NEWTABSETTINGSIDKEY]: tab.id})
-      })
-    }
 }
 
 export async function resumeTimer (callback) {

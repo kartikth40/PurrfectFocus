@@ -16,7 +16,6 @@ import {
   LONGBREAK,
   SIMPLETIMERSTYLE,
   LIGHTTHEME,
-  tabNames,
   TIMERKEY,
   SETTINGSKEY
  } from "../constants.js"
@@ -33,13 +32,9 @@ const nextBtn = document.querySelector('.focus-btn-next')
 const timerTag = document.querySelector('.timer-tag')
 
 const settingsBtn = document.querySelector('.settings-tab-btn')
+const supportBtn = document.querySelector('.support-tab-btn')
+const rateBtn = document.querySelector('.rate-tab-btn')
 
-// const tabs = tabNames.map(tabName => ({
-//   btn: document.querySelector(`.${tabName}-tab-btn`),
-//   tab: document.querySelector(`.${tabName}-tab`)
-// }))
-
-let settingsObj = {}
 let isPaused = false
 
 const print = printer()
@@ -104,7 +99,7 @@ async function handleUntilLongBreakCount(settings, timer, tryOnce=false) {
 // on DOM loading
 document.addEventListener('DOMContentLoaded', async () => {
   const store = await getSyncStorage(SETTINGSKEY)
-  settingsObj = store
+  let settingsObj = store
   let settings = store.settings
   if(settings?.theme === LIGHTTHEME) {
     container.classList.add('light')
@@ -165,6 +160,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   settingsBtn.addEventListener('click',async () => {
     await createNewTabForSettings()
   })
+  supportBtn.addEventListener('click',async function(event){
+    event.preventDefault()
+    chrome.tabs.create({ url: this.href, active: true })
+  })
+  rateBtn.addEventListener('click',async function(event){
+    event.preventDefault()
+    chrome.tabs.create({ url: this.href, active: true })
+  })
 })
 
 async function nextTimer() {
@@ -211,7 +214,7 @@ const resume = async (timer) => {
 
 const initiateTimer = async () => {
   const store = await getSyncStorage(SETTINGSKEY)
-  settingsObj = store
+  let settingsObj = store
   let settings = store.settings
   chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {
     const timerObj = {

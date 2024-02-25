@@ -41,11 +41,32 @@
   padding: 5px 15px;
   border: none;
 }
-
+p.until-long {
+  margin-top: 15px;
+}
 .tab-btn-container {
   width: 100%;
   display: flex;
   gap: 5px;
+}
+.heading-container{
+  position: relative;
+}
+.focus-title {
+  padding-bottom: 14px;
+}
+.tab-btns {
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  transform: translateX(-50%);
+  display: flex;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  overflow: hidden;
+}
+.container.light .tab-btns{
+  border: 1px solid var(--primary-color);
 }
 .tab-btn {
   text-align: center;
@@ -53,32 +74,18 @@
   padding: 2px 5px;
   width: 100%;
   border: none;
-  border-bottom: 2px solid transparent;
   cursor: pointer;
-  background-color: transparent;
   color: var(--secondary-color-1);
   font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  background-color: var(--secondary-color-2);
 }
 .container.light .tab-btn {
   color: #000;
-}
-.tab-btn.active {
-  border-bottom: 2px solid var(--secondary-color-2);
-}
-.container.light .tab-btn.active {
-  border-bottom: 2px solid var(--primary-color);
-}
-.tab-btn:hover:not(.active) {
-  border-bottom: 2px solid #323232;
-}
-.container.light .tab-btn:hover:not(.active) {
-  border-bottom: 2px solid var(--secondary-color-2);
 }
 
 .tab:not(.active) {
   display: none;
 }
-
 
 .timer-style, .theme-label{
   display: flex;
@@ -101,4 +108,81 @@
 }
 .timer-tag.simple:hover, .timer-tag.simple:focus-visible {
   box-shadow:inset -7px 7px 5px var(--secondary-color-2),inset 5px -5px 10px var(--primary-color), 0 0 10px var(--primary-color);
+}
+
+.tab-btn{
+  width: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tab-btn img {
+  width: 16px;
+  height: 16px;
+}
+.settings-tab-btn {
+  border-bottom-right-radius: 10px;
+}
+.rate-tab-btn {
+  border-bottom-left-radius: 10px;
+}
+.settings-tab-btn:hover img {
+  animation: 1s rotate infinite cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.support-tab-btn:hover img {
+  animation: 2s shake infinite cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.rate-tab-btn:hover img {
+  animation: .7s twinkle infinite cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0);
+  }
+  80%{
+    transform: rotate(360deg);
+  }
+  100%{
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shake {
+  0% {
+    transform: rotate(0);
+  }
+  20% {
+    transform: rotate(30deg);
+  }
+  60% {
+    transform: rotate(-30deg);
+  }
+  80%{
+    transform: rotate(30deg);
+  }
+  100%{
+    transform: rotate(0);
+  }
+}
+
+@keyframes twinkle {
+  0%{
+    transform: skew(0) rotate(0);
+  }
+  20%{
+    transform: skew(10deg) rotate(10deg);
+  }
+  40%{
+    transform: skew(-10deg) rotate(-10deg);
+  }
+  60%{
+    transform: skew(10deg) rotate(10deg);
+  }
+  80% {
+    transform: skew(-10deg) rotate(-10deg);
+  }
+  100%{
+    transform: skew(0) rotate(0);
+  }
 }

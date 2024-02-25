@@ -29,7 +29,7 @@
 }
 #settings-form{
   padding: 10px 20px;
-  border: 5px solid var(--secondary-color-1);
+  border: 2px solid var(--secondary-color-1);
   width: max-content;
   border-radius: 10px;
   font-size: 16px;
@@ -45,15 +45,18 @@
   border: 1px solid black;
 }
 .container.light #settings-form {
-  border: 5px solid black;
+  border: 2px solid black;
 }
 .notification {
   white-space: nowrap;
   width: 100%;
   display: flex;
   align-items: center;
+  font-size: 16px;
 }
-
+.indent {
+  margin-left: 20px;
+}
 
 .duration {
   white-space: nowrap;

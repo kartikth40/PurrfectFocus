@@ -54,6 +54,12 @@ soundSelects.forEach(soundSelect => {
     notificationTone = new Audio(`/assets/audio/${e.target.value}.mp3`)
     notificationTone.play()
   })
+  soundSelect.addEventListener('blur', async function(e) {
+    if(notificationTone) {
+      notificationTone.pause()
+      notificationTone.currentTime = 0
+    }
+  })
 })
 
 
@@ -74,6 +80,8 @@ settingsForm.addEventListener('submit', async (e) => {
   if(settings?.theme === LIGHTTHEME) {
     container.classList.add('light')
   }else container.classList.remove('light')
+  chrome.action.setBadgeText({text: ''})
+  chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]})
     try{
       await chrome.runtime.sendMessage({stopTimer: true})
       await chrome.runtime.sendMessage({saveSettings: true, newSettings: settingsObj})
