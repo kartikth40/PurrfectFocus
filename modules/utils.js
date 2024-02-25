@@ -4,7 +4,7 @@ import {
   FOCUS,
   LIGHTTHEME,
   LONGBREAK,
-  NEWTABIDKEY,
+  NEWTABTIMERIDKEY,
   SETTINGSKEY,
   SHORTBREAK,
   SIMPLETIMERSTYLE,
@@ -19,7 +19,8 @@ import {
   STACKTRACELOGTYPE,
   DEVELOPING,
   breakQuotes,
-  focusQuotes} from "./constants.js"
+  focusQuotes,
+  NEWTABSETTINGSIDKEY} from "./constants.js"
 
 const print = printer()
 
@@ -235,11 +236,11 @@ export async function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
 }
 
 export async function createNewTabForTimers(notify=true) {
-  const res = await getSessionStorage(NEWTABIDKEY)
+  const res = await getSessionStorage(NEWTABTIMERIDKEY)
   async function callback() {
     if (chrome.runtime.lastError) {
       await chrome.tabs.create({url:"modules/newTab/over.html", active: true}, async function(tab){
-        await setSessionStorage({[NEWTABIDKEY]: tab.id})
+        await setSessionStorage({[NEWTABTIMERIDKEY]: tab.id})
         if(notify) {
           await chrome.storage.session.set({notificationTriggered:true})
           try {
@@ -249,7 +250,7 @@ export async function createNewTabForTimers(notify=true) {
       })
     } else {
       // Tab exists
-      await chrome.tabs.update(res?.newTabId, {active: true}, async (tab) => { 
+      await chrome.tabs.update(res?.NEWTABTIMERIDKEY, {active: true}, async (tab) => { 
         if(notify) {
           try {
               await chrome.runtime.sendMessage({notificationTriggered: true})
@@ -258,11 +259,11 @@ export async function createNewTabForTimers(notify=true) {
         })
       }
     } 
-    if(res?.newTabId) {
-      await chrome.tabs.get(res?.newTabId,callback);
+    if(res[NEWTABTIMERIDKEY]) {
+      await chrome.tabs.get(res?.NEWTABTIMERIDKEY,callback);
     }else {
       await chrome.tabs.create({url:"modules/newTab/over.html", active: true}, async function(tab){
-        await setSessionStorage({[NEWTABIDKEY]: tab.id})
+        await setSessionStorage({[NEWTABTIMERIDKEY]: tab.id})
         if(notify) {
           await chrome.storage.session.set({notificationTriggered:true})
           try {
@@ -273,8 +274,29 @@ export async function createNewTabForTimers(notify=true) {
     }
 }
 
+export async function createNewTabForSettings() {
+  const res = await getSessionStorage(NEWTABSETTINGSIDKEY)
+  async function callback() {
+    if (chrome.runtime.lastError) {
+      await chrome.tabs.create({url:"modules/settings/settings.html", active: true}, async function(tab){
+        await setSessionStorage({[NEWTABSETTINGSIDKEY]: tab.id})
+      })
+    } else {
+      // Tab exists
+      await chrome.tabs.update(res?.NEWTABSETTINGSIDKEY, {active: true}, async (tab) => {})
+      }
+    } 
+    if(res?.NEWTABSETTINGSIDKEY) {
+      await chrome.tabs.get(res?.NEWTABSETTINGSIDKEY,callback);
+    }else {
+      await chrome.tabs.create({url:"modules/settings/settings.html", active: true}, async function(tab){
+        await setSessionStorage({[NEWTABSETTINGSIDKEY]: tab.id})
+      })
+    }
+}
+
 export async function resumeTimer (callback) {
-  const result = await getSessionStorage([TIMERKEY, NEWTABIDKEY])
+  const result = await getSessionStorage([TIMERKEY, NEWTABTIMERIDKEY])
   chrome.action.setBadgeText({text: getTimeString(result.timer.time)})
   chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'})
     print.log('====> ▶')
@@ -355,7 +377,7 @@ export const setFormValues = (data) => {
 export function changeTextTo(element, text) {
   if(element.innerText.toString().toLowerCase() === text.toString().toLowerCase()) return
   const timerContainer = document.querySelector('.time-container')
-  if(element === timer) {
+  if(typeof timer !== 'undefined' && element === timer) {
     timerContainer.classList.add('changingTimer')
     setTimeout(() => {
       element.innerText = text

@@ -2,14 +2,13 @@ import {
   printer,
   timerDuration,
   getTimeString,
-  setNewSettings,
-  setFormValues,
   changeTextTo,
   getSessionStorage,
   getSyncStorage,
   getFocusText,
   resumeTimer, 
-  createNewTabForTimers} from "../utils.js"
+  createNewTabForTimers,
+  createNewTabForSettings} from "../utils.js"
 import {
   PLAY,
   PAUSE,
@@ -32,25 +31,18 @@ const untilLongBreak = document.querySelector('.until-long')
 const stopBtn = document.querySelector('.focus-btn-stop')
 const nextBtn = document.querySelector('.focus-btn-next')
 const timerTag = document.querySelector('.timer-tag')
-const notificationCheckboxes = document.querySelectorAll('.notification-checkbox')
-const soundSelects = document.querySelectorAll('.sound-select')
 
-const settingsForm = document.querySelector('#settings-form')
-const saveBtn = document.querySelector('.submit-btn')
+const settingsBtn = document.querySelector('.settings-tab-btn')
 
-const tabs = tabNames.map(tabName => ({
-  btn: document.querySelector(`.${tabName}-tab-btn`),
-  tab: document.querySelector(`.${tabName}-tab`)
-}))
+// const tabs = tabNames.map(tabName => ({
+//   btn: document.querySelector(`.${tabName}-tab-btn`),
+//   tab: document.querySelector(`.${tabName}-tab`)
+// }))
 
 let settingsObj = {}
-let settingsChanged = false
 let isPaused = false
 
 const print = printer()
-
-// setup tabs system
-setupTabsSystem()
 
 // listening messages
 chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
@@ -59,17 +51,6 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
     changeTextTo(timer, request.time)
     print.log('UI --> ' + request.time)
   }
-  // settings status change
-  if(request.settingsSaved) {
-    saveBtn.classList.add('saved')
-    changeTextTo(saveBtn, 'Saved')
-    saveBtn.disabled = true
-    settingsChanged = false
-    setTimeout(() => {
-      saveBtn.classList.remove('saved')
-      changeTextTo(saveBtn, 'Save')
-    }, 1500)
-  }
 
   if(request.updateNextTimer) {
     await updateNextTimer()
@@ -77,6 +58,19 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
   else if(request.resumeTimer) {
     const status = await getSessionStorage(TIMERKEY)
     resume(status.timer)
+  }
+  else if(request.saveSettings) {
+    const store = await getSyncStorage(SETTINGSKEY)
+    if(store?.settings?.theme === LIGHTTHEME) {
+      container.classList.add('light')
+    }else container.classList.remove('light')
+    if(store?.settings?.timerStyle === SIMPLETIMERSTYLE) {
+      timerTag.classList.remove('cat-walk')
+      timerTag.classList.add('simple')
+    }else {
+      timerTag.classList.remove('simple')
+      timerTag.classList.add('cat-walk')
+    }
   }
 })
 
@@ -138,7 +132,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.action.setBadgeText({text: getTimeString(sessionStore.timer.time)})
     chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'})
   }
-  setFormValues(store)
   focusBtn.addEventListener('click', async () => {
     const timer = await getSessionStorage(TIMERKEY)
     // if started already
@@ -169,27 +162,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     await createNewTabForTimers(false)
   })
 
-  notificationCheckboxes.forEach((notificationCheckbox, index) => {
-    notificationCheckbox.addEventListener('change', function() {
-      if(this.checked) {
-        soundSelects[index].disabled = false
-      }else{
-        soundSelects[index].disabled = true
-      }
-    })
-  })
-
-  soundSelects.forEach(soundSelect => {
-    let notificationTone = null
-    soundSelect.addEventListener('change', async function(e) {
-      if(notificationTone) {
-        notificationTone.pause()
-        notificationTone.currentTime = 0
-      }
-      if(e.target.value === 'None') return
-      notificationTone = new Audio(`/assets/audio/${e.target.value}.mp3`)
-      notificationTone.play()
-    })
+  settingsBtn.addEventListener('click',async () => {
+    await createNewTabForSettings()
   })
 })
 
@@ -256,53 +230,24 @@ const initiateTimer = async () => {
   nextBtn.classList.add('active')
 }
 
-// on settings change
-settingsForm.addEventListener('change', (e) => {
-  settingsChanged = true
-  saveBtn.disabled = false
-})
  
 
-// on settings submit
-settingsForm.addEventListener('submit', async (e) => {
-  e.preventDefault()
-  if(!settingsChanged) return
-  const formData = new FormData(e.target)
-  const formValues = Object.fromEntries(formData)
-  settingsObj = setNewSettings(formValues)
-  const settings = settingsObj.settings
-  if(settings?.theme === LIGHTTHEME) {
-    container.classList.add('light')
-  }else container.classList.remove('light')
-  if(settings?.timerStyle === SIMPLETIMERSTYLE) {
-    timerTag.classList.remove('cat-walk')
-    timerTag.classList.add('simple')
-  }else {
-    timerTag.classList.remove('simple')
-    timerTag.classList.add('cat-walk')
-  }
-  const result = await getSessionStorage(TIMERKEY)
-  changeTextTo(timer, getTimeString(timerDuration(result.timer?.type ?? FOCUS, settings)*60))
-  try {
-    await stopTimer(settingsObj.settings)
-    await chrome.runtime.sendMessage({saveSettings: true, newSettings: settingsObj})
-  }catch{(e) => {console.warn(e)}}
-})
 
-function setupTabsSystem() {
-  tabs.forEach(({tab, btn}) => {
-    btn.addEventListener('click', () => {
-      if(btn.classList.contains('active')) return
-      tabs.forEach(curTab => {
-        if(curTab.btn.classList.contains('active')) {
-          curTab.btn.classList.remove('active')
-        }
-        if(curTab.tab.classList.contains('active')) {
-          curTab.tab.classList.remove('active')
-        }
-      })
-      btn.classList.add('active')
-      tab.classList.add('active')
-    })
-  })
-  }
+
+// function setupTabsSystem() {
+//   tabs.forEach(({tab, btn}) => {
+//     btn.addEventListener('click', () => {
+//       if(btn.classList.contains('active')) return
+//       tabs.forEach(curTab => {
+//         if(curTab.btn.classList.contains('active')) {
+//           curTab.btn.classList.remove('active')
+//         }
+//         if(curTab.tab.classList.contains('active')) {
+//           curTab.tab.classList.remove('active')
+//         }
+//       })
+//       btn.classList.add('active')
+//       tab.classList.add('active')
+//     })
+//   })
+//   }

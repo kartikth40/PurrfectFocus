@@ -45,6 +45,13 @@ h2 {
   font-size: 16px;
 }
 
+.container.light .title {
+  color: #000;
+}
+.container.light h2 {
+  color: #000;
+}
+
 p {
   font-weight: 500;
   margin-bottom: 10px;
