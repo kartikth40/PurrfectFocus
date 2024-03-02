@@ -127,13 +127,20 @@ p.until-long {
   border-bottom-left-radius: 10px;
 }
 .settings-tab-btn:hover img {
-  animation: 1s rotate infinite cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: 1s rotate forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.history-tab-btn img {
+  width: 13px;
+  height: 13px;
+}
+.history-tab-btn:hover img {
+  animation: 1s lilShake forwards cubic-bezier(0.075, 0.82, 0.165, 1);
 }
 .support-tab-btn:hover img {
-  animation: 2s shake infinite cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: 2s shake forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .rate-tab-btn:hover img {
-  animation: .7s twinkle infinite cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: .7s twinkle forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 @keyframes rotate {
@@ -160,6 +167,18 @@ p.until-long {
   }
   80%{
     transform: rotate(30deg);
+  }
+  100%{
+    transform: rotate(0);
+  }
+}
+
+@keyframes lilShake {
+  0% {
+    transform: rotate(0);
+  }
+  50% {
+    transform: rotate(15deg) scale(1.1);
   }
   100%{
     transform: rotate(0);

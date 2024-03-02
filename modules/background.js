@@ -8,7 +8,10 @@ import {
   setSessionStorage,
   setSyncStorage,
   storageChangesLogger,
-  getTimeString } from "./utils.js"
+  getTimeString, 
+  setLocalStorage,
+  getLocalStorage,
+  getCurrentTimeString} from "./utils.js"
 import {
   PLAY,
   PAUSE,
@@ -17,7 +20,8 @@ import {
   LONGBREAK,
   TIMERKEY,
   SETTINGSKEY,
-  DEVELOPING
+  DEVELOPING,
+  sampleHistory
  } from "./constants.js"
 
 let intervalId = createState(0)
@@ -25,9 +29,10 @@ const print = printer()
 
 
 oninstall = async (event) => {
+  if(DEVELOPING) setLocalStorage(sampleHistory)
   await initBackgroundJs()
   storageChangesLogger()
-};
+}
 
 async function startActualTimer(timer) {
   print.log('message received - start timer')
@@ -36,7 +41,9 @@ async function startActualTimer(timer) {
       time: timer?.time ?? 0,
       status: PLAY,
       type: timer?.type ?? FOCUS,
-      counts: timer?.counts ?? 0
+      counts: timer?.counts ?? 0,
+      startTime: getCurrentTimeString(),
+      endTime: null
     }
   }
   await setSessionStorage(timerObj)
@@ -52,7 +59,9 @@ async function pauseActualTimer(timer) {
       time: timer?.time ?? 0,
       status: PAUSE,
       type: timer?.type ?? FOCUS,
-      counts: timer?.counts ?? 0
+      counts: timer?.counts ?? 0,
+      startTime: timer?.startTime ?? getCurrentTimeString(),
+      endTime: null
     }
   }
   await setSessionStorage(timerObj)
@@ -100,16 +109,98 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
 })
 
 const startTimer =(chrome, timer) => {
-  if(DEVELOPING) timer = 5
+  // if(DEVELOPING) timer = 5
   print.log('start timer started 🌠')
   let intId = setInterval(async function() {
     timer--
     if (timer < 0) {
       print.log('start timer 🔚')
       clearInterval(intervalId.getState())
-      await setNextTimer(true)
       chrome.action.setBadgeText({text: getTimeString(0)})
       chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'})
+      const currentDate = new Date()
+      const oldHistory = await getLocalStorage(currentDate.getFullYear().toString())
+      const timerObj = await getSessionStorage(TIMERKEY)
+      const settingsObj = await getSyncStorage(SETTINGSKEY)
+      const currentDateWithMonth = currentDate.getDate()+'-'+(currentDate.getMonth()+1)
+      console.log(currentDateWithMonth)
+      console.log(oldHistory)
+      if(!oldHistory) {
+        console.log('we dont have old history')
+        console.log(oldHistory, currentDate.getFullYear().toString())
+        let startTime = timerObj?.timer?.startTime
+        let endTime = getCurrentTimeString()
+        let duration = timerObj?.timer?.type === SHORTBREAK 
+                        ? settingsObj?.settings?.shortBreak?.time
+                        : timerObj?.timer?.type === LONGBREAK
+                        ? settingsObj?.settings?.longBreak?.time
+                        : settingsObj?.settings?.focus?.time
+        console.log(startTime, endTime, duration)
+        await setLocalStorage({[currentDate.getFullYear().toString()]: {
+          [currentDateWithMonth]: [{
+            startTime: startTime,
+            endTime: endTime,
+            duration: duration,
+            type: timerObj?.timer?.type === FOCUS ? 'focus' : 'break'
+            }]
+          } 
+        })
+      } else if(oldHistory[currentDate.getFullYear().toString()][currentDateWithMonth]){
+        console.log('we have old history and even todays')
+        let startTime = timerObj?.timer?.startTime
+        let endTime = getCurrentTimeString()
+        let duration = timerObj?.timer?.type === SHORTBREAK 
+                        ? settingsObj?.settings?.shortBreak?.time
+                        : timerObj?.timer?.type === LONGBREAK
+                        ? settingsObj?.settings?.longBreak?.time
+                        : settingsObj?.settings?.focus?.time
+        console.log(startTime, endTime, duration)
+        let todaysPomodoros = oldHistory[currentDate.getFullYear().toString()][currentDateWithMonth]
+        todaysPomodoros.push({
+          startTime: startTime,
+          endTime: endTime,
+          duration: duration,
+          type: timerObj?.timer?.type === FOCUS ? 'focus' : 'break'
+          })
+        await setLocalStorage({[currentDate.getFullYear().toString()]: {
+          [currentDateWithMonth]: todaysPomodoros,
+            ...oldHistory[currentDate.getFullYear().toString()]
+          } 
+        })
+      }
+      else {
+        console.log('we have old history')
+        let startTime = timerObj?.timer?.startTime
+        let endTime = getCurrentTimeString()
+        let duration = timerObj?.timer?.type === SHORTBREAK 
+                        ? settingsObj?.settings?.shortBreak?.time
+                        : timerObj?.timer?.type === LONGBREAK
+                        ? settingsObj?.settings?.longBreak?.time
+                        : settingsObj?.settings?.focus?.time
+        console.log(startTime, endTime, duration)
+        await setLocalStorage({[currentDate.getFullYear().toString()]: {
+          [currentDateWithMonth]: [{
+            startTime: startTime,
+            endTime: endTime,
+            duration: duration,
+            type: timerObj?.timer?.type === FOCUS ? 'focus' : 'break'
+            }],
+            ...oldHistory[currentDate.getFullYear().toString()]
+          } 
+        })
+        console.log({[currentDate.getFullYear().toString()]: {
+          [currentDateWithMonth]: [{
+            startTime: startTime,
+            endTime: endTime,
+            duration: duration,
+            type: timerObj?.timer?.type === FOCUS ? 'focus' : 'break'
+            }],
+            ...oldHistory[currentDate.getFullYear().toString()]
+          } 
+        })
+        console.log(await getLocalStorage("2024"))
+      }
+      await setNextTimer(true)
     }else {
       const timerString = getTimeString(timer)
       print.log('⏲ -> ' + timer +' '+ getTimeString(timer))
@@ -124,7 +215,9 @@ const startTimer =(chrome, timer) => {
           time: timer,
           status: result.timer.status,
           type: result.timer.type,
-          counts: result.timer.counts
+          counts: result.timer.counts,
+          startTime: result.timer.startTime,
+          endTime: null
         }
       }
       await setSessionStorage(timerToStore)

@@ -8,7 +8,8 @@ import {
   getFocusText,
   resumeTimer, 
   createNewTabForTimers,
-  createNewTabForSettings} from "../utils.js"
+  createNewTabForSettings,
+  createNewTabForHistory} from "../utils.js"
 import {
   PLAY,
   PAUSE,
@@ -32,6 +33,7 @@ const nextBtn = document.querySelector('.focus-btn-next')
 const timerTag = document.querySelector('.timer-tag')
 
 const settingsBtn = document.querySelector('.settings-tab-btn')
+const historyBtn = document.querySelector('.history-tab-btn')
 const supportBtn = document.querySelector('.support-tab-btn')
 const rateBtn = document.querySelector('.rate-tab-btn')
 
@@ -159,6 +161,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   settingsBtn.addEventListener('click',async () => {
     await createNewTabForSettings()
+  })
+  historyBtn.addEventListener('click',async () => {
+    await createNewTabForHistory()
   })
   supportBtn.addEventListener('click',async function(event){
     event.preventDefault()

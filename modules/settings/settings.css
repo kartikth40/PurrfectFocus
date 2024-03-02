@@ -43,7 +43,7 @@
   background-color: var(--primary-color);
   top: -10%;
   right: 0;
-  filter: blur(150px);
+  filter: blur(10vw);
   z-index: -1;
 }
 #settings-form::after{
@@ -55,7 +55,7 @@
   background-color: var(--primary-color);
   bottom: 10%;
   left: -20%;
-  filter: blur(150px);
+  filter: blur(10vw);
   z-index: -1;
 }
 #settings-form h2 {

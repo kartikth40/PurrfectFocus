@@ -20,7 +20,8 @@ import {
   DEVELOPING,
   breakQuotes,
   focusQuotes,
-  NEWTABSETTINGSIDKEY} from "./constants.js"
+  NEWTABSETTINGSIDKEY,
+  NEWTABHISTORYIDKEY} from "./constants.js"
 
 const print = printer()
 
@@ -51,10 +52,11 @@ export function printer() {
   }
 }
 
-function getTime() {
+function getTime(concise=false) {
   let date = new Date();
   let hours = date.getHours().toString().padStart(2, '0')
   let minutes = date.getMinutes().toString().padStart(2, '0')
+  if(concise) return `${hours}:${minutes}`
   let seconds = date.getSeconds().toString().padStart(2, '0')
   let milliseconds = date.getMilliseconds().toString().padStart(3, '0')
   return `${hours}:${minutes}:${seconds}.${milliseconds}`
@@ -80,6 +82,7 @@ export async function initBackgroundJs() {
 }
 
 export function storageChangesLogger() {
+  if(!DEVELOPING) return
   chrome.storage.onChanged.addListener(
     (changes, storageType) => {
       let oldValue = null
@@ -142,6 +145,24 @@ export async function setSyncStorage(obj) {
     return await chrome.storage.sync.set(obj)
   } catch (error) {
     console.error('Error storing in sync storage: ', error)
+    return null
+  }
+}
+
+export async function getLocalStorage(key) {
+  try {
+    return await chrome.storage.local.get(key)
+  } catch (error) {
+    console.error('Error retrieving local storage for '+ key +': ', error)
+    return null
+  }
+}
+
+export async function setLocalStorage(obj) {
+  try {
+    return await chrome.storage.local.set(obj)
+  } catch (error) {
+    console.error('Error storing in local storage: ', error)
     return null
   }
 }
@@ -295,6 +316,27 @@ export async function createNewTabForSettings() {
     } 
 }
 
+export async function createNewTabForHistory() {
+  const res = await getSessionStorage(NEWTABHISTORYIDKEY)
+  if(res[NEWTABHISTORYIDKEY]) {
+    await chrome.tabs.get(res[NEWTABHISTORYIDKEY],callback);
+  }else {
+    await chrome.tabs.create({url:"modules/history/history.html", active: true}, async function(tab){
+      await setSessionStorage({[NEWTABHISTORYIDKEY]: tab.id})
+    })
+  }
+  async function callback() {
+    if (chrome.runtime.lastError) {
+      await chrome.tabs.create({url:"modules/history/history.html", active: true}, async function(tab){
+        await setSessionStorage({[NEWTABHISTORYIDKEY]: tab.id})
+      })
+    } else {
+      // Tab exists
+      await chrome.tabs.update(res[NEWTABHISTORYIDKEY], {active: true}, async (tab) => {})
+      }
+    } 
+}
+
 export async function resumeTimer (callback) {
   const result = await getSessionStorage([TIMERKEY, NEWTABTIMERIDKEY])
   chrome.action.setBadgeText({text: getTimeString(result.timer.time)})
@@ -330,6 +372,13 @@ export function getTimeString(t) {
   let secondsString = (seconds < 10 ? '0' : '') + seconds
   let time = minutesString + ':' + secondsString
   return time
+}
+
+export function getCurrentTimeString() {
+  const now = new Date()
+  const hours = now.getHours().toString().padStart(2, '0')
+  const minutes = now.getMinutes().toString().padStart(2, '0')
+  return `${hours}:${minutes}`
 }
 
 export const setNewSettings = (formValues) => {

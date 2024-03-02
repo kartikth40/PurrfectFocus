@@ -5,7 +5,7 @@ export const HELPERLOGTYPE = false
 export const STACKTRACELOGTYPE = false
 
 // env
-export const DEVELOPING = false
+export const DEVELOPING = true
 
 // status
 export const STOP = 'Stop'
@@ -36,6 +36,7 @@ export const SETTINGSKEY = 'settings'
 export const TIMERKEY = 'timer'
 export const NEWTABTIMERIDKEY = 'newTabTimerId'
 export const NEWTABSETTINGSIDKEY = 'newTabSettingsId'
+export const NEWTABHISTORYIDKEY = 'newTabHistoryId'
 
 // others
 export const tabNames = ['focus', 'settings']
@@ -62,6 +63,51 @@ export const defaultSettings = {
     theme: DARKTHEME
   }
     
+}
+
+export const sampleHistory = {
+  "2024": {
+    "28-2": [
+      {"startTime": "08:00", "endTime": "08:25", "duration": 25, "type": "focus"},
+      {"startTime": "08:30", "endTime": "08:35", "duration": 5, "type": "break"},
+      {"startTime": "09:00", "endTime": "09:30", "duration": 30, "type": "focus"},
+      {"startTime": "09:30", "endTime": "09:35", "duration": 5, "type": "break"},
+    ],
+    "29-2": [
+      {"startTime": "09:00", "endTime": "09:25", "duration": 25, "type": "focus"},
+      {"startTime": "09:30", "endTime": "09:35", "duration": 5, "type": "break"},
+      {"startTime": "10:00", "endTime": "10:30", "duration": 30, "type": "focus"},
+      {"startTime": "10:30", "endTime": "10:35", "duration": 5, "type": "break"},
+      {"startTime": "11:00", "endTime": "11:45", "duration": 45, "type": "focus"},
+      {"startTime": "12:00", "endTime": "12:45", "duration": 45, "type": "focus"},
+      {"startTime": "12:45", "endTime": "13:15", "duration": 30, "type": "break"},
+      {"startTime": "13:00", "endTime": "13:25", "duration": 25, "type": "focus"},
+    ],
+    "1-3": [
+      {"startTime": "10:00", "endTime": "10:25", "duration": 25, "type": "focus"},
+      {"startTime": "10:30", "endTime": "10:35", "duration": 5, "type": "break"},
+      {"startTime": "11:00", "endTime": "11:30", "duration": 30, "type": "focus"},
+      {"startTime": "11:30", "endTime": "11:35", "duration": 5, "type": "break"},
+      {"startTime": "12:00", "endTime": "12:25", "duration": 25, "type": "focus"},
+    ],
+    "2-3": [
+      {"startTime": "08:00", "endTime": "08:25", "duration": 25, "type": "focus"},
+      {"startTime": "08:30", "endTime": "08:35", "duration": 5, "type": "break"},
+      {"startTime": "09:00", "endTime": "09:30", "duration": 30, "type": "focus"},
+      {"startTime": "09:30", "endTime": "09:35", "duration": 5, "type": "break"},
+      {"startTime": "10:00", "endTime": "10:25", "duration": 25, "type": "focus"},
+    ]
+  }
+}
+
+export const DAYS = {
+  1: "Monday",
+  2: "Tuesday",
+  3: "Wednesday",
+  4: "Thursday",
+  5: "Friday",
+  6: "Saturday",
+  7: "Sunday"
 }
 
 

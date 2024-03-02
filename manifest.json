@@ -9,9 +9,10 @@
     },
     "action": {
       "default_icon": {
-        "16": "assets/cat.png",
-        "24": "assets/cat.png",
-        "32": "assets/cat.png"
+        "48": "assets/cat_small.png",
+        "16": "assets/cat_small.png",
+        "24": "assets/cat_small.png",
+        "32": "assets/cat_small.png"
       },
       "default_title": "Purrfect Focus",
       "default_popup": "modules/popup/popup.html"

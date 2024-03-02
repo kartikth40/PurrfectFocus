@@ -1,5 +1,5 @@
-import { LIGHTTHEME, SETTINGSKEY, SIMPLETIMERSTYLE, TIMERKEY } from "../constants.js"
-import { changeTextTo, getSessionStorage, getSyncStorage, getTimeString, setFormValues, setNewSettings, timerDuration } from "../utils.js"
+import { LIGHTTHEME, SETTINGSKEY } from "../constants.js"
+import { changeTextTo, getSyncStorage, setFormValues, setNewSettings, timerDuration } from "../utils.js"
 
 const container = document.querySelector('.container')
 const notificationCheckboxes = document.querySelectorAll('.notification-checkbox')
