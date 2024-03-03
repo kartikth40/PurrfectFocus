@@ -20,7 +20,7 @@
 }
 
 .metrics-container{
-  padding: 20px 50px;
+  padding: 30px 50px;
   border: 2px dashed var(--secondary-color-1);
   width: max-content;
   border-radius: 10px;
@@ -38,6 +38,26 @@
 .container.light .metrics-container {
   background-color: var(--secondary-color-1);
   border: 2px dashed black;
+}
+.data-btns {
+  position: absolute;
+  top:5px;
+  right:5px;
+  border: none;
+}
+.data-btns button {
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  padding: 5px 10px;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  background-color: var(--secondary-color-2);
+  color: #000;
+  cursor: pointer;
+}
+.container.light .data-btns button {
+  background-color: var(--primary-color);
+  color: #fff;
 }
 .metrics-container::before{
   content: '';
@@ -106,7 +126,7 @@ p{
   justify-content: space-between;
   align-items: flex-end;
   height: calc(50vh - 10px);
-  left: -20px;
+  right: calc(100% + 5px);
   bottom: 0;
   pointer-events: none;
 }
@@ -116,12 +136,12 @@ p{
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 5px;
+  gap: 10px;
   height: 100%;
   position: relative;
 }
 .bar {
-  width: calc(70vw / var(--bars));
+  width: calc(50vw / var(--bars));
   height: var(--bar-height);
   border-radius: 5px;
   background: var(--primary-color);

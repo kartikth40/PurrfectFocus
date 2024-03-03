@@ -1,5 +1,5 @@
-import { getLocalStorage, getSyncStorage, setLocalStorage } from "../utils.js"
-import { SETTINGSKEY, LIGHTTHEME, DAYS, sampleHistory } from "../constants.js"
+import { clearHistory, getLocalStorage, getSyncStorage, setSampleHistory } from "../utils.js"
+import { SETTINGSKEY, LIGHTTHEME } from "../constants.js"
 
 const container = document.querySelector('.container')
 const todayCount = document.querySelector('.today-count')
@@ -9,18 +9,35 @@ const yearCount = document.querySelector('.year-count')
 const graphContainer = document.querySelector('.graph-container')
 const YAxis = document.querySelector('.y-axis')
 const bars = document.querySelectorAll('.bar')
+const sampleHistoryBtn = document.querySelector('.sample-history-btn')
+const deleteHistoryBtn = document.querySelector('.delete-btn')
 
+graphContainer.style.setProperty('--bars', bars.length)
 const maxHeightOfGraph = graphContainer.clientHeight - 20
 let maxValueOfGraph = 0
-graphContainer.style.setProperty('--bars', bars.length)
+
+sampleHistoryBtn.addEventListener('click', async () => {
+  await setSampleHistory()
+  await init()
+} )
+
+deleteHistoryBtn.addEventListener('click', async () => {
+  await clearHistory()
+  await init()
+})
 
 document.addEventListener('DOMContentLoaded', async () => {
-
+  
   const store = await getSyncStorage(SETTINGSKEY)
   if(store.settings?.theme === LIGHTTHEME) {
     container.classList.add('light')
   }else container.classList.remove('light')
   
+  await init()
+})
+
+async function init() {
+  maxValueOfGraph = 0
   const currentFullDate = new Date()
   const currentYear = currentFullDate.getFullYear().toString()
   const currentDate = currentFullDate.getDate()
@@ -41,8 +58,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   for(let i = 0; i < 7; i++) {
     const currentWeekDateWithMonth = weekDate.getDate()+'-'+ (weekDate.getMonth()+1)
     weekDate.setDate(weekDate.getDate() + 1)
-    const data = history[currentWeekDateWithMonth]
-    if(data) {
+    if(!history) break
+    if(currentWeekDateWithMonth in history) {
+      const data = history[currentWeekDateWithMonth]
       let focus = 0
       let breaks = 0
       data.forEach(d => {
@@ -74,8 +92,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const date = new Date(currentYear, currentMonth-1, i)
     const currentDateWithMonth = date.getDate()+'-'+(date.getMonth()+1)
     
-    const data = history[currentDateWithMonth]
-    if(data) {
+    if(!history) break
+    if(currentDateWithMonth in history) {
+      const data = history[currentDateWithMonth]
       let focus = 0
       let breaks = 0
       data.forEach(d => {
@@ -98,8 +117,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     for (let day = 1; day <= daysInMonth; day++) {
         const currentDate = new Date(currentYear, month, day)
         const currentDateWithMonth = currentDate.getDate()+'-'+(currentDate.getMonth()+1)
-        const data = history[currentDateWithMonth]
-        if(data) {
+        if(!history) break
+        if(currentDateWithMonth in history) {
+          const data = history[currentDateWithMonth]
           let focus = 0
           let breaks = 0
           data.forEach(d => {
@@ -115,7 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
   setSimpleMetrics(yearlySum, yearCount, true)
-})
+}
 
 function setWeeklyBars(thisWeekData) {
   let totalFocusInThisWeek = 0
@@ -124,7 +144,7 @@ function setWeeklyBars(thisWeekData) {
     totalFocusInThisWeek+=value
     bar.setAttribute('data-value', getTimeFormatted(value))
     const height = maxHeightOfGraph/maxValueOfGraph * value
-    bar.style.height = height + 'px'
+    bar.style.height = (value === 0 ? value : height) + 'px'
   })
   setSimpleMetrics(totalFocusInThisWeek, weekCount)
 }
@@ -135,7 +155,7 @@ function setSimpleMetrics(time, elementToSetUpon, onlyHrs = false) {
   let step = time/100
   const interval = setInterval(() => {
     count+= step
-    if(count > time){
+    if(count >= time){
       elementToSetUpon.innerText = getTimeFormatted(time, onlyHrs)
       clearInterval(interval)
     }
@@ -160,6 +180,7 @@ function setYAxis() {
   if(maxValueOfGraph < 5) step = .5
   else if(step < 10 && step > 2) step = 5
   else if(step > 10) step = 10
+  YAxis.innerHTML = ""
   for(let i = maxValueOfGraph; i >= 0; i=i-step) {
     const marker = document.createElement('span')
     marker.classList.add('marker')

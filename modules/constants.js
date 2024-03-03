@@ -67,6 +67,20 @@ export const defaultSettings = {
 
 export const sampleHistory = {
   "2024": {
+    "26-2": [
+      {"startTime": "08:00", "endTime": "08:25", "duration": 25, "type": "focus"},
+      {"startTime": "08:30", "endTime": "08:35", "duration": 5, "type": "break"},
+      {"startTime": "09:00", "endTime": "09:30", "duration": 30, "type": "focus"},
+      {"startTime": "09:30", "endTime": "09:55", "duration": 25, "type": "break"},
+      {"startTime": "10:00", "endTime": "11:30", "duration": 90, "type": "focus"},
+    ],
+    "27-2": [
+      {"startTime": "08:00", "endTime": "08:25", "duration": 25, "type": "focus"},
+      {"startTime": "08:30", "endTime": "08:35", "duration": 5, "type": "break"},
+      {"startTime": "09:00", "endTime": "09:30", "duration": 30, "type": "focus"},
+      {"startTime": "09:30", "endTime": "09:35", "duration": 5, "type": "break"},
+      {"startTime": "11:00", "endTime": "11:30", "duration": 30, "type": "focus"},
+    ],
     "28-2": [
       {"startTime": "08:00", "endTime": "08:25", "duration": 25, "type": "focus"},
       {"startTime": "08:30", "endTime": "08:35", "duration": 5, "type": "break"},
@@ -94,6 +108,10 @@ export const sampleHistory = {
       {"startTime": "08:00", "endTime": "08:25", "duration": 25, "type": "focus"},
       {"startTime": "08:30", "endTime": "08:35", "duration": 5, "type": "break"},
       {"startTime": "09:00", "endTime": "09:30", "duration": 30, "type": "focus"},
+      {"startTime": "09:30", "endTime": "09:35", "duration": 5, "type": "break"},
+      {"startTime": "10:00", "endTime": "10:25", "duration": 25, "type": "focus"},
+    ],
+    "3-3": [
       {"startTime": "09:30", "endTime": "09:35", "duration": 5, "type": "break"},
       {"startTime": "10:00", "endTime": "10:25", "duration": 25, "type": "focus"},
     ]

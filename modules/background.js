@@ -11,7 +11,8 @@ import {
   getTimeString, 
   setLocalStorage,
   getLocalStorage,
-  getCurrentTimeString} from "./utils.js"
+  getCurrentTimeString,
+  setSampleHistory} from "./utils.js"
 import {
   PLAY,
   PAUSE,
@@ -19,9 +20,7 @@ import {
   SHORTBREAK,
   LONGBREAK,
   TIMERKEY,
-  SETTINGSKEY,
-  DEVELOPING,
-  sampleHistory
+  SETTINGSKEY
  } from "./constants.js"
 
 let intervalId = createState(0)
@@ -29,7 +28,6 @@ const print = printer()
 
 
 oninstall = async (event) => {
-  if(DEVELOPING) setLocalStorage(sampleHistory)
   await initBackgroundJs()
   storageChangesLogger()
 }
