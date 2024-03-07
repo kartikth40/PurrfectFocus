@@ -76,7 +76,7 @@ p.until-long {
   border: none;
   cursor: pointer;
   color: var(--secondary-color-1);
-  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  font-family: "Poppins", sans-serif;
   background-color: var(--secondary-color-2);
 }
 .container.light .tab-btn {
@@ -95,7 +95,7 @@ p.until-long {
 .timer-tag{
   cursor: pointer;
   transition: .25s all;
-  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  font-family: "Poppins", sans-serif;
   transform: scale(1);
   border: 2px solid transparent;
 }

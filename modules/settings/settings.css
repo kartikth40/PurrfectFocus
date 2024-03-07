@@ -25,11 +25,22 @@
   border: 2px dashed var(--secondary-color-1);
   width: max-content;
   border-radius: 10px;
-  font-size: 16px;
+  font-size: 12px;
   background-color: #000;
   position:relative;
   z-index: 1;
   overflow: hidden;
+}
+.row{
+  display: flex;
+  gap: 20px;
+  width: 100%;
+}
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
 }
 .container.light #settings-form {
   background-color: var(--secondary-color-1);
@@ -43,7 +54,7 @@
   background-color: var(--primary-color);
   top: -10%;
   right: 0;
-  filter: blur(10vw);
+  filter: blur(200px);
   z-index: -1;
 }
 #settings-form::after{
@@ -55,14 +66,14 @@
   background-color: var(--primary-color);
   bottom: 10%;
   left: -20%;
-  filter: blur(10vw);
+  filter: blur(200px);
   z-index: -1;
 }
 #settings-form h2 {
   font-size: 20px;
 }
 #settings-form select, #settings-form input {
-  font-size: 16px;
+  font-size: 12px;
 }
 .container.light input, .container.light select {
   background-color: var(--secondary-color-1);
@@ -95,10 +106,10 @@
 
 #interval-input {
   margin-block: 5px 10px;
-  margin-left: 20px;
 }
 
 .btn-container {
+  width: 100%;
   position: relative;
   margin-block: 10px;
 }
@@ -136,6 +147,7 @@
   cursor: pointer;
   transition: .15s all;
   padding: 10px;
+  margin-top: 20px;
 }
 .submit-btn:hover {
   opacity: .9;
@@ -162,11 +174,16 @@
   background-color: rgb(231, 231, 231);
   color: rgb(186, 186, 186);
 }
-
+.timer-style-container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
 
 .settings-checkbox-container {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
   gap: 5px;
 }

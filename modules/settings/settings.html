@@ -12,172 +12,178 @@
   <div class="container">
     <div class="settings-tab tab">
       <form id="settings-form">
-      <div class="focus-container">
-        <h2>Focus</h2>
-        <div class="duration ">
-          <label for="focus-duration-input">Duration: <input type="number" id="focus-duration-input" name="focusDuration" value="25" required> minutes</label>
+        <div class="row">
+          <div class="col">
+            <div class="focus-container">
+              <h2>Focus</h2>
+              <div class="duration ">
+                <label for="focus-duration-input">Duration: <input type="number" id="focus-duration-input" name="focusDuration" value="25" required> minutes</label>
+              </div>
+              <div class="settings-checkbox-container ">
+                <!-- <p>When complete</p> -->
+                <label class="notification" for="focus-desktop-notification">
+                  <input type='hidden' value='off' name='focusDesktopNotification'>
+                  <input type="checkbox" class="notification-checkbox" checked name="focusDesktopNotification" id="focus-desktop-notification"> 
+                  Notifications
+                </label>
+                <label class="notification" for="focus-timer-sound">
+                    <select name="focusTimerSound" id="focus-timer-sound" class="sound-select" required>
+                      <option value="None">None</option> 
+                      <option value="Among Us">Among Us</option> 
+                      <option value="Analog Alarm Clock">Analog Alarm Clock</option> 
+                      <option value="Beedo">Beedo</option> 
+                      <option value="Bike Horn">Bike Horn</option> 
+                      <option value="Computer Magic">Computer Magic</option> 
+                      <option value="Digital Watch">Digital Watch</option> 
+                      <option value="Ding">Ding</option>
+                      <option value="Dong" selected>Dong</option>
+                      <option value="Ding Dong">Ding Dong</option> 
+                      <option value="Reception Bell">Reception Bell</option>
+                      <option value="Gong 1">Gong 1</option>
+                      <option value="Gong 2">Gong 2</option>
+                      <option value="Train Horn">Train Horn</option>
+                      <option value="Toaster Oven">Toaster Oven</option>
+                      <option value="Cat Vicious">Cat Vicious</option> 
+                      <option value="Scooby Doo">Scooby Doo</option>
+                      <option value="Hellono">Hellono</option>
+                      <option value="Minions">Minions</option>
+                      <option value="Music Tone">Music Tone</option>
+                      <option value="Papoi">Papoi</option>
+                      <option value="Yiiiiii">Yiiiiii</option>
+                      <option value="Extreme Alarm Clock">Extreme Alarm Clock!!!</option>
+                    </select>
+                </label>
+              </div>
+            </div>
+            <div class="timer-style-container">
+              <h2>Timer Style</h2>
+              <div class="settings-checkbox-container ">
+                <label class="timer-style" for="simple-style">
+                  <input type="radio" name="timerStyle" id="simple-style" value="simple"> 
+                  Basic
+                </label>
+                <label class="timer-style" for="cat-walk-style">
+                  <input type="radio" checked name="timerStyle" id="cat-walk-style" value="catWalk"> 
+                  Cat Walk
+                </label>
+              </div>
+              <label class="theme-label " for="app-theme">
+                <input type='hidden' value='off' name='theme'>
+                <input type="checkbox" name="theme" id="app-theme"> 
+                Light Mode
+              </label>
+            </div>
+          </div>
+          <div class="col">
+            <div class="short-break-container">
+              <h2>Short Break</h2>
+              <div class="duration ">
+                <label for="short-break-duration-input">Duration: <input type="number" id="short-break-duration-input" name="shortBreakDuration" value="5" required> minutes</label>
+              </div>
+              <div class="settings-checkbox-container ">
+                <!-- <p>When complete</p> -->
+                <label class="notification" for="short-break-desktop-notification">
+                  <input type='hidden' value='off' name='shortBreakDesktopNotification'>
+                  <input type="checkbox" class="notification-checkbox" checked name="shortBreakDesktopNotification" id="short-break-desktop-notification"> 
+                  Notifications
+                </label>
+                <label class="notification" for="short-break-timer-sound">
+                    <select name="shortBreakTimerSound" id="short-break-timer-sound" class="sound-select" required>
+                      <option value="None">None</option> 
+                      <option value="Among Us">Among Us</option> 
+                      <option value="Analog Alarm Clock">Analog Alarm Clock</option> 
+                      <option value="Beedo">Beedo</option> 
+                      <option value="Bike Horn">Bike Horn</option> 
+                      <option value="Computer Magic">Computer Magic</option> 
+                      <option value="Digital Watch">Digital Watch</option> 
+                      <option value="Ding">Ding</option>
+                      <option value="Dong">Dong</option>
+                      <option value="Ding Dong" selected>Ding Dong</option> 
+                      <option value="Reception Bell">Reception Bell</option>
+                      <option value="Gong 1">Gong 1</option>
+                      <option value="Gong 2">Gong 2</option>
+                      <option value="Train Horn">Train Horn</option>
+                      <option value="Toaster Oven">Toaster Oven</option>
+                      <option value="Cat Vicious">Cat Vicious</option> 
+                      <option value="Scooby Doo">Scooby Doo</option>
+                      <option value="Hellono">Hellono</option>
+                      <option value="Minions">Minions</option>
+                      <option value="Music Tone">Music Tone</option>
+                      <option value="Papoi">Papoi</option>
+                      <option value="Yiiiiii">Yiiiiii</option>
+                      <option value="Extreme Alarm Clock">Extreme Alarm Clock!!!</option>
+                    </select>
+                </label>
+              </div>
+            </div>
+        
+            <div class="long-break-container">
+              <h2>Long Break</h2>
+              <div class="long-break-interval ">
+                <label for="interval-input">Take a long break:
+                <select name="longBreakInterval" id="interval-input" required>
+                  <option value="0">never</option> 
+                  <option value="1">every 2nd break (alternating)</option> 
+                  <option value="2">every 3rd break</option> 
+                  <option value="3" selected>every 4th break</option> 
+                  <option value="4">every 5th break</option> 
+                  <option value="5">every 6th break</option> 
+                  <option value="6">every 7th break</option> 
+                  <option value="7">every 8th break</option> 
+                  <option value="8">every 9th break</option> 
+                  <option value="9">every 10th break</option>
+                </select>
+              </label>
+              </div>
+              <div class="duration ">
+                <label for="long-break-duration-input">Duration: <input type="number" id="long-break-duration-input" name="longBreakDuration" value="15" required> minutes</label>
+              </div>
+              <div class="settings-checkbox-container ">
+                <!-- <p>When complete</p> -->
+                <label class="notification" for="long-break-desktop-notification">
+                  <input type='hidden' value='off' name='longBreakDesktopNotification'>
+                  <input type="checkbox" class="notification-checkbox" checked name="longBreakDesktopNotification" id="long-break-desktop-notification"> 
+                  Notifications
+                </label>
+                <label class="notification" for="long-break-timer-sound">
+                    <select name="longBreakTimerSound" id="long-break-timer-sound" class="sound-select" required>
+                      <option value="None">None</option> 
+                      <option value="Among Us">Among Us</option> 
+                      <option value="Analog Alarm Clock">Analog Alarm Clock</option> 
+                      <option value="Beedo">Beedo</option> 
+                      <option value="Bike Horn">Bike Horn</option> 
+                      <option value="Computer Magic" selected>Computer Magic</option> 
+                      <option value="Digital Watch">Digital Watch</option> 
+                      <option value="Ding">Ding</option>
+                      <option value="Dong">Dong</option>
+                      <option value="Ding Dong">Ding Dong</option> 
+                      <option value="Reception Bell">Reception Bell</option>
+                      <option value="Gong 1">Gong 1</option>
+                      <option value="Gong 2">Gong 2</option>
+                      <option value="Train Horn">Train Horn</option>
+                      <option value="Toaster Oven">Toaster Oven</option>
+                      <option value="Cat Vicious">Cat Vicious</option> 
+                      <option value="Scooby Doo">Scooby Doo</option>
+                      <option value="Hellono">Hellono</option>
+                      <option value="Minions">Minions</option>
+                      <option value="Music Tone">Music Tone</option>
+                      <option value="Papoi">Papoi</option>
+                      <option value="Yiiiiii">Yiiiiii</option>
+                      <option value="Extreme Alarm Clock">Extreme Alarm Clock!!!</option>
+                    </select>
+                </label>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="settings-checkbox-container ">
-          <!-- <p>When complete</p> -->
-          <label class="notification" for="focus-desktop-notification">
-            <input type='hidden' value='off' name='focusDesktopNotification'>
-            <input type="checkbox" class="notification-checkbox" checked name="focusDesktopNotification" id="focus-desktop-notification"> 
-            Notifications
-          </label>
-          <label class="notification" for="focus-timer-sound">
-              <select name="focusTimerSound" id="focus-timer-sound" class="sound-select" required>
-                <option value="None">None</option> 
-                <option value="Among Us">Among Us</option> 
-                <option value="Analog Alarm Clock">Analog Alarm Clock</option> 
-                <option value="Beedo">Beedo</option> 
-                <option value="Bike Horn">Bike Horn</option> 
-                <option value="Computer Magic">Computer Magic</option> 
-                <option value="Digital Watch">Digital Watch</option> 
-                <option value="Ding">Ding</option>
-                <option value="Dong" selected>Dong</option>
-                <option value="Ding Dong">Ding Dong</option> 
-                <option value="Reception Bell">Reception Bell</option>
-                <option value="Gong 1">Gong 1</option>
-                <option value="Gong 2">Gong 2</option>
-                <option value="Train Horn">Train Horn</option>
-                <option value="Toaster Oven">Toaster Oven</option>
-                <option value="Cat Vicious">Cat Vicious</option> 
-                <option value="Scooby Doo">Scooby Doo</option>
-                <option value="Hellono">Hellono</option>
-                <option value="Minions">Minions</option>
-                <option value="Music Tone">Music Tone</option>
-                <option value="Papoi">Papoi</option>
-                <option value="Yiiiiii">Yiiiiii</option>
-                <option value="Extreme Alarm Clock">Extreme Alarm Clock!!!</option>
-              </select>
-          </label>
+        <div class="row">
+          <div class="btn-container">
+            <button type="submit" class="submit-btn" disabled>
+              Save
+            </button>
+            <span class="alert">* Saving would reset the timer</span>
+          </div>
         </div>
-      </div>
-      
-      <div class="short-break-container">
-        <h2>Short Break</h2>
-        <div class="duration ">
-          <label for="short-break-duration-input">Duration: <input type="number" id="short-break-duration-input" name="shortBreakDuration" value="5" required> minutes</label>
-        </div>
-        <div class="settings-checkbox-container ">
-          <!-- <p>When complete</p> -->
-          <label class="notification" for="short-break-desktop-notification">
-            <input type='hidden' value='off' name='shortBreakDesktopNotification'>
-            <input type="checkbox" class="notification-checkbox" checked name="shortBreakDesktopNotification" id="short-break-desktop-notification"> 
-            Notifications
-          </label>
-          <label class="notification" for="short-break-timer-sound">
-              <select name="shortBreakTimerSound" id="short-break-timer-sound" class="sound-select" required>
-                <option value="None">None</option> 
-                <option value="Among Us">Among Us</option> 
-                <option value="Analog Alarm Clock">Analog Alarm Clock</option> 
-                <option value="Beedo">Beedo</option> 
-                <option value="Bike Horn">Bike Horn</option> 
-                <option value="Computer Magic">Computer Magic</option> 
-                <option value="Digital Watch">Digital Watch</option> 
-                <option value="Ding">Ding</option>
-                <option value="Dong">Dong</option>
-                <option value="Ding Dong" selected>Ding Dong</option> 
-                <option value="Reception Bell">Reception Bell</option>
-                <option value="Gong 1">Gong 1</option>
-                <option value="Gong 2">Gong 2</option>
-                <option value="Train Horn">Train Horn</option>
-                <option value="Toaster Oven">Toaster Oven</option>
-                <option value="Cat Vicious">Cat Vicious</option> 
-                <option value="Scooby Doo">Scooby Doo</option>
-                <option value="Hellono">Hellono</option>
-                <option value="Minions">Minions</option>
-                <option value="Music Tone">Music Tone</option>
-                <option value="Papoi">Papoi</option>
-                <option value="Yiiiiii">Yiiiiii</option>
-                <option value="Extreme Alarm Clock">Extreme Alarm Clock!!!</option>
-              </select>
-          </label>
-        </div>
-      </div>
-  
-      <div class="long-break-container">
-        <h2>Long Break</h2>
-        <div class="long-break-interval ">
-          <label for="interval-input">Take a long break:
-          <select name="longBreakInterval" id="interval-input" required>
-            <option value="0">never</option> 
-            <option value="1">every 2nd break (alternating)</option> 
-            <option value="2">every 3rd break</option> 
-            <option value="3" selected>every 4th break</option> 
-            <option value="4">every 5th break</option> 
-            <option value="5">every 6th break</option> 
-            <option value="6">every 7th break</option> 
-            <option value="7">every 8th break</option> 
-            <option value="8">every 9th break</option> 
-            <option value="9">every 10th break</option>
-          </select>
-        </label>
-        </div>
-        <div class="duration ">
-          <label for="long-break-duration-input">Duration: <input type="number" id="long-break-duration-input" name="longBreakDuration" value="15" required> minutes</label>
-        </div>
-        <div class="settings-checkbox-container ">
-          <!-- <p>When complete</p> -->
-          <label class="notification" for="long-break-desktop-notification">
-            <input type='hidden' value='off' name='longBreakDesktopNotification'>
-            <input type="checkbox" class="notification-checkbox" checked name="longBreakDesktopNotification" id="long-break-desktop-notification"> 
-            Notifications
-          </label>
-          <label class="notification" for="long-break-timer-sound">
-              <select name="longBreakTimerSound" id="long-break-timer-sound" class="sound-select" required>
-                <option value="None">None</option> 
-                <option value="Among Us">Among Us</option> 
-                <option value="Analog Alarm Clock">Analog Alarm Clock</option> 
-                <option value="Beedo">Beedo</option> 
-                <option value="Bike Horn">Bike Horn</option> 
-                <option value="Computer Magic" selected>Computer Magic</option> 
-                <option value="Digital Watch">Digital Watch</option> 
-                <option value="Ding">Ding</option>
-                <option value="Dong">Dong</option>
-                <option value="Ding Dong">Ding Dong</option> 
-                <option value="Reception Bell">Reception Bell</option>
-                <option value="Gong 1">Gong 1</option>
-                <option value="Gong 2">Gong 2</option>
-                <option value="Train Horn">Train Horn</option>
-                <option value="Toaster Oven">Toaster Oven</option>
-                <option value="Cat Vicious">Cat Vicious</option> 
-                <option value="Scooby Doo">Scooby Doo</option>
-                <option value="Hellono">Hellono</option>
-                <option value="Minions">Minions</option>
-                <option value="Music Tone">Music Tone</option>
-                <option value="Papoi">Papoi</option>
-                <option value="Yiiiiii">Yiiiiii</option>
-                <option value="Extreme Alarm Clock">Extreme Alarm Clock!!!</option>
-              </select>
-          </label>
-        </div>
-      </div>
-  
-      <div class="timer-style-container">
-        <h2>Timer Style</h2>
-        <div class="settings-checkbox-container ">
-          <label class="timer-style" for="simple-style">
-            <input type="radio" name="timerStyle" id="simple-style" value="simple"> 
-            Basic
-          </label>
-          <label class="timer-style" for="cat-walk-style">
-            <input type="radio" checked name="timerStyle" id="cat-walk-style" value="catWalk"> 
-            Cat Walk
-          </label>
-        </div>
-      </div>
-      <label class="theme-label " for="app-theme">
-        <input type='hidden' value='off' name='theme'>
-        <input type="checkbox" name="theme" id="app-theme"> 
-        Light Mode
-      </label>
-      <div class="btn-container">
-        <button type="submit" class="submit-btn" disabled>
-          Save
-        </button>
-        <span class="alert">* Saving would reset the timer</span>
-      </div>
     </form>
     </div>
   </div>

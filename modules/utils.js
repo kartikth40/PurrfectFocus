@@ -474,55 +474,50 @@ export const setSampleHistory = async () => {
   const currentYear = currentFullDate.getFullYear().toString()
   const currentDate = currentFullDate.getDate()
   const currentDay = currentFullDate.getDay() === 0 ? 6 : currentFullDate.getDay() - 1
-  const historyObj = await getLocalStorage([currentYear, 'sampleHistory'])
-  const history = historyObj[currentYear]
-  const isSample = historyObj.sampleHistory
-  if(!history || isSample) {
-    const currentWeekStart = new Date(currentFullDate)
-    currentWeekStart.setDate(currentDate - currentDay)
-    const weekDate = new Date(currentWeekStart)
-    const weekData = {}
 
-    for(let i = 0; i < 7; i++) {
-      const currentWeekDateWithMonth = weekDate.getDate()+'-'+ (weekDate.getMonth()+1)
-      weekDate.setDate(weekDate.getDate() + 1)
-      let noOfTimers = getRandomNumber(0, 10)
-      let noOfFocusTimers = getRandomNumber(0, noOfTimers)
-      let start = getRandomNumber(0, 720)
-      const currentDayData = []
-      for(let j = 0; j < noOfTimers; j++) {
-        let type = 'focus' 
-        let duration = 0
-        let startTime = "00:00"
-        let endTime = "00:00"
-        if(noOfFocusTimers > 0 && getRandomNumber(0,1) === 0) {
-          noOfFocusTimers--
-          duration = getRandomNumber(10, 180)
-        }else {
-          type = 'break'
-          duration = getRandomNumber(5, 120)
-        }
-        startTime = getTimeString(start)
-        endTime = getTimeString(start+duration)
-        start+= duration + getRandomNumber(0, 60)
-        currentDayData.push({startTime: startTime, endTime: endTime, duration: duration, type: type})
+  const currentWeekStart = new Date(currentFullDate)
+  currentWeekStart.setDate(currentDate - currentDay)
+  const weekDate = new Date(currentWeekStart)
+  const weekData = {}
+
+  for(let i = 0; i < 7; i++) {
+    const currentWeekDateWithMonth = weekDate.getDate()+'-'+ (weekDate.getMonth()+1)
+    weekDate.setDate(weekDate.getDate() + 1)
+    let noOfTimers = getRandomNumber(0, 10)
+    let noOfFocusTimers = getRandomNumber(0, noOfTimers)
+    let start = getRandomNumber(0, 720)
+    const currentDayData = []
+    for(let j = 0; j < noOfTimers; j++) {
+      let type = 'focus' 
+      let duration = 0
+      let startTime = "00:00"
+      let endTime = "00:00"
+      if(noOfFocusTimers > 0 && getRandomNumber(0,1) === 0) {
+        noOfFocusTimers--
+        duration = getRandomNumber(10, 180)
+      }else {
+        type = 'break'
+        duration = getRandomNumber(5, 120)
       }
-      weekData[currentWeekDateWithMonth] = currentDayData
+      startTime = getTimeString(start)
+      endTime = getTimeString(start+duration)
+      start+= duration + getRandomNumber(0, 60)
+      currentDayData.push({startTime: startTime, endTime: endTime, duration: duration, type: type})
     }
-
-    const sampleHistory = {[currentYear] : weekData}
-
-    console.log(sampleHistory)
-
-    await setLocalStorage(sampleHistory)
-    await setLocalStorage({'sampleHistory': true})
+    weekData[currentWeekDateWithMonth] = currentDayData
   }
+
+  const sampleHistory = {[currentYear] : weekData}
+
+  console.log(sampleHistory)
+
+  await setSessionStorage(sampleHistory)
 }
 
 export async function clearHistory() {
   const currentFullDate = new Date()
   const currentYear = currentFullDate.getFullYear().toString()
-  const historyObj = await setLocalStorage({[currentYear]: null})
+  await setLocalStorage({[currentYear]: null})
 }
 
 

@@ -12,7 +12,8 @@
   <div class="container">
     <div class="metrics-container">
       <div class="data-btns">
-        <button class="sample-history-btn">Show Sample</button>
+        <button class="sample-history-btn active">Show Sample</button>
+        <button class="sample-history-btn-remove">Remove Sample</button>
         <button class="delete-btn">Delete All Data</button>
       </div>
       <div class="simple-metrics-container">
@@ -36,6 +37,8 @@
       <div class="week-metrics-container">
         <h2 class="week-metrics-title">Weekly Focus Distribution</h2>
         <div class="graph-container">
+          <div class="is-sample">*sample data</div>
+          <div class="no-data">Nothing To Display!</div>
           <div class="y-axis"></div>
           <div class="bars-container">
             <span class="bar" data-x="MON" data-value="0"></span>

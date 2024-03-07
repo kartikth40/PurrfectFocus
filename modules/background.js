@@ -11,8 +11,7 @@ import {
   getTimeString, 
   setLocalStorage,
   getLocalStorage,
-  getCurrentTimeString,
-  setSampleHistory} from "./utils.js"
+  getCurrentTimeString} from "./utils.js"
 import {
   PLAY,
   PAUSE,
@@ -117,7 +116,8 @@ const startTimer =(chrome, timer) => {
       chrome.action.setBadgeText({text: getTimeString(0)})
       chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'})
       const currentDate = new Date()
-      const oldHistory = await getLocalStorage(currentDate.getFullYear().toString())
+      const oldHistoryObj = await getLocalStorage(currentDate.getFullYear().toString())
+      const oldHistory = oldHistoryObj[currentDate.getFullYear().toString()]
       const timerObj = await getSessionStorage(TIMERKEY)
       const settingsObj = await getSyncStorage(SETTINGSKEY)
       const currentDateWithMonth = currentDate.getDate()+'-'+(currentDate.getMonth()+1)
@@ -143,7 +143,7 @@ const startTimer =(chrome, timer) => {
             }]
           } 
         })
-      } else if(oldHistory[currentDate.getFullYear().toString()][currentDateWithMonth]){
+      } else if(oldHistory[currentDateWithMonth]){
         console.log('we have old history and even todays')
         let startTime = timerObj?.timer?.startTime
         let endTime = getCurrentTimeString()
@@ -153,7 +153,7 @@ const startTimer =(chrome, timer) => {
                         ? settingsObj?.settings?.longBreak?.time
                         : settingsObj?.settings?.focus?.time
         console.log(startTime, endTime, duration)
-        let todaysPomodoros = oldHistory[currentDate.getFullYear().toString()][currentDateWithMonth]
+        let todaysPomodoros = oldHistory[currentDateWithMonth]
         todaysPomodoros.push({
           startTime: startTime,
           endTime: endTime,
@@ -162,7 +162,7 @@ const startTimer =(chrome, timer) => {
           })
         await setLocalStorage({[currentDate.getFullYear().toString()]: {
           [currentDateWithMonth]: todaysPomodoros,
-            ...oldHistory[currentDate.getFullYear().toString()]
+            ...oldHistory
           } 
         })
       }
@@ -183,7 +183,7 @@ const startTimer =(chrome, timer) => {
             duration: duration,
             type: timerObj?.timer?.type === FOCUS ? 'focus' : 'break'
             }],
-            ...oldHistory[currentDate.getFullYear().toString()]
+            ...oldHistory
           } 
         })
         console.log({[currentDate.getFullYear().toString()]: {
@@ -193,7 +193,7 @@ const startTimer =(chrome, timer) => {
             duration: duration,
             type: timerObj?.timer?.type === FOCUS ? 'focus' : 'break'
             }],
-            ...oldHistory[currentDate.getFullYear().toString()]
+            ...oldHistory
           } 
         })
         console.log(await getLocalStorage("2024"))
