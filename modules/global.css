@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Poppins:wght@200;400;700;900&display=swap');
 
 html{
   margin: 0;
@@ -184,7 +184,7 @@ input:hover, select:hover {
 }
 
 .changingTimer:has(.simple) {
-  animation: jiggle .1s forwards linear;
+  animation: jiggle .1s forwards linear;  
 }
 
 .changingTimer .timer-tag.cat-walk {
@@ -192,11 +192,13 @@ input:hover, select:hover {
 }
 
 .timer {
+  font-weight: 900;
+  font-family: "Share Tech Mono", monospace;
   position: relative;
-  font-size: 50px;
+  font-size:60px;
   border-radius: 50px;
   width: max-content;
-  padding: 5px 40px;
+  padding: 5px 20px;
   color: #000;
 }
 
@@ -205,7 +207,6 @@ input:hover, select:hover {
   backdrop-filter: blur(4px);
   box-shadow: 0 0 15px rgb(154, 154, 154), inset 0 0 5px rgb(159, 159, 159);
 }
-
 
 @keyframes loading {
   0% {

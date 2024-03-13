@@ -132,6 +132,7 @@ p{
   color: var(--primary-color);
 }
 .simple-metrics > .count{
+  font-family: "Share Tech Mono", monospace;
   font-size: 20px;
 }
 .simple-metrics-title{

@@ -33,7 +33,7 @@
 }
 .row{
   display: flex;
-  gap: 20px;
+  gap: 40px;
   width: 100%;
 }
 .col {
@@ -75,6 +75,9 @@
 #settings-form select, #settings-form input {
   font-size: 12px;
 }
+label {
+  cursor: pointer;
+}
 .container.light input, .container.light select {
   background-color: var(--secondary-color-1);
   border: 1px solid black;
@@ -112,6 +115,50 @@
   width: 100%;
   position: relative;
   margin-block: 10px;
+}
+
+.theme-cards-container {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.theme-card {
+  text-align: center;
+  border-radius: 5px;
+  border: 1px solid #fff;
+  padding: 10px 20px;
+  width: 100%;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  white-space: nowrap;
+  color: var(--secondary-color-1);
+  user-select: none;
+}
+.theme-card.checked {
+  box-shadow: 0px 0px 0 3px #fff;
+}
+.container.light .theme-card {
+  border: 1px solid #000;
+
+}
+.container.light .theme-card.checked {
+  box-shadow: 0px 0px 0 3px #000;
+}
+
+.theme-card:hover {
+  text-decoration: underline;
+}
+.theme-card-light {
+  color: #000;
+  background: linear-gradient(60deg, var(--primary-color), var(--secondary-color-2));
+}
+.theme-card-dark {
+  background: linear-gradient(60deg, #000, var(--primary-color));
+  box-shadow: inset 0 0 40px var(--primary-color);
 }
 
 .submit-btn + .alert {
@@ -178,6 +225,10 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
+}
+.flex-row {
+  flex-direction: row !important;
+  justify-content: space-between !important;
 }
 
 .settings-checkbox-container {

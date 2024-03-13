@@ -53,16 +53,16 @@ body.light .timer-tag.simple {
   backdrop-filter: blur(5px);
 }
 .timer{
-  font-size: 70px;
+  font-weight: bolder;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 100px;
+  font-variant-numeric: tabular-nums;
 }
 
 .changingTimer:has(.simple) {
   animation: none;
 }
 
-.changingTimer .timer-tag.simple .timer {
-  animation: slideDown .2s forwards linear;
-}
 .bottom {
   display: flex;
   width: 80vh;

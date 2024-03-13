@@ -5,6 +5,11 @@ const container = document.querySelector('.container')
 const notificationCheckboxes = document.querySelectorAll('.notification-checkbox')
 const soundSelects = document.querySelectorAll('.sound-select')
 
+const lightCard = document.querySelector('.theme-card-light')
+const lightCardRadio = document.querySelector('#app-theme-light')
+const darkCard = document.querySelector('.theme-card-dark')
+const darkCardRadio = document.querySelector('#app-theme-dark')
+
 const settingsForm = document.querySelector('#settings-form')
 const saveBtn = document.querySelector('.submit-btn')
 
@@ -27,9 +32,24 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
 document.addEventListener('DOMContentLoaded', async () => {
   const store = await getSyncStorage(SETTINGSKEY)
   if(store.settings?.theme === LIGHTTHEME) {
+    lightCard.classList.add('checked')
+    darkCard.classList.remove('checked')
     container.classList.add('light')
-  }else container.classList.remove('light')
+  }else {
+    darkCard.classList.add('checked')
+    lightCard.classList.remove('checked')
+    container.classList.remove('light')
+  }
   setFormValues(store)
+})
+
+lightCardRadio.addEventListener('click', () => {
+  lightCard.classList.add('checked')
+  darkCard.classList.remove('checked')
+})
+darkCardRadio.addEventListener('click', () => {
+  darkCard.classList.add('checked')
+  lightCard.classList.remove('checked')
 })
 
 

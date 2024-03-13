@@ -57,7 +57,7 @@
             </div>
             <div class="timer-style-container">
               <h2>Timer Style</h2>
-              <div class="settings-checkbox-container ">
+              <div class="settings-checkbox-container flex-row">
                 <label class="timer-style" for="simple-style">
                   <input type="radio" name="timerStyle" id="simple-style" value="simple"> 
                   Basic
@@ -67,11 +67,16 @@
                   Cat Walk
                 </label>
               </div>
-              <label class="theme-label " for="app-theme">
-                <input type='hidden' value='off' name='theme'>
-                <input type="checkbox" name="theme" id="app-theme"> 
-                Light Mode
-              </label>
+              <div class="theme-cards-container">
+                <label class="theme-card theme-card-light" for="app-theme-light">
+                  <input type='radio' value='light' name='theme' class="theme-radio" id="app-theme-light" style="display: none;">
+                  Light Mode
+                </label>
+                <label class="theme-card theme-card-dark checked" for="app-theme-dark">
+                  <input type='radio' value='dark' name='theme' class="theme-radio" id="app-theme-dark" style="display: none;">
+                  Dark Mode
+                </label>
+              </div>
             </div>
           </div>
           <div class="col">

@@ -402,7 +402,7 @@ export const setNewSettings = (formValues) => {
         sound: formValues.longBreakTimerSound
       },
       timerStyle: formValues.timerStyle,
-      theme: formValues.theme === 'on' ? LIGHTTHEME : DARKTHEME
+      theme: formValues.theme === 'light' ? LIGHTTHEME : DARKTHEME
     }
   }
 }
@@ -421,24 +421,25 @@ export const setFormValues = (data) => {
   document.querySelector('#long-break-timer-sound').value = settings.longBreak.sound
   document.querySelector('#cat-walk-style').checked = settings.timerStyle === CATWALKTIMERSTYLE 
   document.querySelector('#simple-style').checked = settings.timerStyle === SIMPLETIMERSTYLE || settings.timerStyle !== CATWALKTIMERSTYLE
-  document.querySelector('#app-theme').checked = settings.theme === LIGHTTHEME
+  document.querySelector('#app-theme-light').checked = settings.theme === LIGHTTHEME
+  document.querySelector('#app-theme-dark').checked = settings.theme === DARKTHEME
 }
 
 export function changeTextTo(element, text) {
   if(element.innerText.toString().toLowerCase() === text.toString().toLowerCase()) return
   const timerContainer = document.querySelector('.time-container')
   if(typeof timer !== 'undefined' && element === timer) {
+    element.innerText = text
     timerContainer.classList.add('changingTimer')
     setTimeout(() => {
-      element.innerText = text
     }, 100)
     setTimeout(() => {
       timerContainer.classList.remove('changingTimer')
     }, 200)
   }else {
+    element.innerText = text
     element.classList.add('changingText')
     setTimeout(() => {
-      element.innerText = text
     }, 100)
     setTimeout(() => {
       element.classList.remove('changingText')

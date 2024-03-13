@@ -55,6 +55,23 @@ p.until-long {
 .focus-title {
   padding-bottom: 14px;
 }
+.tooltip {
+  font-weight: bolder;
+  font-size: 6px;
+  position: absolute;
+  top: -70%;
+  left: 70%;
+  padding: 2px 5px;
+  background-color: var(--secondary-color-1);
+  border-radius: 5px;
+  border-bottom-left-radius: 0;
+  border: 1px solid var(--primary-color);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 10;
+  transition: .25s all;
+  transform: translate(-50%, 50%) scale(0);
+}
 .tab-btns {
   position: absolute;
   left: 50%;
@@ -63,10 +80,17 @@ p.until-long {
   display: flex;
   border-radius: 10px;
   border: 1px solid transparent;
-  overflow: hidden;
+  /* overflow: hidden; */
 }
 .container.light .tab-btns{
   border: 1px solid var(--primary-color);
+}
+.tab-btns > a, .tab-btns > button {
+  position: relative;
+}
+.tab-btns > a:hover .tooltip, .tab-btns > button:hover .tooltip {
+  opacity: 1;
+  transform: translate(0, 0) scale(1);
 }
 .tab-btn {
   text-align: center;
@@ -122,9 +146,11 @@ p.until-long {
 }
 .settings-tab-btn {
   border-bottom-right-radius: 10px;
+  border-top-right-radius: 10px;
 }
 .rate-tab-btn {
   border-bottom-left-radius: 10px;
+  border-top-left-radius: 10px;
 }
 .settings-tab-btn:hover img {
   animation: 1s rotate forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
