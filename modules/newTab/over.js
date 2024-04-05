@@ -1,5 +1,5 @@
 import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE } from "../constants.js"
-import { changeTextTo, getFocusText, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, printer, resumeTimer, timerDuration } from "../utils.js"
+import { changeTextTo, createNewTabForHistory, createNewTabForSettings, getFocusText, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, printer, resumeTimer, timerDuration } from "../utils.js"
 
 const container = document.querySelector('.container')
 const focusTitle = document.querySelector('.focus-title')
@@ -12,6 +12,8 @@ const untilLongBreak = document.querySelector('.until-long')
 const stopBtn = document.querySelector('.focus-btn-stop')
 const nextBtn = document.querySelector('.focus-btn-next')
 const quote = document.querySelector('.quote')
+const settingsBtn = document.querySelector('.settings-tab-btn')
+const historyBtn = document.querySelector('.history-tab-btn')
 
 const print = printer()
 let isPaused = false
@@ -125,6 +127,13 @@ function addEventListeners() {
   })
   nextBtn.addEventListener('click', async () => {
     await nextTimer()
+  })
+
+  settingsBtn.addEventListener('click',async () => {
+    await createNewTabForSettings()
+  })
+  historyBtn.addEventListener('click',async () => {
+    await createNewTabForHistory()
   })
 
 }

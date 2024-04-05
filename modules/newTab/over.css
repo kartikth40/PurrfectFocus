@@ -59,6 +59,10 @@ body.light .timer-tag.simple {
   font-variant-numeric: tabular-nums;
 }
 
+.tab-btns {
+  bottom: 0px;
+}
+
 .changingTimer:has(.simple) {
   animation: none;
 }
