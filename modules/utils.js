@@ -473,17 +473,16 @@ export const getRandomFocusQuote = () => {
 export const setSampleHistory = async () => {
   const currentFullDate = new Date()
   const currentYear = currentFullDate.getFullYear().toString()
-  const currentDate = currentFullDate.getDate()
-  const currentDay = currentFullDate.getDay() === 0 ? 6 : currentFullDate.getDay() - 1
+  const currentMonth = currentFullDate.getMonth() + 1
 
-  const currentWeekStart = new Date(currentFullDate)
-  currentWeekStart.setDate(currentDate - currentDay)
-  const weekDate = new Date(currentWeekStart)
-  const weekData = {}
+  const firstDayOfNextMonth = new Date(currentYear, currentMonth, 1)
+  const lastDateOfCurrentMonth = new Date(firstDayOfNextMonth - 1).getDate()
+  const monthData = {}
 
-  for(let i = 0; i < 7; i++) {
-    const currentWeekDateWithMonth = weekDate.getDate()+'-'+ (weekDate.getMonth()+1)
-    weekDate.setDate(weekDate.getDate() + 1)
+  for(let i = 1; i < lastDateOfCurrentMonth; i++) {
+    const date = new Date(currentYear, currentMonth - 1, i)
+    const currentDateWithMonth = date.getDate() + '-' + (date.getMonth() + 1)
+
     let noOfTimers = getRandomNumber(0, 10)
     let noOfFocusTimers = getRandomNumber(0, noOfTimers)
     let start = getRandomNumber(0, 720)
@@ -505,10 +504,10 @@ export const setSampleHistory = async () => {
       start+= duration + getRandomNumber(0, 60)
       currentDayData.push({startTime: startTime, endTime: endTime, duration: duration, type: type})
     }
-    weekData[currentWeekDateWithMonth] = currentDayData
+    monthData[currentDateWithMonth] = currentDayData
   }
 
-  const sampleHistory = {[currentYear] : weekData}
+  const sampleHistory = {[currentYear] : monthData}
 
   console.log(sampleHistory)
 

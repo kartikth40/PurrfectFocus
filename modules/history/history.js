@@ -14,15 +14,21 @@ const weekCount = document.querySelector('.week-count')
 const monthCount = document.querySelector('.month-count')
 const yearCount = document.querySelector('.year-count')
 const graphContainer = document.querySelector('.graph-container')
-const YAxis = document.querySelector('.y-axis')
-const bars = document.querySelectorAll('.bar')
+const weekYAxis = document.querySelector('.week-y-axis')
+const monthYAxis = document.querySelector('.month-y-axis')
+const weekBars = document.querySelectorAll('.week-bar')
+const monthBarsContainer = document.querySelector('.month-bars-container')
 const sampleHistoryBtn = document.querySelector('.sample-history-btn')
 const sampleHistoryRemoveBtn = document.querySelector('.sample-history-btn-remove')
 const deleteHistoryBtn = document.querySelector('.delete-btn')
-const isSampleElement = document.querySelector('.is-sample')
-const noDataElement = document.querySelector('.no-data')
+const isSampleElement = document.querySelectorAll('.is-sample')
+const noWeekDataElement = document.querySelector('.week-no-data')
+const noMonthDataElement = document.querySelector('.month-no-data')
 
-graphContainer.style.setProperty('--bars', bars.length)
+const WEEK = 'week'
+const MONTH = 'month'
+const YEAR = 'year'
+
 const maxHeightOfGraph = graphContainer.clientHeight - 20
 let maxValueOfGraph = 0
 
@@ -35,11 +41,14 @@ sampleHistoryRemoveBtn.addEventListener('click', async () => {
   const currentYear = currentFullDate.getFullYear().toString()
   await setSessionStorage({[currentYear]: null})
   await init()
+  setSimpleMetrics(0, todayCount)
 })
 
 deleteHistoryBtn.addEventListener('click', async () => {
-  await clearHistory()
-  await init()
+  if(confirm("Are you sure you wanna delete all of your history?")) {
+    await clearHistory()
+    await init()
+  }
 })
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -69,35 +78,35 @@ async function init() {
   const sampleHistory = sampleHistoryObj[currentYear]
   const historyObj = await getLocalStorage(currentYear)
   const history = sampleHistory ?? historyObj[currentYear]
-  console.log(history)
 
   if(!sampleHistory){ 
     sampleHistoryBtn.classList.add('active')
     sampleHistoryRemoveBtn.classList.remove('active')
-    isSampleElement.classList.remove('active')
+    isSampleElement.forEach(el => el.classList.remove('active'))
   }
   else {
     sampleHistoryBtn.classList.remove('active')
     sampleHistoryRemoveBtn.classList.add('active')
-    isSampleElement.classList.add('active')
+    isSampleElement.forEach(el => el.classList.add('active'))
   }
 
   if(!history) {
-    noDataElement.classList.add('active')
-    setSimpleMetrics(0, todayCount)
+    noWeekDataElement.classList.add('active')
+    noMonthDataElement.classList.add('active')
   } else {
-    noDataElement.classList.remove('active')
+    noWeekDataElement.classList.remove('active')
+    noMonthDataElement.classList.remove('active')
   }
 
   // weekly metrics
   const currentWeekStart = new Date(currentFullDate)
   currentWeekStart.setDate(currentDate - currentDay)
-  console.log(currentWeekStart)
   const weekDate = new Date(currentWeekStart)
   const thisWeekData = {}
+  let weeklySum = 0
 
   if (history) {
-    for (let i = 0; i < 7; i++) {
+    for (let i = 1; i <= 7; i++) {
       const currentWeekDateWithMonth = weekDate.getDate() + '-' + (weekDate.getMonth() + 1)
       weekDate.setDate(weekDate.getDate() + 1)
       if (currentWeekDateWithMonth in history) {
@@ -116,41 +125,59 @@ async function init() {
           breaks,
         }
 
-        if (i === currentDay) {
+
+        if (i-1 === currentDay) {
           setSimpleMetrics(focus, todayCount)
         }
-        maxValueOfGraph = Math.max(Math.ceil(focus), maxValueOfGraph)
+        weeklySum += focus
+        maxValueOfGraph = Math.max(focus, maxValueOfGraph)
       }
     }
   }
-  setYAxis()
-  setWeeklyBars(thisWeekData)
+
+    setYAxis(maxValueOfGraph)
+    setBars(thisWeekData, maxValueOfGraph)
+    setSimpleMetrics(weeklySum, weekCount, true)
+
 
   // monthly metrics
   const firstDayOfNextMonth = new Date(currentYear, currentMonth, 1)
   const lastDateOfCurrentMonth = new Date(firstDayOfNextMonth - 1).getDate()
+  let totalDaysInCurrentMonth = 0
+  const thisMonthData = {}
   let monthlySum = 0
-  for (let i = 1; i <= lastDateOfCurrentMonth; i++) {
-    const date = new Date(currentYear, currentMonth - 1, i)
-    const currentDateWithMonth = date.getDate() + '-' + (date.getMonth() + 1)
+  if(history) {
+    for (let i = 1; i <= lastDateOfCurrentMonth; i++) {
+      totalDaysInCurrentMonth++
+      const date = new Date(currentYear, currentMonth - 1, i)
+      const currentDateWithMonth = date.getDate() + '-' + (date.getMonth() + 1)
 
-    if (!history) break
-    if (currentDateWithMonth in history) {
-      const data = history[currentDateWithMonth]
-      let focus = 0
-      let breaks = 0
-      data.forEach((d) => {
-        if (d.type === 'focus') focus += d.duration
-        else if (d.type === 'break') breaks += d.duration
-      })
+      if (!history) break
+      if (currentDateWithMonth in history) {
+        const data = history[currentDateWithMonth]
+        let focus = 0
+        let breaks = 0
+        data.forEach((d) => {
+          if (d.type === 'focus') focus += d.duration
+          else if (d.type === 'break') breaks += d.duration
+        })
 
-      focus = parseFloat((focus / 60).toFixed(2))
-      breaks = parseFloat((breaks / 60).toFixed(2))
+        focus = parseFloat((focus / 60).toFixed(2))
+        breaks = parseFloat((breaks / 60).toFixed(2))
+        thisMonthData[i] = {
+          focus,
+          breaks,
+        }
 
-      monthlySum += focus
+        monthlySum += focus
+        maxValueOfGraph = Math.max(focus, maxValueOfGraph)
+      }
     }
   }
-  setSimpleMetrics(monthlySum, monthCount, true)
+    setYAxis(maxValueOfGraph, MONTH)
+    setBars(thisMonthData, maxValueOfGraph, MONTH, totalDaysInCurrentMonth)
+    setSimpleMetrics(monthlySum, monthCount, true)
+
 
   // yearly metrics
   let yearlySum = 0
@@ -180,16 +207,31 @@ async function init() {
   setSimpleMetrics(yearlySum, yearCount, true)
 }
 
-function setWeeklyBars(thisWeekData) {
-  let totalFocusInThisWeek = 0
-  bars.forEach((bar, i) => {
-    const value = thisWeekData[i] ? thisWeekData[i].focus : 0
-    totalFocusInThisWeek += value
-    bar.setAttribute('data-value', getTimeFormatted(value))
-    const height = (maxHeightOfGraph / maxValueOfGraph) * value
-    bar.style.height = (value === 0 ? value : height) + 'px'
-  })
-  setSimpleMetrics(totalFocusInThisWeek, weekCount)
+function setBars(data, maxValueOfGraph, range=WEEK, totalDays=7) {
+  let totalFocus = 0
+  let bars = weekBars
+  if(range===MONTH) {
+    bars = []
+    monthBarsContainer.innerHTML = ''
+    for(let i = 1; i <= totalDays; i++) {
+      const bar = document.createElement('span')
+      bar.classList.add('bar', 'month-bar')
+      bar.setAttribute('data-x', i)
+      bar.style.setProperty("--bar-height", 0 + 'px')
+      monthBarsContainer.appendChild(bar)
+      bars.push(bar)
+    }
+  }
+  setTimeout(() => {
+    bars.forEach((bar, i) => {
+      const value = data[i+1] ? data[i+1].focus : 0
+      totalFocus += value
+      bar.setAttribute('data-value', getTimeFormatted(value))
+      const height = (maxHeightOfGraph / maxValueOfGraph) * value
+      bar.style.setProperty("--bar-height", (height) + 'px')
+    })
+    
+  }, 50);
 }
 
 function setSimpleMetrics(time, elementToSetUpon, onlyHrs = false) {
@@ -224,20 +266,29 @@ function getTimeFormatted(floatHours, onlyHrs = false) {
   return formattedString
 }
 
-function setYAxis() {
-  let step = Math.ceil(maxValueOfGraph / 7)
-  if(maxValueOfGraph % 2 === 1) maxValueOfGraph++
+function setYAxis(maxValueOfGraph, range=WEEK) {
+  console.log(maxValueOfGraph)
+  maxValueOfGraph = Math.round(maxValueOfGraph)
+  let n = 7
+  let axis = null
+  if(range === WEEK) {
+    axis = weekYAxis
+  }
+  else if(range === MONTH) {
+    axis = monthYAxis
+  }
+  let step = Math.ceil(maxValueOfGraph / n)
   if (step % 2 === 1) step++
-  if (maxValueOfGraph < 5) step = 0.5
+  if (maxValueOfGraph < 2) step = 0.5
   else if (step < 10 && step > 2) step = 5
   else if (step > 10) step = 10
-  YAxis.innerHTML = ''
+  axis.innerHTML = ''
   if(maxValueOfGraph === 0) return
   for (let i = maxValueOfGraph; i >= 0; i = i - step) {
     const marker = document.createElement('span')
     marker.classList.add('marker')
     marker.innerText = i
-    YAxis.appendChild(marker)
+    axis.appendChild(marker)
   }
 }
 
@@ -245,9 +296,7 @@ function setYAxis() {
 function loadSettings(settings) {
   if(settings?.theme === LIGHTTHEME) {
     container.classList.add('light')
-    console.log('light me')
   }else {
     container.classList.remove('light')
-    console.log('dark me')
   } 
 }

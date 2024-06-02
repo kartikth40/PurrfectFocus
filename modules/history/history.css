@@ -20,6 +20,7 @@
 }
 
 .metrics-container{
+  margin: 50px;
   padding: 30px 50px;
   border: 2px dashed var(--secondary-color-1);
   width: max-content;
@@ -139,12 +140,13 @@ p{
   font-size: 15px;
 }
 
-.week-metrics-container{
+.sub-metrics-container{
   margin-top: 50px;
 }
 .graph-container{
-  --bars: 07;
-  min-width: 100%;
+  --week-bars: 7;
+  --month-bars: 30;
+  width: 60vw;
   height: 50vh;
   padding: 5px;
   position: relative;
@@ -172,6 +174,7 @@ p{
   display: inline-block;
 }
 .no-data {
+  pointer-events: none;
   position: absolute;
   top: 40%;
   left: 50%;
@@ -248,7 +251,6 @@ p{
   pointer-events: none;
 }
 .bars-container {
-  --bar-height: 0;
   width: 100%;
   display: flex;
   align-items: flex-end;
@@ -258,13 +260,19 @@ p{
   position: relative;
 }
 .bar {
-  width: calc(50vw / var(--bars));
+  --bar-height: 0;
   height: var(--bar-height);
   border-radius: 5px;
   background: var(--primary-color);
   border: 2px solid var(--primary-color);
   position: relative;
   transition: 1s height cubic-bezier(.56,0.36,0.3,1.26), .2s box-shadow cubic-bezier(.56,0.36,0.3,1.26);
+}
+.week-bar {
+  width: calc(50vw / var(--week-bars));
+}
+.month-bar {
+  width: calc(50vw / var(--month-bars));
 }
 .container.light .bar {
   background: linear-gradient(45deg, #000, var(--primary-color));
@@ -279,8 +287,12 @@ p{
   transform: translateX(-50%);
 }
 .bar::before{
+  z-index: 10;
   position: absolute;
   content: attr(data-value);
+  padding-inline: 3px;
+  background-color: transparent;
+  border-radius: 5px;
   white-space: nowrap;
   font-size: 12px;
   top: -10px;
@@ -292,10 +304,11 @@ p{
   transition: .25s all;
 }
 .container.light .bar::before{
+  background-color: var(--secondary-color-2);
   color: black;
 }
 .bar:hover::before{
-  top: -22px;
+  top: -25px;
   opacity: 1;
 }
 .bar:hover {
