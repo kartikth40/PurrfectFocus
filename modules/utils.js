@@ -474,43 +474,41 @@ export const setSampleHistory = async () => {
   const currentFullDate = new Date()
   const currentYear = currentFullDate.getFullYear().toString()
   const currentMonth = currentFullDate.getMonth() + 1
-
-  const firstDayOfNextMonth = new Date(currentYear, currentMonth, 1)
-  const lastDateOfCurrentMonth = new Date(firstDayOfNextMonth - 1).getDate()
+  let sampleHistory = {}
   const monthData = {}
+  for(let m = 5; m >= 0; m--) {
+    const firstDayOfNextMonth = new Date(currentYear, currentMonth-m, 1)
+    const lastDateOfCurrentMonth = new Date(firstDayOfNextMonth - 1).getDate()
+    for(let i = 1; i <= lastDateOfCurrentMonth; i++) {
+      const date = new Date(currentYear, currentMonth - m - 1, i)
+      const currentDateWithMonth = date.getDate() + '-' + (date.getMonth() + 1)
 
-  for(let i = 1; i < lastDateOfCurrentMonth; i++) {
-    const date = new Date(currentYear, currentMonth - 1, i)
-    const currentDateWithMonth = date.getDate() + '-' + (date.getMonth() + 1)
-
-    let noOfTimers = getRandomNumber(0, 10)
-    let noOfFocusTimers = getRandomNumber(0, noOfTimers)
-    let start = getRandomNumber(0, 720)
-    const currentDayData = []
-    for(let j = 0; j < noOfTimers; j++) {
-      let type = 'focus' 
-      let duration = 0
-      let startTime = "00:00"
-      let endTime = "00:00"
-      if(noOfFocusTimers > 0 && getRandomNumber(0,1) === 0) {
-        noOfFocusTimers--
-        duration = getRandomNumber(10, 180)
-      }else {
-        type = 'break'
-        duration = getRandomNumber(5, 120)
+      let noOfTimers = getRandomNumber(0, 10)
+      let noOfFocusTimers = getRandomNumber(0, noOfTimers)
+      let start = getRandomNumber(0, 720)
+      const currentDayData = []
+      for(let j = 0; j < noOfTimers; j++) {
+        let type = 'focus' 
+        let duration = 0
+        let startTime = "00:00"
+        let endTime = "00:00"
+        if(noOfFocusTimers > 0 && getRandomNumber(0,1) === 0) {
+          noOfFocusTimers--
+          duration = getRandomNumber(10, 180)
+        }else {
+          type = 'break'
+          duration = getRandomNumber(5, 120)
+        }
+        startTime = getTimeString(start)
+        endTime = getTimeString(start+duration)
+        start+= duration + getRandomNumber(0, 60)
+        currentDayData.push({startTime: startTime, endTime: endTime, duration: duration, type: type})
       }
-      startTime = getTimeString(start)
-      endTime = getTimeString(start+duration)
-      start+= duration + getRandomNumber(0, 60)
-      currentDayData.push({startTime: startTime, endTime: endTime, duration: duration, type: type})
+      monthData[currentDateWithMonth] = currentDayData
     }
-    monthData[currentDateWithMonth] = currentDayData
   }
-
-  const sampleHistory = {[currentYear] : monthData}
-
+  sampleHistory ={[currentYear] : monthData}
   console.log(sampleHistory)
-
   await setSessionStorage(sampleHistory)
 }
 

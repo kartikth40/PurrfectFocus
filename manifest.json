@@ -1,6 +1,6 @@
 {
     "name": "Purrfect Focus: Pomodoro Timer",
-    "version": "0.1.6",
+    "version": "0.1.7",
     "description": "Purrfect Focus: Cat & Pomodoro Pal",
     "permissions": ["storage", "notifications"],
     "background": {

@@ -25,10 +25,10 @@ const deleteHistoryBtn = document.querySelector('.delete-btn')
 const isSampleElement = document.querySelectorAll('.is-sample')
 const noWeekDataElement = document.querySelector('.week-no-data')
 const noMonthDataElement = document.querySelector('.month-no-data')
-const streakGraph = document.querySelector('.month-streak-graph')
-const streakMonthContainers = document.querySelectorAll('.streak-month-container')
-const streakMonthLabels = document.querySelectorAll('.streak-month-label')
-const streakMonthBoxesContainers = document.querySelectorAll('.streak-month-boxes-container')
+const calendarGraph = document.querySelector('.month-calendar-graph')
+const calendarMonthContainers = document.querySelectorAll('.calendar-month-container')
+const calendarMonthLabels = document.querySelectorAll('.calendar-month-label')
+const calendarMonthBoxesContainers = document.querySelectorAll('.calendar-month-boxes-container')
 const totalFocusCountEle = document.querySelector('.total-focus-count')
 
 const WEEK = 'week'
@@ -141,7 +141,7 @@ async function init() {
     }
   }
 
-    setYAxis(maxValueOfGraph)
+    // setYAxis(maxValueOfGraph)
     setBars(thisWeekData, maxValueOfGraph)
     setSimpleMetrics(weeklySum, weekCount, true)
 
@@ -180,10 +180,10 @@ async function init() {
       }
     }
   }
-  setYAxis(maxValueOfGraph, MONTH)
+  // setYAxis(maxValueOfGraph, MONTH)
   setBars(thisMonthData, maxValueOfGraph, MONTH, totalDaysInCurrentMonth)
   setSimpleMetrics(monthlySum, monthCount, true)
-  makeStreakGraph(currentYear, currentDate, currentMonth, currentDay, history)
+  makecalendarGraph(currentYear, currentDate, currentMonth, currentDay, history)
   
   
   // yearly metrics
@@ -274,31 +274,30 @@ function getTimeFormatted(floatHours, onlyHrs = false) {
   return formattedString
 }
 
-function setYAxis(maxValueOfGraph, range=WEEK) {
-  console.log(maxValueOfGraph)
-  maxValueOfGraph = Math.round(maxValueOfGraph)
-  let n = 7
-  let axis = null
-  if(range === WEEK) {
-    axis = weekYAxis
-  }
-  else if(range === MONTH) {
-    axis = monthYAxis
-  }
-  let step = Math.ceil(maxValueOfGraph / n)
-  if (step % 2 === 1) step++
-  if (maxValueOfGraph < 2) step = 0.5
-  else if (step < 10 && step > 2) step = 5
-  else if (step > 10) step = 10
-  axis.innerHTML = ''
-  if(maxValueOfGraph === 0) return
-  for (let i = maxValueOfGraph; i >= 0; i = i - step) {
-    const marker = document.createElement('span')
-    marker.classList.add('marker')
-    marker.innerText = i
-    axis.appendChild(marker)
-  }
-}
+// function setYAxis(maxValueOfGraph, range=WEEK) {
+//   maxValueOfGraph = Math.round(maxValueOfGraph)
+//   let n = 7
+//   let axis = null
+//   if(range === WEEK) {
+//     axis = weekYAxis
+//   }
+//   else if(range === MONTH) {
+//     axis = monthYAxis
+//   }
+//   let step = Math.ceil(maxValueOfGraph / n)
+//   if (step % 2 === 1) step++
+//   if (maxValueOfGraph < 2) step = 0.5
+//   else if (step < 10 && step > 2) step = 5
+//   else if (step > 10) step = 10
+//   axis.innerHTML = ''
+//   if(maxValueOfGraph === 0) return
+//   for (let i = maxValueOfGraph; i >= 0; i = i - step) {
+//     const marker = document.createElement('span')
+//     marker.classList.add('marker')
+//     marker.innerText = i
+//     axis.appendChild(marker)
+//   }
+// }
 
 
 function loadSettings(settings) {
@@ -309,30 +308,30 @@ function loadSettings(settings) {
   } 
 }
 
-function makeStreakGraph(currentYear, currentDate, currentMonth, currentDay, history) {
+function makecalendarGraph(currentYear, currentDate, currentMonth, currentDay, history) {
   let maxPomos = 0
   const boxes = []
   let totalFocus = 0
   let totalFocusCount = 0
-  streakMonthContainers.forEach((container, index) => {
-    const m = streakMonthContainers.length - index - 1
+  calendarMonthContainers.forEach((container, index) => {
+    calendarMonthBoxesContainers[index].innerHTML = ''
+    const m = calendarMonthContainers.length - index - 1
     const firstDayOfCurrentMonth = new Date(currentYear, currentMonth-m-1, 1).getDay() === 0 ? 6: new Date(currentYear, currentMonth-m-1, 1).getDay() - 1
     const firstDateOfCurrentMonth = new Date(currentYear, currentMonth-m, 1).getDate()
     const firstDayOfNextMonth = new Date(currentYear, currentMonth-m, 1)
     const lastDateOfCurrentMonth = new Date(firstDayOfNextMonth - 1).getDate()
     let noOfDaysThisMonth = lastDateOfCurrentMonth - firstDateOfCurrentMonth + 1 + firstDayOfCurrentMonth
     const currentMonthString = new Date(currentYear, currentMonth-m-1, 1).toLocaleString('default', { month: 'long' })
-    streakMonthLabels[index].innerText = currentMonthString
-    let streakCol = document.createElement('div')
-    streakCol.classList.add('streak-col', 'first-streak-col')
+    calendarMonthLabels[index].innerText = currentMonthString
+    let calendarCol = document.createElement('div')
+    calendarCol.classList.add('calendar-col', 'first-calendar-col')
     for(let i = 1; i <= noOfDaysThisMonth; i++) {
       if(firstDayOfCurrentMonth >= i) continue
       const currentDate = new Date(currentYear, currentMonth-m-1, i - firstDayOfCurrentMonth)
       const currentDateWithMonth = currentDate.getDate()+'-'+(currentDate.getMonth()+1)
-      const streakBox = document.createElement('span')
-      streakBox.classList.add('streak-box')
+      const calendarBox = document.createElement('span')
+      calendarBox.classList.add('calendar-box')
       if(currentDateWithMonth in history) {
-        streakBox.classList.add('fill')
         const data = history[currentDateWithMonth]
         let focus = 0
         let breaks = 0
@@ -350,24 +349,30 @@ function makeStreakGraph(currentYear, currentDate, currentMonth, currentDay, his
         totalFocusCount++
         breaks = parseFloat((breaks).toFixed(2))
         maxPomos = Math.max(maxPomos, focus)
-        streakBox.setAttribute('data-value', `${focusCount} pomodoro${focusCount > 1 ? 's': ''} of total ${focus} minutes on ${formatDateWithOrdinal(currentDate)}`)
-        boxes.push({"ele": streakBox, "focus": focus})
+        if(focus !== 0) {
+          calendarBox.setAttribute('data-value', `${focusCount} pomodoro${focusCount > 1 ? 's': ''} of total ${focus > 60 ? Math.floor(focus/60) + ' hrs and ' + focus%60 + ' mins': focus +  ' mins'} on ${formatDateWithOrdinal(currentDate)}`)
+          boxes.push({"ele": calendarBox, "focus": focus})
+        } else {
+          calendarBox.setAttribute('data-value', `0 pomodoros on ${formatDateWithOrdinal(currentDate)}`)
+          boxes.push({"ele": calendarBox, "focus": 0})
+        }
+      } else {
+        calendarBox.setAttribute('data-value', `0 pomodoros on ${formatDateWithOrdinal(currentDate)}`)
+        boxes.push({"ele": calendarBox, "focus": 0})
       }
-      else {
-        streakBox.setAttribute('data-value', `0 pomodoros on ${formatDateWithOrdinal(currentDate)}`)
-        boxes.push({"ele": streakBox, "focus": 0})
-      }
-      streakCol.appendChild(streakBox)
+      calendarCol.appendChild(calendarBox)
       if(i%7 == 0 || i === noOfDaysThisMonth) {
-        streakMonthBoxesContainers[index].appendChild(streakCol)
-        streakCol = document.createElement('div')
-        streakCol.classList.add('streak-col')
+        calendarMonthBoxesContainers[index].appendChild(calendarCol)
+        calendarCol = document.createElement('div')
+        calendarCol.classList.add('calendar-col')
       }
     }
   }) 
 
-  totalFocusCountEle.innerText = `${totalFocusCount} (${parseFloat((totalFocus/60).toFixed(2))} hrs)`
+  const totalFocusString = parseFloat((totalFocus/60).toFixed(2)) > 24 ? Math.floor(parseFloat((totalFocus/60).toFixed(2))/24) + ' days and ' + Math.floor(parseFloat((totalFocus/60).toFixed(2))%24) + ' hrs' : parseFloat((totalFocus/60).toFixed(2)) + ' hrs'
+  totalFocusCountEle.innerText = `${totalFocusCount} (${totalFocusString})`
 
+  let delayIndex = 0
   boxes.forEach(box => {
     const {ele: boxEle, focus} = box
     let shade = ''
@@ -383,7 +388,11 @@ function makeStreakGraph(currentYear, currentDate, currentMonth, currentDay, his
     } else {
       shade = '--primary-color-4'
     }
-    if(shade) boxEle.style.backgroundColor = `var(${shade})`
-    console.log(shade)
+    if(shade) {
+      setTimeout(() => {
+        boxEle.style.backgroundColor = `var(${shade})`
+      }, 10*delayIndex);
+      delayIndex++
+    }
   })
 }

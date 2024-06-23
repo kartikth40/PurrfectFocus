@@ -123,21 +123,36 @@ p{
 .sub-metrics-container{
   margin-top: 50px;
 }
+.graphs {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.row {
+  display: flex;
+  gap: 20px;
+}
 .graph-container{
+  border: 2px solid var(--primary-color);
+  box-shadow: 5px 5px 0 0 var(--primary-color);
+  border-radius: 5px;
   --week-bars: 7;
   --month-bars: 30;
-  width: 60vw;
-  height: 50vh;
-  padding: 5px;
+  width: 100%;
+  height: 200px;
+  padding: 10px 20px;
   position: relative;
+  margin-top: 30px;
+  padding-bottom: 30px;
 }
 .is-sample{
   font-family: "Poppins", sans-serif;
   font-weight: 700;
   display: none;
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 2;
   font-size: 15px;
   color: var(--primary-color);
@@ -152,6 +167,7 @@ p{
 }
 .is-sample.active {
   display: inline-block;
+  box-shadow: inset 5px 10px 60px var(--secondary-color-1), inset -5px 5px 70px var(--primary-color);
 }
 .no-data {
   pointer-events: none;
@@ -243,20 +259,22 @@ p{
   --bar-height: 0;
   height: var(--bar-height);
   border-radius: 5px;
-  background: var(--primary-color);
-  border: 2px solid var(--primary-color);
+  background: var(--primary-color-2);
+  border: 2px solid var(--primary-color-2);
   position: relative;
   transition: 1s height cubic-bezier(.56,0.36,0.3,1.26), .2s box-shadow cubic-bezier(.56,0.36,0.3,1.26);
 }
 .week-bar {
-  width: calc(50vw / var(--week-bars));
+  width: calc(20vw / var(--week-bars));
 }
 .month-bar {
-  width: calc(50vw / var(--month-bars));
+  width: calc(20vw / var(--month-bars));
+  font-weight: 500;
+  font-size: 12px;
 }
 .container.light .bar {
-  background: linear-gradient(45deg, #000, var(--primary-color));
-  box-shadow: inset 20px 20px 50px var(--primary-color), 0 0 0 #000;
+  background: linear-gradient(45deg, var(--primary-color-4), var(--primary-color-3));
+  box-shadow: inset 20px 20px 50px var(--primary-color-2), 0 0 0 var(--primary-color-4);
   border: none;
 }
 .bar::after{
@@ -296,61 +314,67 @@ p{
 }
 
 .container.light .bar:hover {
-  box-shadow: inset 20px 20px 20px var(--primary-color), 0 -3px 0 3px #000;
+  box-shadow: inset 20px 20px 20px var(--primary-color-2), 0 -3px 0 3px #000;
 }
 
-.streak-container {
+.calendar-metrics-container {
+  width: 100%;
+}
+.calendar-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  height: max-content;
+  width: 100%;
+  padding-block: 10px;
 }
-.streak-graph-container {
+.calendar-graph-container {
   display: flex;
   align-items: flex-end;
   justify-content: center;
   gap: 10px;
 }
 
-.month-streak-week-label-container {
+.month-calendar-week-label-container {
   font-size: 10px;
   margin-bottom: 2.5px;
   font-weight: 400;
 }
 
-.month-streak-graph {
+.month-calendar-graph {
   display: flex;
   gap: 4px;
   justify-content: center;
 }
 
-.streak-month-label {
+.calendar-month-label {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.streak-month-container > div{
+.calendar-month-container > div{
   display: flex;
   gap: 3px;
   border-radius: 5px;
   padding: 5px;
 }
 
-.streak-col {
+.calendar-col {
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
-.first-streak-col {
+.first-calendar-col {
   justify-content: end;
 }
 
-.streak-box {
+.calendar-box {
   position: relative;
-  width: 12px;
-  height: 12px;
+  width: 20px;
+  height: 20px;
   background-color: #ffffff1f;
   border-radius: 2px;
   font-size: 7px;
@@ -360,15 +384,11 @@ p{
   font-weight: 500;
 }
 
-.container.light .streak-box {
+.container.light .calendar-box {
   background-color: #00000018;
 }
 
-.streak-box.fill {
-  background-color: var(--primary-color);
-}
-
-.streak-box::after {
+.calendar-box::after {
   pointer-events: none;
   opacity: 0;
   transform: scale(0);
@@ -385,23 +405,27 @@ p{
   z-index: 10;
   border-radius: 5px;
 }
-.container.light .streak-box::after {
+.container.light .calendar-box::after {
   background-color: var(--primary-color);
   color: var(--secondary-color-1);
 }
-.streak-box:hover {
+.calendar-box:hover {
   border: 1px solid var(--secondary-color-1);
 }
-.container.light .streak-box:hover {
+.container.light .calendar-box:hover {
   border: 1px solid black;
 }
-.streak-box:hover::after{
+.calendar-box:hover::after{
   opacity: 1;
   transform: scale(1);
   top: -30px;
 }
+.container.light .calendar-box:hover::after{
+  background-color: var(--primary-color-2);
+}
 
-.streak-legend {
+.calendar-legend {
+  margin-top: 20px;
   font-size: 14px;
   font-weight: 400;
   display: flex;
@@ -412,12 +436,13 @@ p{
 
 .legend-box {
   display: inline-block;
-  width: 12px;
-  height: 12px;
+  width: 20px;
+  height: 20px;
   border-radius: 2px;
 }
 
 footer {
+  margin-top: 50px;
   font-size: 15px;
   font-weight: 200;
 }
