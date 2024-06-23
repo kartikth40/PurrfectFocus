@@ -12,7 +12,12 @@ body{
   padding: 0;
   height: max-content;
   font-family: "Poppins", sans-serif;
-  --primary-color: rgb(97, 47, 121);
+  --primary-color: rgb(72, 36, 88);
+  --primary-color-1: rgb(84, 49, 102);
+  --primary-color-2: rgb(133, 81, 160);
+  --primary-color-3: rgb(214, 127, 255);
+  --primary-color-4: rgb(205, 98, 255);
+
   --secondary-color-1: rgb(232, 227, 255);
   --secondary-color-2: rgb(197, 184, 255); 
   font-size: 12px;
@@ -87,7 +92,7 @@ p {
   transform: translate(-50%, 0) scale(1);
 }
 .tab-btn {
-  width: 25px;
+  width: 45px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -99,6 +104,11 @@ p {
   color: var(--secondary-color-1);
   font-family: "Poppins", sans-serif;
   background-color: var(--secondary-color-2);
+  transition: .15s all;
+}
+.tab-btn:hover {
+  transform: scale(1.5);
+  border-radius: 30px;
 }
 .container.light .tab-btn {
   color: #000;
@@ -140,9 +150,9 @@ p {
   white-space: nowrap;
   font-weight: normal;
   letter-spacing: 1px;
-  font-size: 10px;
+  font-size: 9px;
   position: absolute;
-  top: -105%;
+  top: -115%;
   left: 50%;
   padding: 2px 5px;
   border-radius: 5px;
@@ -154,6 +164,19 @@ p {
   transform: translate(-50%, 50%) scale(0);
   color: black;
   background-color: var(--secondary-color-1);
+}
+.tooltip::before {
+  position: absolute;
+  content: '';
+  border: transparent 5px solid;
+  border-top: var(--secondary-color-2) 5px solid;
+  bottom: -9.5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.container.light .tooltip::before {
+  border-top: var(--primary-color) 5px solid;
 }
 
 input, select {

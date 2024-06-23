@@ -70,6 +70,9 @@
 .delete-btn:hover {
   box-shadow: 0 0 0 var(--primary-color);
 }
+.container.light .sample-history-btn:hover {
+  color: black;
+}
 .container.light .delete-btn {
   background-color: var(--primary-color);
   color: var(--secondary-color-1);
@@ -89,30 +92,7 @@
 .sample-history-btn-remove.active {
   display: inline-block;
 }
-.metrics-container::before{
-  content: '';
-  position: absolute;
-  width: 50%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background-color: var(--primary-color);
-  top: -10%;
-  right: -10%;
-  filter: blur(150px);
-  z-index: -1;
-}
-.metrics-container::after{
-  content: '';
-  position: absolute;
-  width: 50%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background-color: var(--primary-color);
-  bottom: 10%;
-  left: -20%;
-  filter: blur(150px);
-  z-index: -1;
-}
+
 
 p{
   margin-block: 3px;  
@@ -317,4 +297,131 @@ p{
 
 .container.light .bar:hover {
   box-shadow: inset 20px 20px 20px var(--primary-color), 0 -3px 0 3px #000;
+}
+
+.streak-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.streak-graph-container {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+}
+
+.month-streak-week-label-container {
+  font-size: 10px;
+  margin-bottom: 2.5px;
+  font-weight: 400;
+}
+
+.month-streak-graph {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.streak-month-label {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.streak-month-container > div{
+  display: flex;
+  gap: 3px;
+  border-radius: 5px;
+  padding: 5px;
+}
+
+.streak-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.first-streak-col {
+  justify-content: end;
+}
+
+.streak-box {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  background-color: #ffffff1f;
+  border-radius: 2px;
+  font-size: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+}
+
+.container.light .streak-box {
+  background-color: #00000018;
+}
+
+.streak-box.fill {
+  background-color: var(--primary-color);
+}
+
+.streak-box::after {
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0);
+  position: absolute;
+  top: -10px;
+  content: attr(data-value);
+  transition: .25s all;
+  background-color: var(--secondary-color-1);
+  color: var(--primary-color);
+  padding: 5px 7px;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  z-index: 10;
+  border-radius: 5px;
+}
+.container.light .streak-box::after {
+  background-color: var(--primary-color);
+  color: var(--secondary-color-1);
+}
+.streak-box:hover {
+  border: 1px solid var(--secondary-color-1);
+}
+.container.light .streak-box:hover {
+  border: 1px solid black;
+}
+.streak-box:hover::after{
+  opacity: 1;
+  transform: scale(1);
+  top: -30px;
+}
+
+.streak-legend {
+  font-size: 14px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.legend-box {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+footer {
+  font-size: 15px;
+  font-weight: 200;
+}
+
+footer>a{
+  font-weight: 700;
 }

@@ -524,3 +524,23 @@ export async function clearHistory() {
 export function getRandomNumber(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+
+function getOrdinalSuffix(day) {
+  if (day > 3 && day < 21) return 'th'
+  switch (day % 10) {
+      case 1: return 'st'
+      case 2: return 'nd'
+      case 3: return 'rd'
+      default: return 'th'
+  }
+}
+
+export function formatDateWithOrdinal(date) {
+  const day = date.toLocaleString('default', { day: 'numeric' })
+  const month = date.toLocaleString('default', { month: 'long' })
+  const year = date.toLocaleString('default', { year: 'numeric' })
+
+  const ordinalSuffix = getOrdinalSuffix(day)
+
+  return `${month} ${day}${ordinalSuffix}, ${year}`
+}

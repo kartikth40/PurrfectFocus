@@ -1,5 +1,6 @@
 import {
   clearHistory,
+  formatDateWithOrdinal,
   getLocalStorage,
   getSessionStorage,
   getSyncStorage,
@@ -24,6 +25,11 @@ const deleteHistoryBtn = document.querySelector('.delete-btn')
 const isSampleElement = document.querySelectorAll('.is-sample')
 const noWeekDataElement = document.querySelector('.week-no-data')
 const noMonthDataElement = document.querySelector('.month-no-data')
+const streakGraph = document.querySelector('.month-streak-graph')
+const streakMonthContainers = document.querySelectorAll('.streak-month-container')
+const streakMonthLabels = document.querySelectorAll('.streak-month-label')
+const streakMonthBoxesContainers = document.querySelectorAll('.streak-month-boxes-container')
+const totalFocusCountEle = document.querySelector('.total-focus-count')
 
 const WEEK = 'week'
 const MONTH = 'month'
@@ -151,7 +157,7 @@ async function init() {
       totalDaysInCurrentMonth++
       const date = new Date(currentYear, currentMonth - 1, i)
       const currentDateWithMonth = date.getDate() + '-' + (date.getMonth() + 1)
-
+      
       if (!history) break
       if (currentDateWithMonth in history) {
         const data = history[currentDateWithMonth]
@@ -161,24 +167,25 @@ async function init() {
           if (d.type === 'focus') focus += d.duration
           else if (d.type === 'break') breaks += d.duration
         })
-
+        
         focus = parseFloat((focus / 60).toFixed(2))
         breaks = parseFloat((breaks / 60).toFixed(2))
         thisMonthData[i] = {
           focus,
           breaks,
         }
-
+        
         monthlySum += focus
         maxValueOfGraph = Math.max(focus, maxValueOfGraph)
       }
     }
   }
-    setYAxis(maxValueOfGraph, MONTH)
-    setBars(thisMonthData, maxValueOfGraph, MONTH, totalDaysInCurrentMonth)
-    setSimpleMetrics(monthlySum, monthCount, true)
-
-
+  setYAxis(maxValueOfGraph, MONTH)
+  setBars(thisMonthData, maxValueOfGraph, MONTH, totalDaysInCurrentMonth)
+  setSimpleMetrics(monthlySum, monthCount, true)
+  makeStreakGraph(currentYear, currentDate, currentMonth, currentDay, history)
+  
+  
   // yearly metrics
   let yearlySum = 0
   for (let month = 0; month < 12; month++) {
@@ -205,6 +212,7 @@ async function init() {
     }
   }
   setSimpleMetrics(yearlySum, yearCount, true)
+
 }
 
 function setBars(data, maxValueOfGraph, range=WEEK, totalDays=7) {
@@ -299,4 +307,83 @@ function loadSettings(settings) {
   }else {
     container.classList.remove('light')
   } 
+}
+
+function makeStreakGraph(currentYear, currentDate, currentMonth, currentDay, history) {
+  let maxPomos = 0
+  const boxes = []
+  let totalFocus = 0
+  let totalFocusCount = 0
+  streakMonthContainers.forEach((container, index) => {
+    const m = streakMonthContainers.length - index - 1
+    const firstDayOfCurrentMonth = new Date(currentYear, currentMonth-m-1, 1).getDay() === 0 ? 6: new Date(currentYear, currentMonth-m-1, 1).getDay() - 1
+    const firstDateOfCurrentMonth = new Date(currentYear, currentMonth-m, 1).getDate()
+    const firstDayOfNextMonth = new Date(currentYear, currentMonth-m, 1)
+    const lastDateOfCurrentMonth = new Date(firstDayOfNextMonth - 1).getDate()
+    let noOfDaysThisMonth = lastDateOfCurrentMonth - firstDateOfCurrentMonth + 1 + firstDayOfCurrentMonth
+    const currentMonthString = new Date(currentYear, currentMonth-m-1, 1).toLocaleString('default', { month: 'long' })
+    streakMonthLabels[index].innerText = currentMonthString
+    let streakCol = document.createElement('div')
+    streakCol.classList.add('streak-col', 'first-streak-col')
+    for(let i = 1; i <= noOfDaysThisMonth; i++) {
+      if(firstDayOfCurrentMonth >= i) continue
+      const currentDate = new Date(currentYear, currentMonth-m-1, i - firstDayOfCurrentMonth)
+      const currentDateWithMonth = currentDate.getDate()+'-'+(currentDate.getMonth()+1)
+      const streakBox = document.createElement('span')
+      streakBox.classList.add('streak-box')
+      if(currentDateWithMonth in history) {
+        streakBox.classList.add('fill')
+        const data = history[currentDateWithMonth]
+        let focus = 0
+        let breaks = 0
+        let focusCount = 0
+        data.forEach((d) => {
+          if (d.type === 'focus') {
+            focus += d.duration
+            focusCount++
+          }
+          else if (d.type === 'break') breaks += d.duration
+        })
+        
+        focus = parseFloat((focus).toFixed(2))
+        totalFocus += focus
+        totalFocusCount++
+        breaks = parseFloat((breaks).toFixed(2))
+        maxPomos = Math.max(maxPomos, focus)
+        streakBox.setAttribute('data-value', `${focusCount} pomodoro${focusCount > 1 ? 's': ''} of total ${focus} minutes on ${formatDateWithOrdinal(currentDate)}`)
+        boxes.push({"ele": streakBox, "focus": focus})
+      }
+      else {
+        streakBox.setAttribute('data-value', `0 pomodoros on ${formatDateWithOrdinal(currentDate)}`)
+        boxes.push({"ele": streakBox, "focus": 0})
+      }
+      streakCol.appendChild(streakBox)
+      if(i%7 == 0 || i === noOfDaysThisMonth) {
+        streakMonthBoxesContainers[index].appendChild(streakCol)
+        streakCol = document.createElement('div')
+        streakCol.classList.add('streak-col')
+      }
+    }
+  }) 
+
+  totalFocusCountEle.innerText = `${totalFocusCount} (${parseFloat((totalFocus/60).toFixed(2))} hrs)`
+
+  boxes.forEach(box => {
+    const {ele: boxEle, focus} = box
+    let shade = ''
+    const value = focus/maxPomos * 100
+    if(value === 0) {
+      shade = ''
+    } else if (value < 25) {
+      shade = '--primary-color-1'
+    } else if (value < 50) {
+      shade = '--primary-color-2'
+    } else if (value < 75) {
+      shade = '--primary-color-3'
+    } else {
+      shade = '--primary-color-4'
+    }
+    if(shade) boxEle.style.backgroundColor = `var(${shade})`
+    console.log(shade)
+  })
 }
