@@ -1,9 +1,11 @@
 import {
   clearHistory,
+  exportData,
   formatDateWithOrdinal,
   getLocalStorage,
   getSessionStorage,
   getSyncStorage,
+  importData,
   setSampleHistory,
   setSessionStorage,
 } from '../utils.js'
@@ -22,6 +24,8 @@ const monthBarsContainer = document.querySelector('.month-bars-container')
 const sampleHistoryBtn = document.querySelector('.sample-history-btn')
 const sampleHistoryRemoveBtn = document.querySelector('.sample-history-btn-remove')
 const deleteHistoryBtn = document.querySelector('.delete-btn')
+const exportDataBtn = document.querySelector('.export-btn')
+const importDataBtn = document.querySelector('.import-btn')
 const isSampleElement = document.querySelectorAll('.is-sample')
 const noWeekDataElement = document.querySelector('.week-no-data')
 const noMonthDataElement = document.querySelector('.month-no-data')
@@ -35,7 +39,7 @@ const WEEK = 'week'
 const MONTH = 'month'
 const YEAR = 'year'
 
-const maxHeightOfGraph = graphContainer.clientHeight - 20
+const maxHeightOfGraph = monthBarsContainer.clientHeight - 15
 let maxValueOfGraph = 0
 
 sampleHistoryBtn.addEventListener('click', async () => {
@@ -55,6 +59,13 @@ deleteHistoryBtn.addEventListener('click', async () => {
     await clearHistory()
     await init()
   }
+})
+exportDataBtn.addEventListener('click', async () => {
+  await exportData()
+})
+
+importDataBtn.addEventListener('click', async () => {
+  await importData()
 })
 
 document.addEventListener('DOMContentLoaded', async () => {

@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Settings - Purrfect Focus</title>
+  <title>Settings - Purrfect Pomodoro Timer</title>
+  <link rel="shortcut icon" href="../../assets/cat_small.png">
   <link rel="stylesheet" href="../global.css">
   <link rel="stylesheet" href="./settings.css">
   <script type="module" defer src="./settings.js"></script>
@@ -52,6 +53,11 @@
                       <option value="Yiiiiii">Yiiiiii</option>
                       <option value="Extreme Alarm Clock">Extreme Alarm Clock!!!</option>
                     </select>
+                </label>
+                <label class="auto-start" for="focus-desktop-auto-start">
+                  <input type='hidden' value='off' name='focusDesktopAutoStart'>
+                  <input type="checkbox" class="auto-start-checkbox" checked name="focusDesktopAutoStart" id="focus-desktop-auto-start"> 
+                  Auto Start after a break
                 </label>
               </div>
             </div>
@@ -119,6 +125,11 @@
                       <option value="Extreme Alarm Clock">Extreme Alarm Clock!!!</option>
                     </select>
                 </label>
+                <label class="auto-start" for="short-break-desktop-auto-start">
+                  <input type='hidden' value='off' name='shortBreakDesktopAutoStart'>
+                  <input type="checkbox" class="auto-start-checkbox" checked name="shortBreakDesktopAutoStart" id="short-break-desktop-auto-start"> 
+                  Auto Start
+                </label>
               </div>
             </div>
         
@@ -176,6 +187,11 @@
                       <option value="Yiiiiii">Yiiiiii</option>
                       <option value="Extreme Alarm Clock">Extreme Alarm Clock!!!</option>
                     </select>
+                </label>
+                <label class="auto-start" for="long-break-desktop-auto-start">
+                  <input type='hidden' value='off' name='longBreakDesktopAutoStart'>
+                  <input type="checkbox" class="auto-start-checkbox" checked name="longBreakDesktopAutoStart" id="long-break-desktop-auto-start"> 
+                  Auto Start
                 </label>
               </div>
             </div>

@@ -13,14 +13,21 @@ body{
   height: max-content;
   font-family: "Poppins", sans-serif;
   --primary-color: rgb(72, 36, 88);
-  --primary-color-1: rgb(84, 49, 102);
-  --primary-color-2: rgb(133, 81, 160);
-  --primary-color-3: rgb(204, 116, 245);
-  --primary-color-4: rgb(220, 145, 255);
+  --primary-color-1: rgb(72, 36, 88);     /* Dark purple */
+  --primary-color-2: rgb(115, 58, 142);   /* Deep purple */
+  --primary-color-3: rgb(158, 80, 195);   /* Rich purple */
+  --primary-color-4: rgb(201, 102, 248);    /* Light purple */ 
 
   --secondary-color-1: rgb(232, 227, 255);
   --secondary-color-2: rgb(197, 184, 255); 
   font-size: 12px;
+}
+
+.container.light {
+  --primary-color-1: rgb(214, 204, 255);        /* Base color: Dark purple */
+  --primary-color-2: rgb(204, 187, 255);      /* Soft purple */
+  --primary-color-3: rgb(180, 167, 240);     /* Lavender */
+  --primary-color-4: rgb(181, 155, 255); 
 }
 
 ::-webkit-scrollbar {
@@ -100,7 +107,7 @@ p {
   text-align: center;
   user-select: none;
   padding: 2px 5px;
-  border: none;
+  border:none;
   cursor: pointer;
   color: var(--secondary-color-1);
   font-family: "Poppins", sans-serif;
@@ -113,6 +120,10 @@ p {
 }
 .container.light .tab-btn {
   color: #000;
+}
+.container.light .tab-btn:hover {
+  z-index: 10;
+  box-shadow: 0 0 1px var(--primary-color);
 }
 
 .tab:not(.active) {

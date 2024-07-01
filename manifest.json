@@ -1,7 +1,7 @@
 {
-    "name": "Purrfect Focus: Pomodoro Timer",
-    "version": "0.1.7",
-    "description": "Purrfect Focus: Cat & Pomodoro Pal",
+    "name": "Purrfect Pomodoro Timer: Productivity & Time Management",
+    "version": "1.0.3",
+    "description": "Purrfect Pomodoro Timer",
     "permissions": ["storage", "notifications"],
     "background": {
       "service_worker": "modules/background.js",
@@ -14,7 +14,7 @@
         "24": "assets/cat_small.png",
         "32": "assets/cat_small.png"
       },
-      "default_title": "Purrfect Focus",
+      "default_title": "Purrfect Pomodoro Timer",
       "default_popup": "modules/popup/popup.html"
     },
     "manifest_version": 3

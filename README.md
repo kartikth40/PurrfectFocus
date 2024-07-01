@@ -1,2 +1,2 @@
-# PurrfectFocus
-Purrfect Focus: Cat &amp; Pomodoro Pal
+# PurrfectPomodoro Timer
+Purrfect Pomodoro Timer: Cat &amp; Pomodoro Pal

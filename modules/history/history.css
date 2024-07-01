@@ -50,7 +50,8 @@
 }
 .sample-history-btn, 
 .sample-history-btn-remove,
-.delete-btn {
+.delete-btn, 
+.footer-btns button {
   border-radius: 5px;
   font-size: 10px;
   font-weight: 400;
@@ -67,15 +68,12 @@
 }
 .sample-history-btn:hover, 
 .sample-history-btn-remove:hover,
-.delete-btn:hover {
+.delete-btn:hover,
+.footer-btns button:hover {
   box-shadow: 0 0 0 var(--primary-color);
 }
 .container.light .sample-history-btn:hover {
   color: black;
-}
-.container.light .delete-btn {
-  background-color: var(--primary-color);
-  color: var(--secondary-color-1);
 }
 .sample-history-btn {
   display: none;
@@ -91,6 +89,10 @@
 .sample-history-btn.active, 
 .sample-history-btn-remove.active {
   display: inline-block;
+}
+.sample-history-btn-remove.active {
+  font-weight: 700;
+  font-size: 15px;
 }
 
 
@@ -164,6 +166,7 @@ p{
 }
 .container.light .is-sample{
   color: #000;
+  box-shadow: inset 5px 10px 60px var(--secondary-color-1), inset -5px 5px 70px var(--primary-color-4), 0 0 10px var(--primary-color-2);
 }
 .is-sample.active {
   display: inline-block;
@@ -259,10 +262,11 @@ p{
   --bar-height: 0;
   height: var(--bar-height);
   border-radius: 5px;
-  background: var(--primary-color-2);
-  border: 2px solid var(--primary-color-2);
+  background: linear-gradient(45deg, var(--primary-color-2), var(--primary-color-3));
+  /* border: 2px solid var(--primary-color-2); */
   position: relative;
   transition: 1s height cubic-bezier(.56,0.36,0.3,1.26), .2s box-shadow cubic-bezier(.56,0.36,0.3,1.26);
+  box-sizing: border-box;
 }
 .week-bar {
   width: calc(20vw / var(--week-bars));
@@ -283,9 +287,15 @@ p{
   bottom: -25px;
   left: 50%;
   transform: translateX(-50%);
+  font-weight: 400;
 }
+.bar:hover::after {
+  font-weight: bolder;
+  bottom: -27px;
+}
+
 .bar::before{
-  z-index: 10;
+  z-index: 1;
   position: absolute;
   content: attr(data-value);
   padding-inline: 3px;
@@ -303,6 +313,7 @@ p{
 }
 .container.light .bar::before{
   background-color: var(--secondary-color-2);
+  box-shadow: 0 0 10px var(--primary-color-2);
   color: black;
 }
 .bar:hover::before{
@@ -314,7 +325,7 @@ p{
 }
 
 .container.light .bar:hover {
-  box-shadow: inset 20px 20px 20px var(--primary-color-2), 0 -3px 0 3px #000;
+  box-shadow: inset 20px 20px 20px var(--primary-color-2), 0 -1px 0 1px #000;
 }
 
 .calendar-metrics-container {
@@ -337,9 +348,12 @@ p{
 }
 
 .month-calendar-week-label-container {
-  font-size: 10px;
-  margin-bottom: 2.5px;
-  font-weight: 400;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.month-calendar-week-label-container > div {
+  margin-bottom: 5px;
 }
 
 .month-calendar-graph {
@@ -385,7 +399,7 @@ p{
 }
 
 .container.light .calendar-box {
-  background-color: #00000018;
+  background-color: #00000009;
 }
 
 .calendar-box::after {
@@ -421,7 +435,8 @@ p{
   top: -30px;
 }
 .container.light .calendar-box:hover::after{
-  background-color: var(--primary-color-2);
+  background-color: var(--primary-color-4);
+  color: var(--primary-color);
 }
 
 .calendar-legend {
@@ -447,6 +462,24 @@ footer {
   font-weight: 200;
 }
 
-footer>a{
+.footer-btns {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  height: max-content;
+  margin-bottom: 20px;
+}
+
+.footer-btns button {
+  font-size: 14px;
+}
+.container.light .footer-btns button:hover {
+  background-color: transparent;
+  color: var(--primary-color);
+}
+
+.feedback-line a{
   font-weight: 700;
 }

@@ -337,7 +337,7 @@ export async function createNewTabForHistory() {
     } 
 }
 
-export async function resumeTimer (callback) {
+export async function resumeTimer(callback) {
   const result = await getSessionStorage([TIMERKEY, NEWTABTIMERIDKEY])
   chrome.action.setBadgeText({text: getTimeString(result.timer.time)})
   chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'})
@@ -352,6 +352,7 @@ export async function resumeTimer (callback) {
     print.log(timerObj)
     try {
       await chrome.runtime.sendMessage({startTimer: true, timer: timerObj})
+      console.log('message sent')
     }catch{e=>console.warn(e)}
     if(typeof callback === 'function') {
       try{callback()}
@@ -388,17 +389,20 @@ export const setNewSettings = (formValues) => {
       focus: {
         time: parseInt(formValues.focusDuration),
         notifications: formValues.focusDesktopNotification === 'on' ? true : false,
+        autoStart: formValues.focusDesktopAutoStart === 'on' ? true : false,
         sound: formValues.focusTimerSound
       },
       shortBreak: {
         time: parseInt(formValues.shortBreakDuration),
         notifications: formValues.shortBreakDesktopNotification === 'on' ? true : false,
+        autoStart: formValues.shortBreakDesktopAutoStart === 'on' ? true : false,
         sound: formValues.shortBreakTimerSound
       },
       longBreak: {
         time: parseInt(formValues.longBreakDuration),
         interval: formValues.longBreakInterval,
         notifications: formValues.longBreakDesktopNotification === 'on' ? true : false,
+        autoStart: formValues.longBreakDesktopAutoStart === 'on' ? true : false,
         sound: formValues.longBreakTimerSound
       },
       timerStyle: formValues.timerStyle,
@@ -411,13 +415,16 @@ export const setFormValues = (data) => {
   const settings = data.settings
   document.querySelector('#focus-duration-input').value = settings.focus.time
   document.querySelector('#focus-desktop-notification').checked = settings.focus.notifications
+  document.querySelector('#focus-desktop-auto-start').checked = settings.focus.autoStart
   document.querySelector('#focus-timer-sound').value = settings.focus.sound
   document.querySelector('#short-break-duration-input').value = settings.shortBreak.time
   document.querySelector('#short-break-desktop-notification').checked = settings.shortBreak.notifications
+  document.querySelector('#short-break-desktop-auto-start').checked = settings.shortBreak.autoStart
   document.querySelector('#short-break-timer-sound').value = settings.shortBreak.sound
   document.querySelector('#interval-input').value = settings.longBreak.interval
   document.querySelector('#long-break-duration-input').value = settings.longBreak.time
   document.querySelector('#long-break-desktop-notification').checked = settings.longBreak.notifications
+  document.querySelector('#long-break-desktop-auto-start').checked = settings.longBreak.autoStart
   document.querySelector('#long-break-timer-sound').value = settings.longBreak.sound
   document.querySelector('#cat-walk-style').checked = settings.timerStyle === CATWALKTIMERSTYLE 
   document.querySelector('#simple-style').checked = settings.timerStyle === SIMPLETIMERSTYLE || settings.timerStyle !== CATWALKTIMERSTYLE
@@ -541,4 +548,73 @@ export function formatDateWithOrdinal(date) {
   const ordinalSuffix = getOrdinalSuffix(day)
 
   return `${month} ${day}${ordinalSuffix}, ${year}`
+}
+
+export async function exportData() {
+  const jsonData = JSON.stringify(await getLocalStorage(null), null, 4)
+  const blob = new Blob([jsonData], { type: 'application/json' })
+  const link = document.createElement('a')
+  link.download = 'purrfect_history_data.json'
+  link.href = window.URL.createObjectURL(blob)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
+export async function importData() {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'application/json'
+
+  input.onchange = async (event) => {
+    const file = event.target.files[0]
+    if (!file) {
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      try {
+        const newData = JSON.parse(e.target.result)
+        const existingData = await getLocalStorage(null)
+        const mergedData = mergeHistory(existingData, newData)
+        await setLocalStorage(mergedData)
+        alert('Data imported successfully!')
+      } catch (error) {
+        alert('Failed to import data. Invalid JSON format.')
+      }
+    }
+    reader.readAsText(file)
+  }
+  input.click()
+}
+
+function mergeHistory(existingData, newData) {
+  for (const key in newData) {
+    if (!existingData[key]) {
+      existingData[key] = newData[key]
+    } else if(isObject(existingData[key])) {
+        for (const date in newData[key]) {
+          if (!existingData[key][date]) {
+            existingData[key][date] = newData[key][date]
+          } else {
+            for (const entry of newData[key][date]) {
+              if (!existingData[key][date].some(existingEntry =>
+                existingEntry.startTime === entry.startTime &&
+                existingEntry.endTime === entry.endTime &&
+                existingEntry.type === entry.type &&
+                existingEntry.duration === entry.duration
+              )) {
+                existingData[key][date].push(entry);
+              }
+            }
+          }
+        }
+    }
+  }
+  return existingData
+}
+
+function isObject(value) {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

@@ -5,7 +5,7 @@ export const HELPERLOGTYPE = false
 export const STACKTRACELOGTYPE = false
 
 // env
-export const DEVELOPING = true
+export const DEVELOPING = false
 
 // status
 export const STOP = 'Stop'
@@ -46,17 +46,20 @@ export const defaultSettings = {
     focus: {
       time: defaultFocusTime,
       notifications: true,
+      autoStart: false,
       sound: 'Dong'
     },
     shortBreak: {
       time: defaultShortBreakTime,
       notifications: true,
+      autoStart: false,
       sound: 'Ding Dong'
     },
     longBreak: {
       time: defaultLongBreakTime,
       interval: defaultInterval.toString(),
       notifications: true,
+      autoStart: false,
       sound: 'Computer Magic'
     },
     timerStyle: SIMPLETIMERSTYLE,

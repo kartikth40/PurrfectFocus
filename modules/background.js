@@ -11,7 +11,8 @@ import {
   getTimeString, 
   setLocalStorage,
   getLocalStorage,
-  getCurrentTimeString} from "./utils.js"
+  getCurrentTimeString,
+  resumeTimer} from "./utils.js"
 import {
   PLAY,
   PAUSE,
@@ -45,6 +46,9 @@ async function startActualTimer(timer) {
   }
   await setSessionStorage(timerObj)
   startTimer(chrome, timer?.time ?? 0)
+  try{
+    await chrome.runtime.sendMessage({timerStarted: true})
+  }catch{e=>console.warn(e)}
 }
 
 async function pauseActualTimer(timer) {
@@ -75,9 +79,6 @@ async function stopActualTimer() {
 chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
   if (request.startTimer) {
     await startActualTimer(request?.timer)
-    try{
-      await chrome.runtime.sendMessage({timerStarted: true})
-    }catch{e=>console.warn(e)}
   }
   else if(request.pauseTimer) {
     await pauseActualTimer(request?.timer)
@@ -107,6 +108,7 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
 
 const startTimer =(chrome, timer) => {
   // if(DEVELOPING) timer = 5
+  timer = 5
   print.log('start timer started 🌠')
   let intId = setInterval(async function() {
     timer--
@@ -121,11 +123,7 @@ const startTimer =(chrome, timer) => {
       const timerObj = await getSessionStorage(TIMERKEY)
       const settingsObj = await getSyncStorage(SETTINGSKEY)
       const currentDateWithMonth = currentDate.getDate()+'-'+(currentDate.getMonth()+1)
-      console.log(currentDateWithMonth)
-      console.log(oldHistory)
       if(!oldHistory) {
-        console.log('we dont have old history')
-        console.log(oldHistory, currentDate.getFullYear().toString())
         let startTime = timerObj?.timer?.startTime
         let endTime = getCurrentTimeString()
         let duration = timerObj?.timer?.type === SHORTBREAK 
@@ -133,7 +131,6 @@ const startTimer =(chrome, timer) => {
                         : timerObj?.timer?.type === LONGBREAK
                         ? settingsObj?.settings?.longBreak?.time
                         : settingsObj?.settings?.focus?.time
-        console.log(startTime, endTime, duration)
         await setLocalStorage({[currentDate.getFullYear().toString()]: {
           [currentDateWithMonth]: [{
             startTime: startTime,
@@ -144,7 +141,6 @@ const startTimer =(chrome, timer) => {
           } 
         })
       } else if(oldHistory[currentDateWithMonth]){
-        console.log('we have old history and even todays')
         let startTime = timerObj?.timer?.startTime
         let endTime = getCurrentTimeString()
         let duration = timerObj?.timer?.type === SHORTBREAK 
@@ -152,7 +148,6 @@ const startTimer =(chrome, timer) => {
                         : timerObj?.timer?.type === LONGBREAK
                         ? settingsObj?.settings?.longBreak?.time
                         : settingsObj?.settings?.focus?.time
-        console.log(startTime, endTime, duration)
         let todaysPomodoros = oldHistory[currentDateWithMonth]
         todaysPomodoros.push({
           startTime: startTime,
@@ -167,7 +162,6 @@ const startTimer =(chrome, timer) => {
         })
       }
       else {
-        console.log('we have old history')
         let startTime = timerObj?.timer?.startTime
         let endTime = getCurrentTimeString()
         let duration = timerObj?.timer?.type === SHORTBREAK 
@@ -175,7 +169,6 @@ const startTimer =(chrome, timer) => {
                         : timerObj?.timer?.type === LONGBREAK
                         ? settingsObj?.settings?.longBreak?.time
                         : settingsObj?.settings?.focus?.time
-        console.log(startTime, endTime, duration)
         await setLocalStorage({[currentDate.getFullYear().toString()]: {
           [currentDateWithMonth]: [{
             startTime: startTime,
@@ -186,17 +179,6 @@ const startTimer =(chrome, timer) => {
             ...oldHistory
           } 
         })
-        console.log({[currentDate.getFullYear().toString()]: {
-          [currentDateWithMonth]: [{
-            startTime: startTime,
-            endTime: endTime,
-            duration: duration,
-            type: timerObj?.timer?.type === FOCUS ? 'focus' : 'break'
-            }],
-            ...oldHistory
-          } 
-        })
-        console.log(await getLocalStorage("2024"))
       }
       await setNextTimer(true)
     }else {
@@ -238,13 +220,14 @@ const setNextTimer = async (timerEnds=false) => {
   print.helper('NEXT ID  => ' + intervalId.getState())
   clearInterval(intervalId.getState())
   chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'})
+  let timerToStore = {}
   if(status?.timer?.type === FOCUS) {
     const interval = parseInt(settingsObj?.settings?.longBreak?.interval)
     if(!interval || (interval && status.timer.counts < interval)) {
       nextTimer = SHORTBREAK
       print.log('next is short break')
       chrome.action.setBadgeText({text: getTimeString(settingsObj.settings.shortBreak.time * 60)})
-      const timerToStore = {
+      timerToStore = {
         timer: {
           time: settingsObj.settings.shortBreak.time * 60,
           status: PAUSE,
@@ -258,7 +241,7 @@ const setNextTimer = async (timerEnds=false) => {
       nextTimer = LONGBREAK
       print.log('next is long break')
       chrome.action.setBadgeText({text: getTimeString(settingsObj.settings.longBreak.time * 60)})
-      const timerToStore = {
+      timerToStore = {
         timer: {
           time: settingsObj.settings.longBreak.time * 60,
           status: PAUSE,
@@ -276,7 +259,7 @@ const setNextTimer = async (timerEnds=false) => {
     prevTimer = SHORTBREAK
     print.log('next is focus after short one')
     chrome.action.setBadgeText({text: getTimeString(settingsObj.settings.focus.time * 60)})
-    const timerToStore = {
+    timerToStore = {
       timer: {
         time: settingsObj.settings.focus.time * 60,
         status: PAUSE,
@@ -293,7 +276,7 @@ const setNextTimer = async (timerEnds=false) => {
     prevTimer = LONGBREAK
     print.log('next is focus after long one')
     chrome.action.setBadgeText({text: getTimeString(settingsObj.settings.focus.time * 60)})
-    const timerToStore = {
+    timerToStore = {
       timer: {
         time: settingsObj.settings.focus.time * 60,
         status: PAUSE,
@@ -309,5 +292,12 @@ const setNextTimer = async (timerEnds=false) => {
   }
   if(timerEnds) {
     await createNotification(prevTimer, nextTimer)
+  }
+  if(nextTimer === SHORTBREAK && settingsObj?.settings?.shortBreak?.autoStart) {
+    await startActualTimer(timerToStore.timer)
+  } else if(nextTimer === LONGBREAK && settingsObj?.settings?.longBreak?.autoStart) {
+    await startActualTimer(timerToStore.timer)
+  } else if(nextTimer === FOCUS && settingsObj?.settings?.focus?.autoStart) {
+    await startActualTimer(timerToStore.timer)
   }
 }
