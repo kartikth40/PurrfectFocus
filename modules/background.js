@@ -108,7 +108,6 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
 
 const startTimer =(chrome, timer) => {
   // if(DEVELOPING) timer = 5
-  timer = 5
   print.log('start timer started 🌠')
   let intId = setInterval(async function() {
     timer--

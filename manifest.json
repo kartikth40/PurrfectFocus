@@ -1,6 +1,6 @@
 {
     "name": "Purrfect Pomodoro Timer: Productivity & Time Management",
-    "version": "1.0.3",
+    "version": "1.0.5",
     "description": "Purrfect Pomodoro Timer",
     "permissions": ["storage", "notifications"],
     "background": {
@@ -9,13 +9,21 @@
     },
     "action": {
       "default_icon": {
-        "48": "assets/cat_small.png",
-        "16": "assets/cat_small.png",
-        "24": "assets/cat_small.png",
-        "32": "assets/cat_small.png"
+        "16": "assets/cat.png",
+        "24": "assets/cat.png",
+        "32": "assets/cat.png",
+        "48": "assets/cat.png",
+        "128": "assets/cat.png"
       },
       "default_title": "Purrfect Pomodoro Timer",
       "default_popup": "modules/popup/popup.html"
+    },
+    "icons": {
+        "16": "assets/cat.png",
+        "24": "assets/cat.png",
+        "32": "assets/cat.png",
+        "48": "assets/cat.png",
+        "128": "assets/cat.png"
     },
     "manifest_version": 3
 }
