@@ -1,5 +1,5 @@
 import { LIGHTTHEME, SETTINGSKEY } from "../constants.js"
-import { changeTextTo, getSyncStorage, setFormValues, setNewSettings, timerDuration } from "../utils.js"
+import { changeTextTo, getSyncStorage, setFormValues, setNewSettings } from "../utils.js"
 
 const container = document.querySelector('.container')
 const notificationCheckboxes = document.querySelectorAll('.notification-checkbox')
@@ -96,6 +96,7 @@ settingsForm.addEventListener('submit', async (e) => {
   const formData = new FormData(e.target)
   const formValues = Object.fromEntries(formData)
   const settingsObj = setNewSettings(formValues)
+  await setBackList()
   const settings = settingsObj.settings
   if(settings?.theme === LIGHTTHEME) {
     container.classList.add('light')

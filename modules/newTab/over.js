@@ -12,6 +12,7 @@ const untilLongBreak = document.querySelector('.until-long')
 const stopBtn = document.querySelector('.focus-btn-stop')
 const nextBtn = document.querySelector('.focus-btn-next')
 const quote = document.querySelector('.quote')
+const breakActivitiesSuggestions = document.querySelector('.break-suggestions-container')
 const settingsBtn = document.querySelector('.settings-tab-btn')
 const historyBtn = document.querySelector('.history-tab-btn')
 
@@ -30,20 +31,22 @@ async function init() {
     untilLongBreak.style.visibility = 'visible'
     focusTitle.innerText = 'Start Focusing'
     focusBtnText.innerText = 'Start Focusing'
+    updateFocusQuote()
   }
   else if(timer.timer.type === SHORTBREAK) {
     untilLongBreak.style.visibility = 'visible'
     focusTitle.innerText = 'Take a Short Break'
     focusBtnText.innerText = 'Start Short Break'
+    updateBreakQuote()
   }else {
     untilLongBreak.style.visibility = 'hidden'
     focusTitle.innerText = 'Take a Long Break'
     focusBtnText.innerText = 'Start Long Break'
+    updateBreakQuote()
   }
   const store = await getSyncStorage(SETTINGSKEY)
   let settings = store.settings
   loadSettings(settings)
-  updateFocusQuote()
   const interval = parseInt(settings.longBreak.interval)
   const timerCounts = timer.timer ? timer.timer.counts : 0
   untilLongBreakCount.innerText = interval - timerCounts + 1
@@ -249,10 +252,14 @@ const resume = async (timer) => {
 }
 
 const updateBreakQuote = () => {
+  console.log('break')
+  breakActivitiesSuggestions.classList.add('show')
   quote.innerText = getRandomBreakQuote()
 }
 
 const updateFocusQuote = () => {
+  console.log('focus')
+  breakActivitiesSuggestions.classList.remove('show')
   quote.innerText = getRandomFocusQuote()
 }
 

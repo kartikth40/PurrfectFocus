@@ -11,8 +11,7 @@ import {
   getTimeString, 
   setLocalStorage,
   getLocalStorage,
-  getCurrentTimeString,
-  resumeTimer} from "./utils.js"
+  getCurrentTimeString} from "./utils.js"
 import {
   PLAY,
   PAUSE,
