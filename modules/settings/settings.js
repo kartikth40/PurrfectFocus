@@ -96,7 +96,6 @@ settingsForm.addEventListener('submit', async (e) => {
   const formData = new FormData(e.target)
   const formValues = Object.fromEntries(formData)
   const settingsObj = setNewSettings(formValues)
-  await setBackList()
   const settings = settingsObj.settings
   if(settings?.theme === LIGHTTHEME) {
     container.classList.add('light')
