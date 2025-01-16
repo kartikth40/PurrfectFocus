@@ -551,6 +551,9 @@ footer {
   font-weight: 500;
   background-color: var(--primary-color);
 }
+.container.light .delete-some-container::after {
+  background-color: var(--primary-color-1);
+}
 .delete-some-container.disable {
   display: none;
 }
