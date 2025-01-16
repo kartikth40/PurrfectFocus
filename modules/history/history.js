@@ -40,7 +40,6 @@ const calendarMonthBoxesContainers = document.querySelectorAll('.calendar-month-
 const totalFocusCountEle = document.querySelector('.total-focus-count')
 let sampleHistory;
 let sessions = []
-deleteSomeHistoryBtn.disabled = true
 
 
 const WEEK = 'week'
@@ -76,6 +75,16 @@ deleteDateInput.addEventListener('change', async () => {
 })
 deleteSomeHistoryBtn.addEventListener('click', async () => {
   if(!sessions.length) return
+  const checkboxes = container.querySelectorAll('.session-checkbox');
+  const checkedSessions = new Set;
+
+  checkboxes.forEach((checkbox) => {
+    if (checkbox.checked) {
+      const sessionId = checkbox.id;
+      checkedSessions.add(parseInt(sessionId));
+    }
+  });
+  if(!checkedSessions.length) return
   if(confirm("Are you sure you wanna delete selected sessions from your history?")) {
     const dateSelected = deleteDateInput.value
     if(dateSelected) {
@@ -83,16 +92,7 @@ deleteSomeHistoryBtn.addEventListener('click', async () => {
     let currentDateStr = dateSelected.split('-')[2][0] === '0' ? dateSelected.split('-')[2][1] : dateSelected.split('-')[2]
     let currentMonthStr = dateSelected.split('-')[1][0] === '0' ? dateSelected.split('-')[1][1] : dateSelected.split('-')[1]
     const currentDateInHistory = currentDateStr+'-'+currentMonthStr
-    const checkedSessions = new Set;
     const container = document.querySelector('.specific-sessions-container');
-    const checkboxes = container.querySelectorAll('.session-checkbox');
-  
-    checkboxes.forEach((checkbox) => {
-      if (checkbox.checked) {
-        const sessionId = checkbox.id;
-        checkedSessions.add(parseInt(sessionId));
-      }
-    });
     const oldHistoryObj = await getLocalStorage(currentYear)
     const oldHistory = oldHistoryObj[currentYear]
 
@@ -246,7 +246,7 @@ async function init() {
   // setYAxis(maxValueOfGraph, MONTH)
   setBars(thisMonthData, maxValueOfGraph, MONTH, totalDaysInCurrentMonth)
   setSimpleMetrics(monthlySum, monthCount, true)
-  makecalendarGraph(currentYear, currentDate, currentMonth, currentDay, history)
+  await makecalendarGraph(currentYear, currentDate, currentMonth, currentDay, history)
   
   
   // yearly metrics
@@ -285,6 +285,7 @@ async function init() {
 
   deleteDateInput.value = formattedDate;
   await generateSessionsToDelete()
+  if(!sessions.length) deleteSomeHistoryBtn.disabled = true
 }
 
 function setBars(data, maxValueOfGraph, range=WEEK, totalDays=7) {
@@ -355,14 +356,23 @@ function loadSettings(settings) {
   } 
 }
 
-function makecalendarGraph(currentYear, currentDate, currentMonth, currentDay, history) {
+async function makecalendarGraph(currentYear, currentDate, currentMonth, currentDay, history) {
   let maxPomos = 0
+  let prevYearHistory = undefined
   const boxes = []
   let totalFocus = 0
   let totalFocusCount = 0
-  calendarMonthContainers.forEach((container, index) => {
-    calendarMonthBoxesContainers[index].innerHTML = ''
+  for(const [index, conatainer] of calendarMonthContainers.entries()) {
     const m = calendarMonthContainers.length - index - 1
+    const previousYear = (new Date().getFullYear() - 1).toString()
+    const curDate = new Date(currentYear, currentMonth-m-1, 1)
+    if(curDate.getFullYear().toString() === previousYear) {
+      const historyObj = await getLocalStorage(previousYear)
+      if(historyObj && !prevYearHistory) {
+        prevYearHistory = historyObj[previousYear]
+      }
+    } else prevYearHistory = undefined
+    calendarMonthBoxesContainers[index].innerHTML = ''
     const firstDayOfCurrentMonth = new Date(currentYear, currentMonth-m-1, 1).getDay() === 0 ? 6: new Date(currentYear, currentMonth-m-1, 1).getDay() - 1
     const firstDateOfCurrentMonth = new Date(currentYear, currentMonth-m, 1).getDate()
     const firstDayOfNextMonth = new Date(currentYear, currentMonth-m, 1)
@@ -372,30 +382,37 @@ function makecalendarGraph(currentYear, currentDate, currentMonth, currentDay, h
     calendarMonthLabels[index].innerText = currentMonthString
     let calendarCol = document.createElement('div')
     calendarCol.classList.add('calendar-col', 'first-calendar-col')
+    const his = prevYearHistory || history
+    console.log('history->',his)
     for(let i = 1; i <= noOfDaysThisMonth; i++) {
       if(firstDayOfCurrentMonth >= i) continue
       const currentDate = new Date(currentYear, currentMonth-m-1, i - firstDayOfCurrentMonth)
       const currentDateWithMonth = currentDate.getDate()+'-'+(currentDate.getMonth()+1)
       const calendarBox = document.createElement('span')
       calendarBox.classList.add('calendar-box')
-      if(history && currentDateWithMonth in history) {
-        const data = history[currentDateWithMonth]
+      console.log(currentDateWithMonth)
+      if(his && currentDateWithMonth in his) {
+        const data = his[currentDateWithMonth]
+        console.log('data->',data)
         let focus = 0
         let breaks = 0
         let focusCount = 0
-        data.forEach((d) => {
+        for(const d of data) {
           if (d.type === 'focus') {
             focus += d.duration
             focusCount++
           }
           else if (d.type === 'break') breaks += d.duration
-        })
+        }
+        console.log(focus,breaks,focusCount)
         
         focus = parseFloat((focus).toFixed(2))
         totalFocus += focus
         totalFocusCount++
         breaks = parseFloat((breaks).toFixed(2))
         maxPomos = Math.max(maxPomos, focus)
+        console.log(focus,maxPomos)
+
         if(focus !== 0) {
           calendarBox.setAttribute('data-value', `${focusCount} pomodoro${focusCount > 1 ? 's': ''} of total ${focus > 60 ? Math.floor(focus/60) + ' hrs and ' + focus%60 + ' mins': focus +  ' mins'} on ${formatDateWithOrdinal(currentDate)}`)
           boxes.push({"ele": calendarBox, "focus": focus})
@@ -407,6 +424,7 @@ function makecalendarGraph(currentYear, currentDate, currentMonth, currentDay, h
         calendarBox.setAttribute('data-value', `0 pomodoros on ${formatDateWithOrdinal(currentDate)}`)
         boxes.push({"ele": calendarBox, "focus": 0})
       }
+      console.log(boxes.length)
       calendarCol.appendChild(calendarBox)
       if(i%7 == 0 || i === noOfDaysThisMonth) {
         calendarMonthBoxesContainers[index].appendChild(calendarCol)
@@ -414,7 +432,7 @@ function makecalendarGraph(currentYear, currentDate, currentMonth, currentDay, h
         calendarCol.classList.add('calendar-col')
       }
     }
-  }) 
+  }
 
   const totalFocusString = parseFloat((totalFocus/60).toFixed(2)) > 24 ? Math.floor(parseFloat((totalFocus/60).toFixed(2))/24) + ' days and ' + Math.floor(parseFloat((totalFocus/60).toFixed(2))%24) + ' hrs' : parseFloat((totalFocus/60).toFixed(2)) + ' hrs'
   totalFocusCountEle.innerText = `${totalFocusCount} (${totalFocusString})`
@@ -424,6 +442,7 @@ function makecalendarGraph(currentYear, currentDate, currentMonth, currentDay, h
     const {ele: boxEle, focus} = box
     let shade = ''
     const value = focus && maxPomos ? focus/maxPomos * 100 : 0
+    console.log(boxEle,value,focus,maxPomos)
     if(value === 0) {
       shade = ''
     } else if (value < 25) {
