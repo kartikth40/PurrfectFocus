@@ -105,7 +105,7 @@ deleteSomeHistoryBtn.addEventListener('click', async () => {
         } 
       })
     
-      generateSessionsToDelete()
+      await generateSessionsToDelete()
       }
     }
   }
@@ -284,6 +284,7 @@ async function init() {
   const formattedDate = `${year}-${month}-${day}`;
 
   deleteDateInput.value = formattedDate;
+  await generateSessionsToDelete()
 }
 
 function setBars(data, maxValueOfGraph, range=WEEK, totalDays=7) {

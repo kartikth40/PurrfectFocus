@@ -1,6 +1,6 @@
 {
     "name": "Purrfect Pomodoro Timer: Productivity & Time Management",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "description": "Purrfect Pomodoro Timer",
     "permissions": ["storage", "notifications"],
     "background": {
