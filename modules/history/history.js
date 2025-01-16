@@ -6,6 +6,7 @@ import {
   getSessionStorage,
   getSyncStorage,
   importData,
+  setLocalStorage,
   setSampleHistory,
   setSessionStorage,
 } from '../utils.js'
@@ -24,6 +25,9 @@ const monthBarsContainer = document.querySelector('.month-bars-container')
 const sampleHistoryBtn = document.querySelector('.sample-history-btn')
 const sampleHistoryRemoveBtn = document.querySelector('.sample-history-btn-remove')
 const deleteHistoryBtn = document.querySelector('.delete-btn')
+const deleteSomeContainer = document.querySelector('.delete-some-container')
+const deleteSomeHistoryBtn = document.querySelector('.delete-some-btn')
+const deleteDateInput = document.querySelector("#delete-date")
 const exportDataBtn = document.querySelector('.export-btn')
 const importDataBtn = document.querySelector('.import-btn')
 const isSampleElement = document.querySelectorAll('.is-sample')
@@ -34,6 +38,10 @@ const calendarMonthContainers = document.querySelectorAll('.calendar-month-conta
 const calendarMonthLabels = document.querySelectorAll('.calendar-month-label')
 const calendarMonthBoxesContainers = document.querySelectorAll('.calendar-month-boxes-container')
 const totalFocusCountEle = document.querySelector('.total-focus-count')
+let sampleHistory;
+let sessions = []
+deleteSomeHistoryBtn.disabled = true
+
 
 const WEEK = 'week'
 const MONTH = 'month'
@@ -58,6 +66,48 @@ deleteHistoryBtn.addEventListener('click', async () => {
   if(confirm("Are you sure you wanna delete all of your history?")) {
     await clearHistory()
     await init()
+  }
+})
+deleteDateInput.addEventListener('change', async () => {
+  await generateSessionsToDelete()
+  if(sessions && sessions.length !== 0) {
+    deleteSomeHistoryBtn.disabled = false
+  }else deleteSomeHistoryBtn.disabled = true
+})
+deleteSomeHistoryBtn.addEventListener('click', async () => {
+  if(!sessions.length) return
+  if(confirm("Are you sure you wanna delete selected sessions from your history?")) {
+    const dateSelected = deleteDateInput.value
+    if(dateSelected) {
+    let currentYear = dateSelected.substring(0,4)
+    let currentDateStr = dateSelected.split('-')[2][0] === '0' ? dateSelected.split('-')[2][1] : dateSelected.split('-')[2]
+    let currentMonthStr = dateSelected.split('-')[1][0] === '0' ? dateSelected.split('-')[1][1] : dateSelected.split('-')[1]
+    const currentDateInHistory = currentDateStr+'-'+currentMonthStr
+    const checkedSessions = new Set;
+    const container = document.querySelector('.specific-sessions-container');
+    const checkboxes = container.querySelectorAll('.session-checkbox');
+  
+    checkboxes.forEach((checkbox) => {
+      if (checkbox.checked) {
+        const sessionId = checkbox.id;
+        checkedSessions.add(parseInt(sessionId));
+      }
+    });
+    const oldHistoryObj = await getLocalStorage(currentYear)
+    const oldHistory = oldHistoryObj[currentYear]
+
+    let todaysPomodoros = oldHistory[currentDateInHistory]?.filter((pom,index) => !checkedSessions.has(index))
+  
+    if(todaysPomodoros !== undefined) {
+      oldHistory[currentDateInHistory] = [...todaysPomodoros]
+      await setLocalStorage({[currentYear]: {
+        ...oldHistory
+        } 
+      })
+    
+      generateSessionsToDelete()
+      }
+    }
   }
 })
 exportDataBtn.addEventListener('click', async () => {
@@ -92,7 +142,7 @@ async function init() {
   const currentDay =
     currentFullDate.getDay() === 0 ? 6 : currentFullDate.getDay() - 1
   const sampleHistoryObj = await getSessionStorage(currentYear)
-  const sampleHistory = sampleHistoryObj[currentYear]
+  sampleHistory = sampleHistoryObj[currentYear]
   const historyObj = await getLocalStorage(currentYear)
   const history = sampleHistory ?? historyObj[currentYear]
 
@@ -100,11 +150,13 @@ async function init() {
     sampleHistoryBtn.classList.add('active')
     sampleHistoryRemoveBtn.classList.remove('active')
     isSampleElement.forEach(el => el.classList.remove('active'))
+    deleteSomeContainer.classList.remove('disable')
   }
   else {
     sampleHistoryBtn.classList.remove('active')
     sampleHistoryRemoveBtn.classList.add('active')
     isSampleElement.forEach(el => el.classList.add('active'))
+    deleteSomeContainer.classList.add('disable')
   }
 
   if(!history) {
@@ -224,6 +276,14 @@ async function init() {
   }
   setSimpleMetrics(yearlySum, yearCount, true)
 
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
+  const day = String(today.getDate()).padStart(2, '0');
+
+  const formattedDate = `${year}-${month}-${day}`;
+
+  deleteDateInput.value = formattedDate;
 }
 
 function setBars(data, maxValueOfGraph, range=WEEK, totalDays=7) {
@@ -285,31 +345,6 @@ function getTimeFormatted(floatHours, onlyHrs = false) {
   return formattedString
 }
 
-// function setYAxis(maxValueOfGraph, range=WEEK) {
-//   maxValueOfGraph = Math.round(maxValueOfGraph)
-//   let n = 7
-//   let axis = null
-//   if(range === WEEK) {
-//     axis = weekYAxis
-//   }
-//   else if(range === MONTH) {
-//     axis = monthYAxis
-//   }
-//   let step = Math.ceil(maxValueOfGraph / n)
-//   if (step % 2 === 1) step++
-//   if (maxValueOfGraph < 2) step = 0.5
-//   else if (step < 10 && step > 2) step = 5
-//   else if (step > 10) step = 10
-//   axis.innerHTML = ''
-//   if(maxValueOfGraph === 0) return
-//   for (let i = maxValueOfGraph; i >= 0; i = i - step) {
-//     const marker = document.createElement('span')
-//     marker.classList.add('marker')
-//     marker.innerText = i
-//     axis.appendChild(marker)
-//   }
-// }
-
 
 function loadSettings(settings) {
   if(settings?.theme === LIGHTTHEME) {
@@ -342,7 +377,7 @@ function makecalendarGraph(currentYear, currentDate, currentMonth, currentDay, h
       const currentDateWithMonth = currentDate.getDate()+'-'+(currentDate.getMonth()+1)
       const calendarBox = document.createElement('span')
       calendarBox.classList.add('calendar-box')
-      if(currentDateWithMonth in history) {
+      if(history && currentDateWithMonth in history) {
         const data = history[currentDateWithMonth]
         let focus = 0
         let breaks = 0
@@ -387,7 +422,7 @@ function makecalendarGraph(currentYear, currentDate, currentMonth, currentDay, h
   boxes.forEach(box => {
     const {ele: boxEle, focus} = box
     let shade = ''
-    const value = focus/maxPomos * 100
+    const value = focus && maxPomos ? focus/maxPomos * 100 : 0
     if(value === 0) {
       shade = ''
     } else if (value < 25) {
@@ -405,5 +440,61 @@ function makecalendarGraph(currentYear, currentDate, currentMonth, currentDay, h
       }, 10*delayIndex);
       delayIndex++
     }
+  })
+}
+
+async function getSessions() {
+  const dateSelected = deleteDateInput.value
+  let currentYear = dateSelected.substring(0,4)
+  let currentDate = dateSelected.split('-')[2][0] === '0' ? dateSelected.split('-')[2][1] : dateSelected.split('-')[2]
+  let currentMonth = dateSelected.split('-')[1][0] === '0' ? dateSelected.split('-')[1][1] : dateSelected.split('-')[1]
+  const currentDateInHistory = currentDate+'-'+currentMonth
+
+  const history = (await getLocalStorage(currentYear))[currentYear]
+  if(history) sessions = history[currentDateInHistory]
+}
+
+async function generateSessionsToDelete() {
+  
+  await getSessions()
+  const container = document.querySelector(".specific-sessions-container");
+  container.innerHTML = null
+  sessions && sessions.forEach((session, id) => {
+
+    const label = document.createElement("label");
+    label.className = "session";
+    label.setAttribute("for", id);
+
+    const hiddenInput = document.createElement("input");
+    hiddenInput.type = "hidden";
+    hiddenInput.value = "off";
+    hiddenInput.name = id;
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "session-checkbox";
+    checkbox.checked = false;
+    checkbox.name = id;
+    checkbox.id = id;
+
+    const startSpan = document.createElement("span");
+    startSpan.className = "session-start";
+    startSpan.textContent = session.startTime;
+
+    const endSpan = document.createElement("span");
+    endSpan.className = "session-end";
+    endSpan.textContent = session.endTime;
+
+    const typeSpan = document.createElement("span");
+    typeSpan.className = "session-type"
+    typeSpan.textContent = session.type === 'focus' ? '⏳' : '🎈'
+
+    label.appendChild(hiddenInput);
+    label.appendChild(checkbox);
+    label.appendChild(startSpan);
+    label.appendChild(endSpan);
+    label.appendChild(typeSpan);
+
+    container.appendChild(label);
   })
 }

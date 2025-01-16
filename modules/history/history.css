@@ -331,6 +331,9 @@ p{
 .calendar-metrics-container {
   width: 100%;
 }
+.month-metrics-container {
+  width: 100%;
+}
 .calendar-container {
   display: flex;
   flex-direction: column;
@@ -482,4 +485,99 @@ footer {
 
 .feedback-line a{
   font-weight: 700;
+  color: var(--primary-color-3);
+}
+.container.light .feedback-line a {
+  color: black;
+}
+
+.top-row {
+  padding: .7em;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.top-row .title {
+  font-weight: bold;
+  font-size: 1.2em;
+  padding-left: .5em;
+  text-decoration: underline;
+}
+.top-row .delete-some-btn {
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: light;
+  padding: 3px 5px;
+  font-family: "Poppins", sans-serif;
+  background-color: var(--primary-color-3);
+  color: var(--secondary-color-1);
+  cursor: pointer;
+  border: 1px solid var(--primary-color);
+  box-shadow: 0 0 5px var(--primary-color);
+  transition: .15s all;
+  box-shadow: inset 5px 10px 70px var(--primary-color), inset -5px 5px 90px var(--secondary-color-1)
+              ,  -5px 5px 100px var(--primary-color);
+}
+.top-row .delete-some-btn:disabled {
+  background-color: var(--primary-color-1);
+  opacity: 50%;
+  cursor: not-allowed;
+}
+#delete-date {
+  font-weight: bold;
+}
+
+.delete-some-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  margin: .5em;
+  padding: .5em;
+  border: 2px dashed var(--primary-color-3);
+  border-radius: 10px;
+  padding-bottom: 30px;
+}
+.delete-some-container::after {
+  position: absolute;
+  content: '🎈 -> break | ⏳ -> focus';
+  bottom: 5px;
+  right:5px;
+  border-radius: 5px;
+  padding: 5px;
+  font-size: .7em;
+  font-weight: 500;
+  background-color: var(--primary-color);
+}
+.delete-some-container.disable {
+  display: none;
+}
+.specific-sessions-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin: 10px;
+}
+.specific-sessions-container .session {
+  user-select: none;
+  cursor: pointer;
+  display: flex;
+  font-weight: bold;
+}
+.specific-sessions-container .session .session-end {
+  position: relative;
+  margin-left: 20px;
+}
+.specific-sessions-container .session .session-end::before {
+  position: absolute;
+  content: 'to';
+  font-size: .7em;
+  left: -15px;
+  bottom: .2em;
+}
+.specific-sessions-container .session .session-type {
+  margin-left: 7px;
+  font-weight: 400;
 }
