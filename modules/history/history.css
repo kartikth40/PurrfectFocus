@@ -64,7 +64,7 @@
   box-shadow: 0 0 5px var(--primary-color);
   transition: .15s all;
   box-shadow: inset 5px 10px 70px var(--primary-color), inset -5px 5px 90px var(--secondary-color-1)
-              ,  -5px 5px 100px var(--primary-color);
+              ,  -5px 5px 100px var(--primary-color), 0 2px 0 var(--primary-color);
 }
 .sample-history-btn:hover, 
 .sample-history-btn-remove:hover,
@@ -229,7 +229,7 @@ p{
   background-color: var(--secondary-color-2);
   color: var(--primary-color);
   box-shadow: inset 5px 10px 70px var(--secondary-color-1), inset -5px 5px 90px var(--primary-color)
-              ,  -5px 5px 100px var(--primary-color);
+              ,  -5px 5px 100px var(--primary-color), 0 2px 0 var(--primary-color);
 }
 .no-data:not(.active)::before, .no-data:not(.active)::after {
   height: 0;
@@ -482,13 +482,24 @@ footer {
   background-color: transparent;
   color: var(--primary-color);
 }
+.feedback-line {
+  max-width: max-content;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px;
+}
 
 .feedback-line a{
+  margin-left: 5px;
   font-weight: 700;
   color: var(--primary-color-3);
 }
 .container.light .feedback-line a {
   color: black;
+}
+.feedback-line a:hover {
+  opacity: .7;
 }
 
 .top-row {
@@ -517,6 +528,16 @@ footer {
   box-shadow: 0 0 5px var(--primary-color);
   transition: .15s all;
   box-shadow: inset 5px 10px 70px var(--primary-color), inset -5px 5px 90px var(--secondary-color-1)
+  ,  -5px 5px 100px var(--primary-color), 0 2px 0 var(--primary-color);
+  transform: translate(0,-2px);
+}
+.top-row .delete-some-btn:hover:not(:disabled) {
+  box-shadow: inset 5px 10px 70px var(--primary-color), inset -5px 5px 90px var(--secondary-color-1)
+  ,  -5px 5px 100px var(--primary-color), 0 2px 5px var(--primary-color);
+}
+.top-row .delete-some-btn:active:not(:disabled) {
+  transform: translate(0,0px);
+  box-shadow: inset 5px 10px 70px var(--primary-color), inset -5px 5px 90px var(--secondary-color-1)
               ,  -5px 5px 100px var(--primary-color);
 }
 .top-row .delete-some-btn:disabled {
@@ -544,12 +565,12 @@ footer {
   position: absolute;
   content: '🎈 -> break | ⏳ -> focus';
   bottom: 5px;
-  right:5px;
+  left:50%;
+  transform: translateX(-50%);
   border-radius: 5px;
   padding: 5px;
   font-size: .7em;
   font-weight: 500;
-  background-color: var(--primary-color);
 }
 .container.light .delete-some-container::after {
   background-color: var(--primary-color-1);
@@ -557,11 +578,37 @@ footer {
 .delete-some-container.disable {
   display: none;
 }
+
+.sessions-table {
+  width: 100%;
+  border-collapse: collapse; /* Ensures borders don't double up */
+  text-align: left;
+}
+
+
+.sessions-table th {
+  border: 1px solid var(--primary-color-2);
+  text-align: center;
+}
+.sessions-table td {
+  border: 1px solid var(--primary-color);
+  padding: 4px;
+  text-align: center;
+  font-weight: 500;
+}
+.light .sessions-table th {
+  border: 1px solid var(--primary-color);
+}
+
+.sessions-table th {
+  background-color: var(--primary-color-1); /* Optional: Makes the header row stand out */
+  font-weight: bold;
+}
 .specific-sessions-container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  width: 100%;
+  
   margin: 10px;
+  padding: 5px 30px;
 }
 .specific-sessions-container .session {
   user-select: none;
@@ -584,4 +631,56 @@ footer {
   margin-left: 7px;
   font-weight: 400;
   font-size: .9em;
+}
+
+footer {
+  margin-top: 1.5em;
+  max-width: 50vw;
+}
+.buy-me-a-coffee-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap:20px;
+  margin: 10px;
+}
+.buy-me-a-coffee-container .action-words{
+  max-width: 70%;
+}
+.buy-me-a-coffee-container .actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  position: relative;
+  gap:0;
+}
+.buy-me-a-coffee-container .actions .qr-code-container {
+  width: 150px;
+  height: 150px;
+}
+.buy-me-a-coffee-container .actions p {
+  font-size: .7em;
+  font-weight: bold;
+  margin:0;
+}
+.buy-me-a-coffee-container .actions .qr-code-img {
+  width: 100%;
+  height: 100%;
+  bottom:0;
+  left:0;
+  border: 1px solid black;
+  border-radius: .5em;
+}
+.buy-me-a-coffee-container a {
+  border: 1px solid black;
+  height: unset;
+  min-width: unset;
+  width: 100%;
+  font-size: 1em;
+  padding: .1em auto;
+  border-radius: .5em;
+}
+.buy-me-a-coffee-container a:hover {
+ text-decoration: underline !important;
 }

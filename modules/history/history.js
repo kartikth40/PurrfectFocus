@@ -62,7 +62,7 @@ sampleHistoryRemoveBtn.addEventListener('click', async () => {
 })
 
 deleteHistoryBtn.addEventListener('click', async () => {
-  if(confirm("Are you sure you wanna delete all of your history?")) {
+  if(confirm("Are you sure you wanna delete all of your history for this year?")) {
     await clearHistory()
     await init()
   }
@@ -84,7 +84,7 @@ deleteSomeHistoryBtn.addEventListener('click', async () => {
       checkedSessions.add(parseInt(sessionId));
     }
   });
-  if(!checkedSessions.length) return
+  if(!checkedSessions.size) return
   if(confirm("Are you sure you wanna delete selected sessions from your history?")) {
     const dateSelected = deleteDateInput.value
     if(dateSelected) {
@@ -458,56 +458,82 @@ async function makecalendarGraph(currentYear, currentDate, currentMonth, current
 
 async function getSessions() {
   const dateSelected = deleteDateInput.value
-  let currentYear = dateSelected.substring(0,4)
+  if(dateSelected.split('-').length !== 3){
+    sessions = []
+    return
+  }
+  let currentYear = dateSelected.split('-')[0]
   let currentDate = dateSelected.split('-')[2][0] === '0' ? dateSelected.split('-')[2][1] : dateSelected.split('-')[2]
   let currentMonth = dateSelected.split('-')[1][0] === '0' ? dateSelected.split('-')[1][1] : dateSelected.split('-')[1]
   const currentDateInHistory = currentDate+'-'+currentMonth
-
   const history = (await getLocalStorage(currentYear))[currentYear]
   if(history) sessions = history[currentDateInHistory]
+  else sessions = []
 }
 
 async function generateSessionsToDelete() {
-  
   await getSessions()
+  if(!sessions) sessions = []
   const container = document.querySelector(".specific-sessions-container");
-  container.innerHTML = null
+  container.innerHTML = "<div style='text-align:center;'>Select a date to view sessions</div>";
+  if(sessions.length === 0) return
+  container.innerHTML = "";
+  const table = document.createElement("table");
+  table.className = "sessions-table";
+
+  const thead = document.createElement("thead");
+  const headerRow = document.createElement("tr");
+
+  const headers = ["Start Time", "End Time", "Duration", "Type", "Delete"];
+  headers.forEach(headerText => {
+    const th = document.createElement("th");
+    th.textContent = headerText;
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+
   sessions && sessions.forEach((session, id) => {
+    const row = document.createElement("tr");
 
-    const label = document.createElement("label");
-    label.className = "session";
-    label.setAttribute("for", id);
+    const startCell = document.createElement("td");
+    startCell.textContent = session.startTime;
+    row.appendChild(startCell);
 
-    const hiddenInput = document.createElement("input");
-    hiddenInput.type = "hidden";
-    hiddenInput.value = "off";
-    hiddenInput.name = id;
+    const endCell = document.createElement("td");
+    endCell.textContent = session.endTime;
+    row.appendChild(endCell);
 
+    const durationCell = document.createElement("td");
+    const duration = session.duration
+    durationCell.textContent = `${duration} mins`;
+    row.appendChild(durationCell);
+
+    const typeCell = document.createElement("td");
+    typeCell.textContent = session.type === 'focus' ? '⏳' : '🎈';
+    row.appendChild(typeCell);
+
+    const checkboxCell = document.createElement("td");
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.className = "session-checkbox";
     checkbox.checked = false;
     checkbox.name = id;
     checkbox.id = id;
+    checkboxCell.appendChild(checkbox);
+    row.appendChild(checkboxCell);
+    row.addEventListener("click", () => {
+      checkbox.checked = !checkbox.checked;
+    });
+    checkbox.addEventListener("click", (e) => {
+      e.stopPropagation(); // Prevent the row click from being triggered when the checkbox is clicked
+    });
+    tbody.appendChild(row);
+  });
 
-    const startSpan = document.createElement("span");
-    startSpan.className = "session-start";
-    startSpan.textContent = session.startTime;
+  table.appendChild(tbody);
+  container.appendChild(table);
 
-    const endSpan = document.createElement("span");
-    endSpan.className = "session-end";
-    endSpan.textContent = session.endTime;
-
-    const typeSpan = document.createElement("span");
-    typeSpan.className = "session-type"
-    typeSpan.textContent = session.type === 'focus' ? '⏳' : '🎈'
-
-    label.appendChild(hiddenInput);
-    label.appendChild(checkbox);
-    label.appendChild(startSpan);
-    label.appendChild(endSpan);
-    label.appendChild(typeSpan);
-
-    container.appendChild(label);
-  })
 }

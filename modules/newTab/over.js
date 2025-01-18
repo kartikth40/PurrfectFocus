@@ -252,13 +252,13 @@ const resume = async (timer) => {
 }
 
 const updateBreakQuote = () => {
-  console.log('break')
+  // console.log('break')
   breakActivitiesSuggestions.classList.add('show')
   quote.innerText = getRandomBreakQuote()
 }
 
 const updateFocusQuote = () => {
-  console.log('focus')
+  // console.log('focus')
   breakActivitiesSuggestions.classList.remove('show')
   quote.innerText = getRandomFocusQuote()
 }
