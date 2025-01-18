@@ -618,3 +618,23 @@ function mergeHistory(existingData, newData) {
 function isObject(value) {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
+
+export function formatTimeWithLabel(time24) {
+  const [hours, minutes] = time24.split(":").map(Number);
+
+  const period = hours >= 12 ? "PM" : "AM";
+  const hour12 = hours % 12 || 12;
+
+  let label = "";
+  if (hours >= 5 && hours < 12) {
+    label = "☀️";
+  } else if (hours >= 12 && hours < 17) {
+    label = "🌞";
+  } else if (hours >= 17 && hours < 21) {
+    label = "🌅";
+  } else {
+    label = "🌙";
+  }
+
+  return `${label} ${hour12}:${minutes.toString().padStart(2, "0")} ${period}`;
+}

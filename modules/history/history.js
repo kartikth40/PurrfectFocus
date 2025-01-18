@@ -2,6 +2,7 @@ import {
   clearHistory,
   exportData,
   formatDateWithOrdinal,
+  formatTimeWithLabel,
   getLocalStorage,
   getSessionStorage,
   getSyncStorage,
@@ -497,13 +498,13 @@ async function generateSessionsToDelete() {
 
   sessions && sessions.forEach((session, id) => {
     const row = document.createElement("tr");
-
+    row.style.cursor = "pointer";
     const startCell = document.createElement("td");
-    startCell.textContent = session.startTime;
+    startCell.textContent = formatTimeWithLabel(session.startTime);
     row.appendChild(startCell);
 
     const endCell = document.createElement("td");
-    endCell.textContent = session.endTime;
+    endCell.textContent = formatTimeWithLabel(session.endTime);
     row.appendChild(endCell);
 
     const durationCell = document.createElement("td");

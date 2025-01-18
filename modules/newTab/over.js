@@ -31,17 +31,20 @@ async function init() {
     untilLongBreak.style.visibility = 'visible'
     focusTitle.innerText = 'Start Focusing'
     focusBtnText.innerText = 'Start Focusing'
+    breakActivitiesSuggestions.classList.remove('show')
     updateFocusQuote()
   }
   else if(timer.timer.type === SHORTBREAK) {
     untilLongBreak.style.visibility = 'visible'
     focusTitle.innerText = 'Take a Short Break'
     focusBtnText.innerText = 'Start Short Break'
+    breakActivitiesSuggestions.classList.add('show')
     updateBreakQuote()
   }else {
     untilLongBreak.style.visibility = 'hidden'
     focusTitle.innerText = 'Take a Long Break'
     focusBtnText.innerText = 'Start Long Break'
+    breakActivitiesSuggestions.classList.add('show')
     updateBreakQuote()
   }
   const store = await getSyncStorage(SETTINGSKEY)
