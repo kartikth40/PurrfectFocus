@@ -588,12 +588,14 @@ footer {
 
 .sessions-table th {
   border: 1px solid var(--primary-color-2);
-  text-align: center;
+  text-align: left;
+  padding-left: 10px;
 }
 .sessions-table td {
   border: 1px solid var(--primary-color);
   padding: 4px;
-  text-align: center;
+  padding-left: 10px;
+  text-align: left;
   font-weight: 500;
 }
 .light .sessions-table th {

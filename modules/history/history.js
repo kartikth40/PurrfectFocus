@@ -527,9 +527,11 @@ async function generateSessionsToDelete() {
     row.appendChild(checkboxCell);
     row.addEventListener("click", () => {
       checkbox.checked = !checkbox.checked;
+      row.style.backgroundColor = checkbox.checked ? "#733a8e31" : "";
     });
     checkbox.addEventListener("click", (e) => {
       e.stopPropagation(); // Prevent the row click from being triggered when the checkbox is clicked
+      row.style.backgroundColor = checkbox.checked ? "#733a8e31" : "";
     });
     tbody.appendChild(row);
   });
