@@ -352,7 +352,6 @@ export async function resumeTimer(callback) {
     print.log(timerObj)
     try {
       await chrome.runtime.sendMessage({startTimer: true, timer: timerObj})
-      console.log('message sent')
     }catch{e=>console.warn(e)}
     if(typeof callback === 'function') {
       try{callback()}
@@ -406,7 +405,8 @@ export const setNewSettings = (formValues) => {
         sound: formValues.longBreakTimerSound
       },
       timerStyle: formValues.timerStyle,
-      theme: formValues.theme === 'light' ? LIGHTTHEME : DARKTHEME
+      theme: formValues.theme === 'light' ? LIGHTTHEME : DARKTHEME,
+      musicPlayer: formValues.musicPlayer === 'on' ? true : false
     }
   }
 }
@@ -430,10 +430,11 @@ export const setFormValues = (data) => {
   document.querySelector('#simple-style').checked = settings.timerStyle === SIMPLETIMERSTYLE || settings.timerStyle !== CATWALKTIMERSTYLE
   document.querySelector('#app-theme-light').checked = settings.theme === LIGHTTHEME
   document.querySelector('#app-theme-dark').checked = settings.theme === DARKTHEME
+  document.querySelector('#music-player').checked = settings.musicPlayer
 }
 
 export function changeTextTo(element, text) {
-  if(element.innerText.toString().toLowerCase() === text.toString().toLowerCase()) return
+  if(element.innerText.toString().toLowerCase() === text?.toString().toLowerCase()) return
   const timerContainer = document.querySelector('.time-container')
   if(typeof timer !== 'undefined' && element === timer) {
     element.innerText = text
@@ -637,4 +638,37 @@ export function formatTimeWithLabel(time24) {
   }
 
   return `${label} ${hour12}:${minutes.toString().padStart(2, "0")} ${period}`;
+}
+
+async function getMusicData() {
+  let musicData = null;
+  await fetch(chrome.runtime.getURL('assets/music.json'))
+    .then(response => response.json())
+    .then(data => {
+      musicData = data;
+    })
+    .catch(err => console.error("Error loading music data:", err));
+  return musicData;
+}
+
+export async function playMusic(category, index=null) {
+  let base_path = 'https://kartikth40.github.io/music_collection/' + category + '/';
+  const musicData = await getMusicData();
+  const audioFiles = musicData[category];
+  if(index !== null) {
+    const validIndex = (index + audioFiles.length) % audioFiles.length
+    const audio = new Audio(base_path + audioFiles[validIndex]);
+    audio.play();
+    return {audio , index: validIndex, title: audioFiles[validIndex].split('.')[0]};
+  }
+  else if (audioFiles && audioFiles.length > 0) {
+    const randomIndex = Math.floor(Math.random() * audioFiles.length);
+    const randomFile = audioFiles[randomIndex];
+    const audio = new Audio(base_path + randomFile);
+    audio.play();
+    return {audio, index: randomIndex, title: randomFile.split('.')[0]};
+  } else {
+    console.error("No files found for category:", category);
+    return {audio: null, index: -1, title: "No music found"};
+  }
 }

@@ -140,6 +140,10 @@ body.light .timer-tag.simple {
   opacity: .15;
   border-radius: 5px;
 }
+.light .break-suggestion p:after {
+  background-color: var(--primary-color-4);
+  opacity: .3;
+}
 .break-suggestion p a {
   color: var(--secondary-color-2);
   font-weight: 700;
@@ -153,4 +157,111 @@ body.light .timer-tag.simple {
 .light .break-suggestion p a:hover {
   color: var(--primary-color-4);
   text-decoration: dotted;
+}
+#music-player {
+  width: 200px;
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  padding: 5px;
+  border-radius: 5px;
+  color: white;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+#music-player.show {
+  display: flex;
+}
+.light #music-player {
+  background: var(--secondary-color-2);
+  box-shadow: inset 0 0 0 1px var(--primary-color);
+}
+
+#music-player:before {
+  content: 'Now Playing...';
+  font-size: 7px;
+  margin-bottom: 5px;
+  position: absolute;
+  top:0px;
+  left:50%;
+  transform: translateX(-50%);
+  color: var(--secondary-color-2);
+}
+.light #music-player:before {
+  color: var(--primary-color);
+}
+
+#music-player .bottom {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: .5em;
+}
+
+#player-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 5px;
+  width: 70%;
+  display: flex;
+  justify-content: space-between;
+}
+
+#music-player button {
+  background: linear-gradient(45deg, var(--secondary-color-1), var(--secondary-color-2));
+  color: var(--primary-color);
+  border: none;
+  font-size: .8em;
+  border-radius: 5px;
+  cursor: pointer;
+  outline: none;
+  padding: 2px 7px;
+  font-family: "Poppins", sans-serif;
+}
+#music-player button#play-pause {
+  border: 2px solid var(--primary-color-4);
+}
+.light #music-player button {
+  background: black;
+  color: var(--secondary-color-1);
+}
+
+#music-player button:hover {
+  opacity: .7;
+}
+#music-player select {
+  background: linear-gradient(45deg, var(--secondary-color-1), var(--secondary-color-2));
+  color: var(--primary-color);
+  font-size: .8em;
+  border: none;
+  border-radius: 5px;
+  margin-right: 10px;
+  cursor: pointer;
+  padding: 2px 3px;
+  font-family: "Poppins", sans-serif;
+}
+.light #music-player select {
+  background: black;
+  color: var(--secondary-color-1);
+}
+
+#music-player label {
+  color: var(--primary-color);
+  font-size: .8em;
+}
+.light #music-player label {
+  color: var(--primary-color);
+}
+
+#music-player p {
+  font-size: 10px;
+  margin-bottom: 0;
+  text-align: center;
+}
+.light #music-player p {
+  color: black;
 }

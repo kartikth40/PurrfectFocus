@@ -191,10 +191,10 @@ const startTimer =(chrome, timer) => {
       const timerToStore = {
         timer: {
           time: timer,
-          status: result.timer.status,
-          type: result.timer.type,
-          counts: result.timer.counts,
-          startTime: result.timer.startTime,
+          status: result?.timer?.status,
+          type: result?.timer?.type,
+          counts: result?.timer?.counts,
+          startTime: result?.timer?.startTime,
           endTime: null
         }
       }

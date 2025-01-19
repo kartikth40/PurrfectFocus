@@ -485,14 +485,19 @@ footer {
 .feedback-line {
   max-width: max-content;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  flex-direction: column;
   margin: 10px;
+  gap:1px;
+}
+.feedback-line p{
+  margin:0;
 }
 
 .feedback-line a{
-  margin-left: 5px;
-  font-weight: 700;
+  margin-left: 2px;
+  font-weight: 500;
   color: var(--primary-color-3);
 }
 .container.light .feedback-line a {

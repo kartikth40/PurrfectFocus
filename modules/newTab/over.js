@@ -1,5 +1,5 @@
 import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE } from "../constants.js"
-import { changeTextTo, createNewTabForHistory, createNewTabForSettings, getFocusText, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, printer, resumeTimer, timerDuration } from "../utils.js"
+import { changeTextTo, createNewTabForHistory, createNewTabForSettings, getFocusText, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, timerDuration } from "../utils.js"
 
 const container = document.querySelector('.container')
 const focusTitle = document.querySelector('.focus-title')
@@ -15,9 +15,13 @@ const quote = document.querySelector('.quote')
 const breakActivitiesSuggestions = document.querySelector('.break-suggestions-container')
 const settingsBtn = document.querySelector('.settings-tab-btn')
 const historyBtn = document.querySelector('.history-tab-btn')
+let audio = null
+let settings
+let musicPlayerInitialized = false
+
 
 const print = printer()
-let isPaused = false
+let isPaused = true
 document.addEventListener('DOMContentLoaded', async () => {
   handleNotificationTone(true)
   addEventListeners()
@@ -25,7 +29,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 })
 
 async function init() {
-
   const timer = await getSessionStorage(TIMERKEY)
   if(!timer?.timer || timer?.timer?.type === FOCUS) {
     untilLongBreak.style.visibility = 'visible'
@@ -48,7 +51,7 @@ async function init() {
     updateBreakQuote()
   }
   const store = await getSyncStorage(SETTINGSKEY)
-  let settings = store.settings
+  settings = store.settings
   loadSettings(settings)
   const interval = parseInt(settings.longBreak.interval)
   const timerCounts = timer.timer ? timer.timer.counts : 0
@@ -70,7 +73,103 @@ async function init() {
     stopBtn.classList.remove('active')
     nextBtn.classList.remove('active')
   }
-  
+  if(settings.musicPlayer && !musicPlayerInitialized) setupMusicPlayer()
+  else removeMusicPlayer()
+}
+
+function setupMusicPlayer() {
+  document.getElementById("music-player").classList.add('show')
+  document.getElementById("play-pause").addEventListener("click", togglePlayPause);
+  document.getElementById("next").addEventListener("click", nextTrack);
+  document.getElementById("prev").addEventListener("click", prevTrack);
+  document.getElementById("category-select").addEventListener("change", changeCategory);
+  settings.musicPlayer = true
+}
+
+function removeMusicPlayer() {
+  document.getElementById("music-player").classList.remove('show')
+  document.getElementById("play-pause").removeEventListener("click", togglePlayPause);
+  document.getElementById("next").removeEventListener("click", nextTrack);
+  document.getElementById("prev").removeEventListener("click", prevTrack);
+  document.getElementById("category-select").removeEventListener("change", changeCategory);
+  settings.musicPlayer = false
+}
+
+async function pauseMusic() {
+  if(audio) {
+    await audio.pause();
+    document.getElementById("play-pause").textContent = "play";
+  }
+}
+
+async function togglePlayPause() {
+  if(!audio) {
+    await loadTrack()
+    document.getElementById("play-pause").textContent = "pause";
+  }
+  else if (audio.paused) {
+    await audio.play();
+    document.getElementById("play-pause").textContent = "pause";
+  } else {
+    await audio.pause();
+    document.getElementById("play-pause").textContent = "play";
+  }
+}
+
+async function nextTrack() {
+  await loadTrack(null, 1);
+}
+
+async function prevTrack() {
+  await loadTrack(null, -1);
+}
+
+async function loadTrack(category = null, nextIndex=null) {
+  if(audio){
+    await audio.pause();
+    audio.currentTime = 0;
+    audio.removeEventListener("ended", nextTrack);
+    audio = null;
+  }
+  let currentlyPlaying = localStorage.getItem('currentlyPlaying')
+  let currentCategory = category || 'FOCUS';
+  let currentTrackIndex = 0;
+  let currentTrack = '';
+  if(currentlyPlaying) {
+    let [category, index] = currentlyPlaying.split('-')
+    if (category && !isNaN(index)) {
+      currentCategory = category;
+      currentTrackIndex = parseInt(index);
+      if(nextIndex) {
+        currentTrackIndex += nextIndex
+      }
+    }
+    let playObj = await playMusic(currentCategory, currentTrackIndex)
+    currentTrackIndex = playObj.index
+    currentTrack = playObj.title
+    audio = playObj.audio
+    localStorage.setItem('currentlyPlaying', `${currentCategory}-${currentTrackIndex}`)
+  }
+  else {
+    let playObj = await playMusic(currentCategory, null)
+    currentTrackIndex = playObj.index
+    currentTrack = playObj.title
+    audio = playObj.audio
+    localStorage.setItem('currentlyPlaying', `${currentCategory}-${currentTrackIndex}`)
+  }
+  currentTrack = currentTrack.replace(/-/g, ' ')
+  document.getElementById("track-title").textContent = `${currentTrack}`;
+  if (audio.paused) {
+    audio.play();
+  }
+  document.getElementById("play-pause").textContent = "pause";
+  audio.addEventListener("ended", nextTrack);
+}
+
+async function changeCategory(event) {
+  localStorage.removeItem('currentlyPlaying')
+  let currentCategory = event.target.value;
+  await loadTrack(currentCategory);
 }
 
 function addEventListeners() {
@@ -86,13 +185,22 @@ function addEventListeners() {
     if(request.timerStarted){
       changeTextTo(focusBtnText, 'Pause')
       if(timer?.timer) changeTextTo(focusTitle, timer?.timer?.type)
+      if(settings && settings.musicPlayer) {
+        if(audio) {
+          audio.play()
+          document.getElementById("play-pause").textContent = "pause";
+        }
+        else await loadTrack()
+      } 
     }
     else if(request.timerPaused){
       changeTextTo(focusBtnText, 'Resume')
       changeTextTo(focusTitle, timer.timer.type)
+      await pauseMusic()
     }
     else if(request.updateNextTimer) {
       await updateNextTimer()
+      await pauseMusic()
     }
     else if(request.timerStopped){
       changeTextTo(focusBtnText, 'Start Focusing')
@@ -102,6 +210,7 @@ function addEventListeners() {
       const store = await getSyncStorage(SETTINGSKEY)
       changeTextTo(timerEle, getTimeString(store.settings.focus.time * 60))
       await handleUntilLongBreakCount(store.settings, null)
+      await pauseMusic()
     }
     else if(request.saveSettings){
       const store = await getSyncStorage(SETTINGSKEY)
@@ -118,6 +227,7 @@ function addEventListeners() {
       if(!isPaused && timer.timer.status !== PAUSE) {
           // pause
           await pause(timer.timer)
+          await pauseMusic()
         }else {
           // resume
           await resume(timer.timer)
@@ -130,6 +240,7 @@ function addEventListeners() {
   stopBtn.addEventListener('click',async () => {
     const store = await getSyncStorage(SETTINGSKEY)
     stopTimer(store.settings)
+    await pauseMusic()
   })
   nextBtn.addEventListener('click', async () => {
     await nextTimer()
@@ -160,8 +271,11 @@ function loadSettings(settings) {
     timerTag.classList.add('cat-walk')
   }
   changeTextTo(timerEle, getTimeString(timerDuration(timer?.timer?.type, settings)*60))
+  if(settings.musicPlayer && !musicPlayerInitialized) setupMusicPlayer()
+  else removeMusicPlayer()
 }
 const initiateTimer = async () => {
+  isPaused = false
   const store = await getSyncStorage(SETTINGSKEY)
   let settings = store.settings
   chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {
@@ -255,13 +369,11 @@ const resume = async (timer) => {
 }
 
 const updateBreakQuote = () => {
-  // console.log('break')
   breakActivitiesSuggestions.classList.add('show')
   quote.innerText = getRandomBreakQuote()
 }
 
 const updateFocusQuote = () => {
-  // console.log('focus')
   breakActivitiesSuggestions.classList.remove('show')
   quote.innerText = getRandomFocusQuote()
 }

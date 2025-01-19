@@ -63,7 +63,8 @@ export const defaultSettings = {
       sound: 'Computer Magic'
     },
     timerStyle: SIMPLETIMERSTYLE,
-    theme: DARKTHEME
+    theme: DARKTHEME,
+    musicPlayer: true
   }
     
 }
