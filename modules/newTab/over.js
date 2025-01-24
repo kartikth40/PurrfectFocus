@@ -73,6 +73,7 @@ async function init() {
     stopBtn.classList.remove('active')
     nextBtn.classList.remove('active')
   }
+  chrome.runtime.sendMessage({ activity: true })
   if(settings.musicPlayer && !musicPlayerInitialized) setupMusicPlayer()
   else removeMusicPlayer()
 }
@@ -98,21 +99,25 @@ function removeMusicPlayer() {
 async function pauseMusic() {
   if(audio) {
     await audio.pause();
-    document.getElementById("play-pause").textContent = "play";
+    document.getElementById("play-pause").classList.remove('pause')
+    document.getElementById("play-pause").classList.add('play')
   }
 }
 
 async function togglePlayPause() {
   if(!audio) {
     await loadTrack()
-    document.getElementById("play-pause").textContent = "pause";
+    document.getElementById("play-pause").classList.remove('play')
+    document.getElementById("play-pause").classList.add('pause')
   }
   else if (audio.paused) {
     await audio.play();
-    document.getElementById("play-pause").textContent = "pause";
+    document.getElementById("play-pause").classList.remove('play')
+    document.getElementById("play-pause").classList.add('pause')
   } else {
     await audio.pause();
-    document.getElementById("play-pause").textContent = "play";
+    document.getElementById("play-pause").classList.remove('pause')
+    document.getElementById("play-pause").classList.add('play')
   }
 }
 
@@ -162,7 +167,8 @@ async function loadTrack(category = null, nextIndex=null) {
   if (audio.paused) {
     audio.play();
   }
-  document.getElementById("play-pause").textContent = "pause";
+  document.getElementById("play-pause").classList.remove('play')
+  document.getElementById("play-pause").classList.add('pause')
   audio.addEventListener("ended", nextTrack);
 }
 
@@ -185,13 +191,6 @@ function addEventListeners() {
     if(request.timerStarted){
       changeTextTo(focusBtnText, 'Pause')
       if(timer?.timer) changeTextTo(focusTitle, timer?.timer?.type)
-      if(settings && settings.musicPlayer) {
-        if(audio) {
-          audio.play()
-          document.getElementById("play-pause").textContent = "pause";
-        }
-        else await loadTrack()
-      } 
     }
     else if(request.timerPaused){
       changeTextTo(focusBtnText, 'Resume')

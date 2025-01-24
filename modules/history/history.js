@@ -476,7 +476,7 @@ async function generateSessionsToDelete() {
   await getSessions()
   if(!sessions) sessions = []
   const container = document.querySelector(".specific-sessions-container");
-  container.innerHTML = "<div style='text-align:center;'>Select a date to view sessions</div>";
+  container.innerHTML = "<p style='text-align:center; opacity: 0.5;'>No sessions for the selected date</p>";
   if(sessions.length === 0) return
   container.innerHTML = "";
   const table = document.createElement("table");
@@ -501,10 +501,12 @@ async function generateSessionsToDelete() {
     row.style.cursor = "pointer";
     const startCell = document.createElement("td");
     startCell.textContent = formatTimeWithLabel(session.startTime);
+    if(startCell.textContent === '') return
     row.appendChild(startCell);
 
     const endCell = document.createElement("td");
     endCell.textContent = formatTimeWithLabel(session.endTime);
+    if(endCell.textContent === '') return
     row.appendChild(endCell);
 
     const durationCell = document.createElement("td");

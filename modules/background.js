@@ -11,7 +11,8 @@ import {
   getTimeString, 
   setLocalStorage,
   getLocalStorage,
-  getCurrentTimeString} from "./utils.js"
+  getCurrentTimeString,
+  checkUserActivity} from "./utils.js"
 import {
   PLAY,
   PAUSE,
@@ -26,10 +27,17 @@ let intervalId = createState(0)
 const print = printer()
 
 
-oninstall = async (event) => {
-  await initBackgroundJs()
-  storageChangesLogger()
-}
+chrome.runtime.onInstalled.addListener(async () => {
+  await initBackgroundJs();
+  storageChangesLogger();
+  chrome.alarms.create("checkActivity", { periodInMinutes: 1440 });
+});
+
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === "checkActivity") {
+    await checkUserActivity();
+  }
+});
 
 async function startActualTimer(timer) {
   print.log('message received - start timer')
@@ -103,6 +111,9 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
       await chrome.runtime.sendMessage({settingsSaved: true})
     }catch{e=>console.warn(e)}
   }
+  if(request.activity) {
+    await setLocalStorage({ lastActive: Date.now() })
+  }
 })
 
 const startTimer =(chrome, timer) => {
@@ -129,7 +140,7 @@ const startTimer =(chrome, timer) => {
                         : timerObj?.timer?.type === LONGBREAK
                         ? settingsObj?.settings?.longBreak?.time
                         : settingsObj?.settings?.focus?.time
-        await setLocalStorage({[currentDate.getFullYear().toString()]: {
+        if(startTime && endTime) await setLocalStorage({[currentDate.getFullYear().toString()]: {
           [currentDateWithMonth]: [{
             startTime: startTime,
             endTime: endTime,
@@ -153,7 +164,7 @@ const startTimer =(chrome, timer) => {
           duration: duration,
           type: timerObj?.timer?.type === FOCUS ? 'focus' : 'break'
           })
-        await setLocalStorage({[currentDate.getFullYear().toString()]: {
+        if(startTime && endTime) await setLocalStorage({[currentDate.getFullYear().toString()]: {
           [currentDateWithMonth]: todaysPomodoros,
             ...oldHistory
           } 
@@ -167,7 +178,7 @@ const startTimer =(chrome, timer) => {
                         : timerObj?.timer?.type === LONGBREAK
                         ? settingsObj?.settings?.longBreak?.time
                         : settingsObj?.settings?.focus?.time
-        await setLocalStorage({[currentDate.getFullYear().toString()]: {
+        if(startTime && endTime) await setLocalStorage({[currentDate.getFullYear().toString()]: {
           [currentDateWithMonth]: [{
             startTime: startTime,
             endTime: endTime,

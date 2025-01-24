@@ -621,6 +621,7 @@ function isObject(value) {
 }
 
 export function formatTimeWithLabel(time24) {
+  if(!time24) return ''
   const [hours, minutes] = time24.split(":").map(Number);
 
   const period = hours >= 12 ? "PM" : "AM";
@@ -672,3 +673,50 @@ export async function playMusic(category, index=null) {
     return {audio: null, index: -1, title: "No music found"};
   }
 }
+
+export async function checkUserActivity() {
+  await getLocalStorage("lastActive", (data) => {
+    const lastActive = data.lastActive || 0;
+    const now = Date.now();
+
+    if (now - lastActive > 3* 24 * 60 * 60 * 1000) {
+      showReminderNotification();
+    }
+  });
+}
+
+function showReminderNotification() {
+  chrome.notifications.create("userReminder", {
+    type: "basic",
+    iconUrl: "../assets/cat.png",
+    title: "Purrfect Timing Awaits! 🐾",
+    message: "Meow! It's been a while since we helped you manage your time. Let's paw-sitively get back on track!",
+    priority: 2,
+    buttons: [
+      { title: "Open Timer" },
+      { title: "Check Your Progress" }
+    ]
+  });
+}
+
+chrome.notifications.onButtonClicked.addListener(async (notificationId, buttonIndex) => {
+  if (notificationId === "userReminder") {
+    if (buttonIndex === 0) {
+      await chrome.tabs.create({url:"modules/newTab/over.html", active: true}, async function(tab){
+        await setSessionStorage({[NEWTABHISTORYIDKEY]: tab.id})
+      })
+    } else if (buttonIndex === 1) {
+      await chrome.tabs.create({url:"modules/history/history.html", active: true}, async function(tab){
+        await setSessionStorage({[NEWTABHISTORYIDKEY]: tab.id})
+      })
+    }
+  }
+});
+
+chrome.notifications.onClicked.addListener(async (notificationId) => {
+  if (notificationId === "userReminder") {
+    await chrome.tabs.create({url:"modules/newTab/over.html", active: true}, async function(tab){
+      await setSessionStorage({[NEWTABHISTORYIDKEY]: tab.id})
+    })
+  }
+});

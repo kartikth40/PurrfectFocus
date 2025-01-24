@@ -184,7 +184,7 @@ body.light .timer-tag.simple {
   font-size: 7px;
   margin-bottom: 5px;
   position: absolute;
-  top:0px;
+  top:5px;
   left:50%;
   transform: translateX(-50%);
   color: var(--secondary-color-2);
@@ -205,15 +205,14 @@ body.light .timer-tag.simple {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 5px;
   width: 70%;
   display: flex;
   justify-content: space-between;
 }
 
 #music-player button {
+  height: 50px;
   background: linear-gradient(45deg, var(--secondary-color-1), var(--secondary-color-2));
-  color: var(--primary-color);
   border: none;
   font-size: .8em;
   border-radius: 5px;
@@ -222,18 +221,39 @@ body.light .timer-tag.simple {
   padding: 2px 7px;
   font-family: "Poppins", sans-serif;
 }
-#music-player button#play-pause {
-  border: 2px solid var(--primary-color-4);
-}
 .light #music-player button {
-  background: black;
-  color: var(--secondary-color-1);
+  background: none;
+}
+
+#music-player button#prev, #music-player button#next{
+  width: 36px;
+  height: 36px;
+}
+#music-player button#prev img {
+  transform: rotate(180deg);
+}
+#music-player button img{
+  width: 100%;
+  height: 100%;
+}
+#music-player button#play-pause.play {
+  background: url('../../assets/icons/play.png'), #c8a0ff;
+  background-size: cover;
+  width: 36px;
+  height: 36px;
+}
+#music-player button#play-pause.pause {
+  background: url('../../assets/icons/pause.png'), #b27fff;
+  background-size: cover;
+  width: 36px;
+  height: 36px;
 }
 
 #music-player button:hover {
   opacity: .7;
 }
 #music-player select {
+  height: 36px;
   background: linear-gradient(45deg, var(--secondary-color-1), var(--secondary-color-2));
   color: var(--primary-color);
   font-size: .8em;
