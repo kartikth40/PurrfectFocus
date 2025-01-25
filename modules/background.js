@@ -27,7 +27,11 @@ let intervalId = createState(0)
 const print = printer()
 
 
-chrome.runtime.onInstalled.addListener(async () => {
+chrome.runtime.onInstalled.addListener(async (details) => {
+  console.log(details)
+  if (details.reason === "install") {
+    await chrome.tabs.create({url:"modules/userGuide/userGuide.html", active: true})
+  }
   await initBackgroundJs();
   storageChangesLogger();
   chrome.alarms.create("checkActivity", { periodInMinutes: 1440 });
