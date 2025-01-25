@@ -518,7 +518,6 @@ export const setSampleHistory = async () => {
     }
   }
   sampleHistory ={[currentYear] : monthData}
-  console.log(sampleHistory)
   await setSessionStorage(sampleHistory)
 }
 
@@ -677,14 +676,13 @@ export async function playMusic(category, index=null) {
 }
 
 export async function checkUserActivity() {
-  await getLocalStorage("lastActive", (data) => {
-    const lastActive = data.lastActive || 0;
-    const now = Date.now();
-
-    if (now - lastActive > 3* 24 * 60 * 60 * 1000) {
-      showReminderNotification();
-    }
-  });
+  const data = await getLocalStorage("lastActive")
+  const lastActive = data.lastActive || 0;
+  const now = Date.now();
+  if (now - lastActive > 3 * 24 * 60 * 60 * 1000) {
+    await setLocalStorage({ lastActive: now })
+    showReminderNotification();
+  }
 }
 
 function showReminderNotification() {

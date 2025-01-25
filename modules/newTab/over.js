@@ -1,5 +1,5 @@
 import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE } from "../constants.js"
-import { changeTextTo, createNewTabForHistory, createNewTabForSettings, getFocusText, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, timerDuration } from "../utils.js"
+import { changeTextTo, createNewTabForHistory, createNewTabForSettings, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, timerDuration } from "../utils.js"
 
 const container = document.querySelector('.container')
 const focusTitle = document.querySelector('.focus-title')
@@ -73,7 +73,7 @@ async function init() {
     stopBtn.classList.remove('active')
     nextBtn.classList.remove('active')
   }
-  chrome.runtime.sendMessage({ activity: true })
+  await setLocalStorage({ lastActive: Date.now() })
   if(settings.musicPlayer && !musicPlayerInitialized) setupMusicPlayer()
   else removeMusicPlayer()
 }

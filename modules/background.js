@@ -28,7 +28,6 @@ const print = printer()
 
 
 chrome.runtime.onInstalled.addListener(async (details) => {
-  console.log(details)
   if (details.reason === "install") {
     await chrome.tabs.create({url:"modules/userGuide/userGuide.html", active: true})
   }
@@ -114,9 +113,6 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
     try{
       await chrome.runtime.sendMessage({settingsSaved: true})
     }catch{e=>console.warn(e)}
-  }
-  if(request.activity) {
-    await setLocalStorage({ lastActive: Date.now() })
   }
 })
 
