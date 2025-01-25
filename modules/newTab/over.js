@@ -221,8 +221,6 @@ function addEventListeners() {
   focusBtn.addEventListener('click', async (event) => {
     event.stopPropagation()
     const timer = await getSessionStorage(TIMERKEY)
-    console.log('focusBtn clicked')
-    console.log('timer', timer)
     // if started already
     if(timer?.timer) {
       print.log('Start -> ' + timer.timer.status)

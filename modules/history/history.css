@@ -719,13 +719,14 @@ footer {
   font-size: .7em;
   font-weight: 500;
   color: var(--primary-color-1);
-  padding: 5px;
+  padding: 0;
   border-radius: 5px;
   background-color: var(--primary-color-4);
   box-shadow: 0 0 10px var(--primary-color-2);
   background: linear-gradient(45deg, var(--primary-color-4) 25%, var(--primary-color-3) 50%, var(--primary-color-4) 75%);
   background-size: 200px 100%;
   animation: skeleton-animation 2.5s infinite linear;
+  cursor: pointer;
 }
 
 .light .made-by {
@@ -735,4 +736,16 @@ footer {
   border: 2px solid var(--primary-color-4);
   background-size: 200px 100%;
   animation: skeleton-animation 2.5s infinite linear;
+}
+
+.made-by a {
+  text-decoration: none;
+  padding: 5px;
+}
+.made-by a:active{
+  color: var(--primary-color);
+}
+.made-by:hover {
+  opacity: 0.8;
+  box-shadow: 0 0 10px var(--primary-color-4);
 }

@@ -45,6 +45,8 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }
 });
 
+chrome.runtime.setUninstallURL("https://chromewebstore.google.com/detail/purrfect-pomodoro-timer-p/aobapnhgpjlldncjopmbbfeoomombhel/support?hl=en-GB")
+
 async function startActualTimer(timer) {
   print.log('message received - start timer')
   const timerObj = {
