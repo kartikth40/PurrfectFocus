@@ -33,7 +33,10 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   }
   await initBackgroundJs();
   storageChangesLogger();
-  chrome.alarms.create("checkActivity", { periodInMinutes: 1440 });
+  const alarms = await chrome.alarms.getAll();
+  if (!alarms.some(alarm => alarm.name === "checkActivity")) {
+    chrome.alarms.create("checkActivity", { periodInMinutes: 1440 });
+  }
 });
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {

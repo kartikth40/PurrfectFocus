@@ -37,8 +37,6 @@ const historyBtn = document.querySelector('.history-tab-btn')
 const supportBtn = document.querySelector('.support-tab-btn')
 const rateBtn = document.querySelector('.rate-tab-btn')
 
-let isPaused = false
-
 const print = printer()
 
 // listening messages
@@ -125,7 +123,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     nextBtn.classList.add('active')
   }
   if(sessionStore?.timer && sessionStore?.timer?.status === PAUSE) {
-    isPaused = true
     chrome.action.setBadgeText({text: getTimeString(sessionStore.timer.time)})
     chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'})
   }
@@ -134,7 +131,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // if started already
     if(timer?.timer) {
       print.log('Start -> ' + timer)
-      if(!isPaused && timer.timer.status !== PAUSE) {
+      if(timer.timer.status !== PAUSE) {
           // pause
           await pause(timer.timer)
         }else {
@@ -183,7 +180,6 @@ async function nextTimer() {
 
 const stopTimer = async (settings) => {
   print.log('stop timer')
-  isPaused = false
   changeTextTo(focusBtnText, 'Start Focusing')
   changeTextTo(focusTitle, 'Start Focusing')
   stopBtn.classList.remove('active')
@@ -199,7 +195,6 @@ const stopTimer = async (settings) => {
 
 const pause = async (timer) => {
   print.log('pause timer')
-  isPaused = true
   const timerObj = await getSessionStorage(TIMERKEY)
   try{
     await chrome.runtime.sendMessage({pauseTimer: true, timer: timerObj.timer})
@@ -211,7 +206,6 @@ const pause = async (timer) => {
 
 const resume = async (timer) => {
   print.log('resume timer')
-  isPaused = false
   changeTextTo(focusBtnText, 'Pause')
   changeTextTo(focusTitle, timer?.type)
   await resumeTimer()

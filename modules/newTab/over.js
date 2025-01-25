@@ -21,7 +21,6 @@ let musicPlayerInitialized = false
 
 
 const print = printer()
-let isPaused = true
 document.addEventListener('DOMContentLoaded', async () => {
   handleNotificationTone(true)
   addEventListeners()
@@ -65,7 +64,6 @@ async function init() {
     nextBtn.classList.add('active')
   }
   if(timer?.timer && timer?.timer?.status === PAUSE) {
-    isPaused = true
     chrome.action.setBadgeText({text: getTimeString(timer.timer.time)})
     chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'})
   }
@@ -184,6 +182,7 @@ function addEventListeners() {
     // tick with timer
     if (request.time) {
       changeTextTo(timerEle, request.time)
+      if(settings.musicPlayer && settings.musicPlayerAutoStart && !audio) await loadTrack()
     }
     if(request.notificationTriggered) {
       handleNotificationTone()
@@ -222,10 +221,12 @@ function addEventListeners() {
   focusBtn.addEventListener('click', async (event) => {
     event.stopPropagation()
     const timer = await getSessionStorage(TIMERKEY)
+    console.log('focusBtn clicked')
+    console.log('timer', timer)
     // if started already
     if(timer?.timer) {
       print.log('Start -> ' + timer.timer.status)
-      if(!isPaused && timer.timer.status !== PAUSE) {
+      if(timer.timer.status !== PAUSE) {
           // pause
           await pause(timer.timer)
           await pauseMusic()
@@ -276,7 +277,6 @@ function loadSettings(settings) {
   else removeMusicPlayer()
 }
 const initiateTimer = async () => {
-  isPaused = false
   const store = await getSyncStorage(SETTINGSKEY)
   let settings = store.settings
   chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {
@@ -304,7 +304,6 @@ async function nextTimer() {
 
 
 const stopTimer = async (settings) => {
-  isPaused = false
   print.log('stop timer - new tab')
   changeTextTo(focusBtnText, 'Start Focusing')
   changeTextTo(focusTitle, 'Start Focusing')
@@ -351,7 +350,6 @@ async function handleUntilLongBreakCount(settings, timer, tryOnce=false) {
 }
 
 const pause = async (timer) => {
-  isPaused = true
   print.log('pause timer - new tab')
   changeTextTo(focusBtnText, 'Resume')
   changeTextTo(focusTitle, timer.type)
@@ -362,7 +360,6 @@ const pause = async (timer) => {
 }
 
 const resume = async (timer) => {
-  isPaused = false
   print.log('resume timer - new tab')
   changeTextTo(focusBtnText, 'Pause')
   changeTextTo(focusTitle, timer?.type)
