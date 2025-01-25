@@ -107,3 +107,10 @@ settingsForm.addEventListener('submit', async (e) => {
       await chrome.runtime.sendMessage({saveSettings: true, newSettings: settingsObj})
     }catch{e=>console.warn(e)}
 })
+
+const musicPlayerCheckbox = document.getElementById("music-player");
+const autoStartCheckbox = document.getElementById("music-auto-start");
+
+musicPlayerCheckbox.addEventListener("change", () => {
+  autoStartCheckbox.disabled = !musicPlayerCheckbox.checked;
+});

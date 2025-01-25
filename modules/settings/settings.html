@@ -63,11 +63,18 @@
             </div>
             <div class="music-player-container">
               <h2>Music Player</h2>
-              <label class="music-player" for="music-player">
-                <input type='hidden' value='off' name='music-player'>
-                <input type="checkbox" class="music-player-checkbox" checked name="musicPlayer" id="music-player"> 
-                Enable
-              </label>
+              <div class="flex-row">
+                <label class="music-player" for="music-player">
+                  <input type='hidden' value='off' name='music-player'>
+                  <input type="checkbox" class="music-player-checkbox" checked name="musicPlayer" id="music-player"> 
+                  Enable
+                </label>
+                <label class="auto-start" for="music-auto-start">
+                  <input type='hidden' value='off' name='musicPlayerAutoStart'>
+                  <input type="checkbox" class="auto-start-checkbox" checked name="musicPlayerAutoStart" id="music-auto-start"> 
+                  Auto Start with timer
+                </label>
+              </div>
             </div>
             <div class="timer-style-container">
               <h2>Timer Style</h2>

@@ -64,7 +64,8 @@ export const defaultSettings = {
     },
     timerStyle: SIMPLETIMERSTYLE,
     theme: DARKTHEME,
-    musicPlayer: true
+    musicPlayer: true,
+    musicPlayerAutoStart: true
   }
     
 }

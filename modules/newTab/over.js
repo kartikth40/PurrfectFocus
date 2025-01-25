@@ -191,6 +191,7 @@ function addEventListeners() {
     if(request.timerStarted){
       changeTextTo(focusBtnText, 'Pause')
       if(timer?.timer) changeTextTo(focusTitle, timer?.timer?.type)
+      if(settings.musicPlayer && settings.musicPlayerAutoStart) await loadTrack()
     }
     else if(request.timerPaused){
       changeTextTo(focusBtnText, 'Resume')
@@ -213,7 +214,8 @@ function addEventListeners() {
     }
     else if(request.saveSettings){
       const store = await getSyncStorage(SETTINGSKEY)
-      loadSettings(store.settings)
+      settings = store.settings
+      loadSettings(settings)
     }
   })
 

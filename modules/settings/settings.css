@@ -236,6 +236,7 @@ label {
   gap: 5px;
 }
 .flex-row {
+  display: flex !important;
   flex-direction: row !important;
   justify-content: flex-start !important;
   align-items: center !important;

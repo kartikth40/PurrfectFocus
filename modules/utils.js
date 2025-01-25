@@ -406,7 +406,8 @@ export const setNewSettings = (formValues) => {
       },
       timerStyle: formValues.timerStyle,
       theme: formValues.theme === 'light' ? LIGHTTHEME : DARKTHEME,
-      musicPlayer: formValues.musicPlayer === 'on' ? true : false
+      musicPlayer: formValues.musicPlayer === 'on' ? true : false,
+      musicPlayerAutoStart: formValues.musicPlayerAutoStart === 'on' ? true : false
     }
   }
 }
@@ -431,6 +432,7 @@ export const setFormValues = (data) => {
   document.querySelector('#app-theme-light').checked = settings.theme === LIGHTTHEME
   document.querySelector('#app-theme-dark').checked = settings.theme === DARKTHEME
   document.querySelector('#music-player').checked = settings.musicPlayer
+  document.querySelector('#music-auto-start').checked = settings.musicPlayerAutoStart
 }
 
 export function changeTextTo(element, text) {
