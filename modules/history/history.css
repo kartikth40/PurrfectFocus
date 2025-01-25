@@ -702,3 +702,37 @@ footer {
 .buy-me-a-coffee-container a:hover {
  text-decoration: underline !important;
 }
+
+@keyframes skeleton-animation {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: 200px 0;
+  }
+}
+
+.made-by {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  font-size: .7em;
+  font-weight: 500;
+  color: var(--primary-color-1);
+  padding: 5px;
+  border-radius: 5px;
+  background-color: var(--primary-color-4);
+  box-shadow: 0 0 10px var(--primary-color-2);
+  background: linear-gradient(45deg, var(--primary-color-4) 25%, var(--primary-color-3) 50%, var(--primary-color-4) 75%);
+  background-size: 200px 100%;
+  animation: skeleton-animation 2.5s infinite linear;
+}
+
+.light .made-by {
+  color: var(--primary-color);
+  background-color: var(--primary-color-1);
+  background: linear-gradient(45deg, var(--primary-color-2) 25%, var(--primary-color-1) 50%, var(--primary-color-2) 75%);
+  border: 2px solid var(--primary-color-4);
+  background-size: 200px 100%;
+  animation: skeleton-animation 2.5s infinite linear;
+}
