@@ -1,3 +1,4 @@
+import { CONFIG } from "../config.js"
 import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE } from "../constants.js"
 import { changeTextTo, createNewTabForHistory, createNewTabForSettings, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, timerDuration } from "../utils.js"
 
@@ -250,6 +251,7 @@ function addEventListeners() {
     await createNewTabForSettings()
   })
   historyBtn.addEventListener('click',async () => {
+    console.log('click')
     await createNewTabForHistory()
   })
 
@@ -411,4 +413,10 @@ async function handleNotificationTone(fromSession=false) {
     notificationTone.currentTime = 0
   })
 
+}
+const votePoll = document?.getElementById("votePoll")
+  if(votePoll) {
+    votePoll.addEventListener("click", function() {
+    chrome.tabs.create({ url: CONFIG.POLL_FORM_URL });
+  });
 }

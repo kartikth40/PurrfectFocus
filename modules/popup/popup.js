@@ -20,6 +20,7 @@ import {
   TIMERKEY,
   SETTINGSKEY
  } from "../constants.js"
+import { CONFIG } from "../config.js"
 
 const container = document.querySelector('.container')
 const timer = document.querySelector('.timer')
@@ -232,24 +233,9 @@ const initiateTimer = async () => {
   nextBtn.classList.add('active')
 }
 
- 
-
-
-
-// function setupTabsSystem() {
-//   tabs.forEach(({tab, btn}) => {
-//     btn.addEventListener('click', () => {
-//       if(btn.classList.contains('active')) return
-//       tabs.forEach(curTab => {
-//         if(curTab.btn.classList.contains('active')) {
-//           curTab.btn.classList.remove('active')
-//         }
-//         if(curTab.tab.classList.contains('active')) {
-//           curTab.tab.classList.remove('active')
-//         }
-//       })
-//       btn.classList.add('active')
-//       tab.classList.add('active')
-//     })
-//   })
-//   }
+const votePoll = document?.getElementById("votePoll")
+  if(votePoll) {
+    votePoll.addEventListener("click", function() {
+    chrome.tabs.create({ url: CONFIG.POLL_FORM_URL });
+  });
+}

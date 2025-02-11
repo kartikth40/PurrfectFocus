@@ -465,3 +465,57 @@ input:hover, select:hover {
     transform: skew(0) rotate(0);
   }
 }
+
+
+.poll-btn {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+}
+.poll-btn.popup {
+  top: 25px;
+}
+.poll-btn button {
+  background: var(--primary-color-4);
+  backdrop-filter: blur(10px);
+  outline: none;
+  border: 2px solid var(--secondary-color-1);
+  border-top: none;
+  color: black;
+  font-weight: 500;
+  font-size: 1.3em;
+  border-radius: 15px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  padding: 5px 10px;
+  font-family: "Share Tech Mono", monospace;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 0 10px var(--primary-color), 0 0 20px var(--primary-color);
+  margin: 0;
+  cursor: pointer;
+  transition: .25s all;
+  text-decoration-color: var(--primary-color);
+
+  &:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5), 0 0 10px var(--primary-color-4), 0 0 20px var(--primary-color-4);
+    text-decoration: underline;
+    text-decoration-color: var(--primary-color);
+  }
+}
+
+body.light .poll-btn button {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 0 10px var(--primary-color-4), 0 0 20px var(--primary-color-4);
+  &:hover {
+    box-shadow:  0 4px 6px rgba(0, 0, 0, 0), 0 0 10px var(--primary-color-4), 0 0 20px var(--primary-color-4);
+  }
+}
+
+.poll-btn.popup button {
+  border: 1px solid var(--secondary-color-1);
+  border-radius: 5px;
+  font-size: .8em;
+  white-space: no-wrap;
+  width: max-content;
+  padding: 2px 5px;
+}
