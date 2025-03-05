@@ -9,7 +9,8 @@ import {
   resumeTimer, 
   createNewTabForTimers,
   createNewTabForSettings,
-  createNewTabForHistory} from "../utils.js"
+  createNewTabForHistory,
+  setSessionStorage} from "../utils.js"
 import {
   PLAY,
   PAUSE,
@@ -18,7 +19,8 @@ import {
   SIMPLETIMERSTYLE,
   LIGHTTHEME,
   TIMERKEY,
-  SETTINGSKEY
+  SETTINGSKEY,
+  TASKS
  } from "../constants.js"
 import { CONFIG } from "../config.js"
 
@@ -37,6 +39,7 @@ const settingsBtn = document.querySelector('.settings-tab-btn')
 const historyBtn = document.querySelector('.history-tab-btn')
 const supportBtn = document.querySelector('.support-tab-btn')
 const rateBtn = document.querySelector('.rate-tab-btn')
+const taskSelect = document.getElementById('tasks-select')
 
 const print = printer()
 
@@ -78,7 +81,12 @@ const updateNextTimer = async () => {
   const settingsObj = await getSyncStorage(SETTINGSKEY)
   await handleUntilLongBreakCount(settingsObj.settings, result.timer)
   changeTextTo(timer, getTimeString(timerDuration(result.timer.type, settingsObj?.settings)*60))
-  if(!result?.timer || result?.timer?.type === FOCUS) return
+  if(!result?.timer || result?.timer?.type === FOCUS) {
+    setFocusOptionForTasks(result?.timer)
+    return
+  }else {
+    setRestOptionForTasks()
+  }
   changeTextTo(focusBtnText, 'Start ' + result.timer.type)
   changeTextTo(focusTitle, result.timer.type)
 }
@@ -115,6 +123,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const sessionStore = await getSessionStorage(TIMERKEY)
   changeTextTo(timer, getTimeString(timerDuration(sessionStore?.timer?.type, settings)*60))
   await handleUntilLongBreakCount(settings, sessionStore.timer)
+  if(!sessionStore?.timer || sessionStore?.timer?.type === FOCUS) setFocusOptionForTasks(sessionStore.timer)
+  else setRestOptionForTasks()
   if(sessionStore?.timer?.type === LONGBREAK) changeTextTo( untilLongBreak, '')
   if(sessionStore?.timer && (sessionStore?.timer?.status === PLAY || sessionStore?.timer?.status === PAUSE)) {
     changeTextTo(timer, getTimeString(sessionStore.timer.time))
@@ -171,6 +181,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     event.preventDefault()
     chrome.tabs.create({ url: this.href, active: true })
   })
+
+  taskSelect.addEventListener('change', async (event) => {
+    const selectedTask = event.target.value
+    const timer = await getSessionStorage(TIMERKEY)
+    if(timer.timer) {
+      timer.timer.task = selectedTask
+      await setSessionStorage({timer: timer.timer})
+    }
+  })
 })
 
 async function nextTimer() {
@@ -207,21 +226,25 @@ const pause = async (timer) => {
 
 const resume = async (timer) => {
   print.log('resume timer')
+  const selectedTask = taskSelect.value
+  timer.task = selectedTask ?? TASKS.WORK
   changeTextTo(focusBtnText, 'Pause')
   changeTextTo(focusTitle, timer?.type)
-  await resumeTimer()
+  await resumeTimer(timer)
 }
 
 const initiateTimer = async () => {
   const store = await getSyncStorage(SETTINGSKEY)
-  let settingsObj = store
   let settings = store.settings
+  const selectedTask = taskSelect.value
+
   chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {
     const timerObj = {
       time: timerDuration(FOCUS, settings)*60,
       status: PLAY,
       type: FOCUS,
-      counts: 0
+      counts: 0,
+      task: selectedTask ?? TASKS.WORK
     }
     try{
       await chrome.runtime.sendMessage({startTimer: true, timer: timerObj})
@@ -238,4 +261,21 @@ const votePoll = document?.getElementById("votePoll")
     votePoll.addEventListener("click", function() {
     chrome.tabs.create({ url: CONFIG.POLL_FORM_URL });
   });
+}
+
+function setRestOptionForTasks() {
+  taskSelect.innerHTML = Object.values(TASKS)
+  .map(task => `<option value="${task}">${task}</option>`)
+  .join('')
+  taskSelect.value = TASKS.REST
+  taskSelect.disabled = true
+}
+
+function setFocusOptionForTasks(timer) {
+  taskSelect.innerHTML = Object.values(TASKS)
+                        .filter(task => task !== TASKS.REST)
+                        .map(task => `<option value="${task}">${task}</option>`)
+                        .join('')
+  taskSelect.value = timer?.task ?? TASKS.WORK
+  taskSelect.disabled = false
 }

@@ -210,7 +210,12 @@ input:hover, select:hover {
   font-weight: 900;
   text-transform: uppercase;
 }
-
+.middle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
 .until-long {
   padding-block: 5px;
   text-align: center;
@@ -279,6 +284,7 @@ input:hover, select:hover {
 }
 
 .time-container{
+  position: relative;
   padding-block: 10px 20px;
   display: flex;
   width: 100%;

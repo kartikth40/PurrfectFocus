@@ -20,7 +20,8 @@ import {
   SHORTBREAK,
   LONGBREAK,
   TIMERKEY,
-  SETTINGSKEY
+  SETTINGSKEY,
+  TASKS
  } from "./constants.js"
 
 let intervalId = createState(0)
@@ -50,13 +51,14 @@ chrome.runtime.setUninstallURL("https://chromewebstore.google.com/detail/purrfec
 async function startActualTimer(timer) {
   print.log('message received - start timer')
   const timerObj = {
-    timer: {
+    [TIMERKEY]: {
       time: timer?.time ?? 0,
       status: PLAY,
       type: timer?.type ?? FOCUS,
       counts: timer?.counts ?? 0,
       startTime: getCurrentTimeString(),
-      endTime: null
+      endTime: null,
+      task: timer?.task ?? TASKS.WORK
     }
   }
   await setSessionStorage(timerObj)
@@ -71,13 +73,14 @@ async function pauseActualTimer(timer) {
   print.log(intervalId.getState())
   clearInterval(intervalId.getState())
   const timerObj = {
-    timer: {
+    [TIMERKEY]: {
       time: timer?.time ?? 0,
       status: PAUSE,
       type: timer?.type ?? FOCUS,
       counts: timer?.counts ?? 0,
       startTime: timer?.startTime ?? getCurrentTimeString(),
-      endTime: null
+      endTime: null,
+      task: timer?.task ?? TASKS.WORK
     }
   }
   await setSessionStorage(timerObj)
@@ -121,7 +124,7 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
   }
 })
 
-const startTimer =(chrome, timer) => {
+const startTimer = async (chrome, timer) => {
   // if(DEVELOPING) timer = 5
   print.log('start timer started 🌠')
   let intId = setInterval(async function() {
@@ -137,6 +140,7 @@ const startTimer =(chrome, timer) => {
       const timerObj = await getSessionStorage(TIMERKEY)
       const settingsObj = await getSyncStorage(SETTINGSKEY)
       const currentDateWithMonth = currentDate.getDate()+'-'+(currentDate.getMonth()+1)
+      const task = timerObj?.timer?.type === SHORTBREAK || timerObj?.timer?.type === LONGBREAK ? TASKS.REST : timerObj?.timer?.task ?? TASKS.WORK
       if(!oldHistory) {
         let startTime = timerObj?.timer?.startTime
         let endTime = getCurrentTimeString()
@@ -150,7 +154,8 @@ const startTimer =(chrome, timer) => {
             startTime: startTime,
             endTime: endTime,
             duration: duration,
-            type: timerObj?.timer?.type === FOCUS ? 'focus' : 'break'
+            type: timerObj?.timer?.type === FOCUS ? 'focus' : 'break',
+            task: task
             }]
           } 
         })
@@ -167,7 +172,8 @@ const startTimer =(chrome, timer) => {
           startTime: startTime,
           endTime: endTime,
           duration: duration,
-          type: timerObj?.timer?.type === FOCUS ? 'focus' : 'break'
+          type: timerObj?.timer?.type === FOCUS ? 'focus' : 'break',
+          task: task
           })
         if(startTime && endTime) await setLocalStorage({[currentDate.getFullYear().toString()]: {
           [currentDateWithMonth]: todaysPomodoros,
@@ -188,7 +194,8 @@ const startTimer =(chrome, timer) => {
             startTime: startTime,
             endTime: endTime,
             duration: duration,
-            type: timerObj?.timer?.type === FOCUS ? 'focus' : 'break'
+            type: timerObj?.timer?.type === FOCUS ? 'focus' : 'break',
+            task: task
             }],
             ...oldHistory
           } 
@@ -205,13 +212,14 @@ const startTimer =(chrome, timer) => {
       } catch{(e) => console.warn(e)}
       const result = await getSessionStorage(TIMERKEY)
       const timerToStore = {
-        timer: {
+        [TIMERKEY]: {
           time: timer,
           status: result?.timer?.status,
           type: result?.timer?.type,
           counts: result?.timer?.counts,
           startTime: result?.timer?.startTime,
-          endTime: null
+          endTime: null,
+          task: result?.timer?.task ?? TASKS.WORKs
         }
       }
       await setSessionStorage(timerToStore)
@@ -242,11 +250,12 @@ const setNextTimer = async (timerEnds=false) => {
       print.log('next is short break')
       chrome.action.setBadgeText({text: getTimeString(settingsObj.settings.shortBreak.time * 60)})
       timerToStore = {
-        timer: {
+        [TIMERKEY]: {
           time: settingsObj.settings.shortBreak.time * 60,
           status: PAUSE,
           type: SHORTBREAK,
-          counts: interval > 0 ? status.timer.counts : 0
+          counts: interval > 0 ? status.timer.counts : 0,
+          task: status?.timer?.task ?? TASKS.WORK
         }
       }
       await setSessionStorage(timerToStore)
@@ -256,11 +265,12 @@ const setNextTimer = async (timerEnds=false) => {
       print.log('next is long break')
       chrome.action.setBadgeText({text: getTimeString(settingsObj.settings.longBreak.time * 60)})
       timerToStore = {
-        timer: {
+        [TIMERKEY]: {
           time: settingsObj.settings.longBreak.time * 60,
           status: PAUSE,
           type: LONGBREAK,
-          counts: 0
+          counts: 0,
+          task: status?.timer?.task ?? TASKS.WORK
         }
       }
       await setSessionStorage(timerToStore)
@@ -274,11 +284,12 @@ const setNextTimer = async (timerEnds=false) => {
     print.log('next is focus after short one')
     chrome.action.setBadgeText({text: getTimeString(settingsObj.settings.focus.time * 60)})
     timerToStore = {
-      timer: {
+      [TIMERKEY]: {
         time: settingsObj.settings.focus.time * 60,
         status: PAUSE,
         type: FOCUS,
-        counts: status.timer.counts + 1
+        counts: status.timer.counts + 1,
+        task: status?.timer?.task ?? TASKS.WORK
       }
     }
     await setSessionStorage(timerToStore)
@@ -291,11 +302,12 @@ const setNextTimer = async (timerEnds=false) => {
     print.log('next is focus after long one')
     chrome.action.setBadgeText({text: getTimeString(settingsObj.settings.focus.time * 60)})
     timerToStore = {
-      timer: {
+      [TIMERKEY]: {
         time: settingsObj.settings.focus.time * 60,
         status: PAUSE,
         type: FOCUS,
-        counts: 0
+        counts: 0,
+        task: status?.timer?.task ?? TASKS.WORK
       }
     }
     await setSessionStorage(timerToStore)

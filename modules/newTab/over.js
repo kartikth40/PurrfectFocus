@@ -1,6 +1,6 @@
 import { CONFIG } from "../config.js"
-import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE } from "../constants.js"
-import { changeTextTo, createNewTabForHistory, createNewTabForSettings, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, timerDuration } from "../utils.js"
+import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE, TASKS } from "../constants.js"
+import { changeTextTo, createNewTabForHistory, createNewTabForSettings, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setSessionStorage, timerDuration } from "../utils.js"
 
 const container = document.querySelector('.container')
 const focusTitle = document.querySelector('.focus-title')
@@ -16,6 +16,8 @@ const quote = document.querySelector('.quote')
 const breakActivitiesSuggestions = document.querySelector('.break-suggestions-container')
 const settingsBtn = document.querySelector('.settings-tab-btn')
 const historyBtn = document.querySelector('.history-tab-btn')
+const taskSelect = document.getElementById('tasks-select')
+
 let audio = null
 let settings
 let musicPlayerInitialized = false
@@ -36,6 +38,7 @@ async function init() {
     focusBtnText.innerText = 'Start Focusing'
     breakActivitiesSuggestions.classList.remove('show')
     updateFocusQuote()
+    setFocusOptionForTasks(timer?.timer)
   }
   else if(timer.timer.type === SHORTBREAK) {
     untilLongBreak.style.visibility = 'visible'
@@ -43,12 +46,14 @@ async function init() {
     focusBtnText.innerText = 'Start Short Break'
     breakActivitiesSuggestions.classList.add('show')
     updateBreakQuote()
+    setRestOptionForTasks()
   }else {
     untilLongBreak.style.visibility = 'hidden'
     focusTitle.innerText = 'Take a Long Break'
     focusBtnText.innerText = 'Start Long Break'
     breakActivitiesSuggestions.classList.add('show')
     updateBreakQuote()
+    setRestOptionForTasks()
   }
   const store = await getSyncStorage(SETTINGSKEY)
   settings = store.settings
@@ -251,10 +256,17 @@ function addEventListeners() {
     await createNewTabForSettings()
   })
   historyBtn.addEventListener('click',async () => {
-    console.log('click')
     await createNewTabForHistory()
   })
 
+  taskSelect.addEventListener('change', async (event) => {
+    const selectedTask = event.target.value
+    const timer = await getSessionStorage(TIMERKEY)
+    if(timer.timer) {
+      timer.timer.task = selectedTask
+      await setSessionStorage({timer: timer.timer})
+    }
+  })
 }
 
 function loadSettings(settings) {
@@ -279,12 +291,15 @@ function loadSettings(settings) {
 const initiateTimer = async () => {
   const store = await getSyncStorage(SETTINGSKEY)
   let settings = store.settings
+
+  const selectedTask = taskSelect.value
   chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {
     const timerObj = {
       time: timerDuration(FOCUS, settings)*60,
       status: PLAY,
       type: FOCUS,
-      counts: 0
+      counts: 0,
+      task: selectedTask ?? TASKS.WORK
     }
     try{
       await chrome.runtime.sendMessage({startTimer: true, timer: timerObj})
@@ -328,7 +343,10 @@ const updateNextTimer = async () => {
   changeTextTo(timerEle, getTimeString(timerDuration(result.timer.type, settingsObj?.settings)*60))
   if(!result?.timer || result?.timer?.type === FOCUS) {
     updateFocusQuote()
+    setFocusOptionForTasks(result?.timer)
     return
+  }else {
+    setRestOptionForTasks()
   }
   updateBreakQuote()
   changeTextTo(focusBtnText, 'Start ' + result.timer.type)
@@ -361,9 +379,11 @@ const pause = async (timer) => {
 
 const resume = async (timer) => {
   print.log('resume timer - new tab')
+  const selectedTask = taskSelect.value
+  timer.task = selectedTask ?? TASKS.WORK
   changeTextTo(focusBtnText, 'Pause')
   changeTextTo(focusTitle, timer?.type)
-  await resumeTimer()
+  await resumeTimer(timer)
 }
 
 const updateBreakQuote = () => {
@@ -419,4 +439,22 @@ const votePoll = document?.getElementById("votePoll")
     votePoll.addEventListener("click", function() {
     chrome.tabs.create({ url: CONFIG.POLL_FORM_URL });
   });
+}
+
+
+function setRestOptionForTasks() {
+  taskSelect.innerHTML = Object.values(TASKS)
+  .map(task => `<option value="${task}">${task}</option>`)
+  .join('')
+  taskSelect.value = TASKS.REST
+  taskSelect.disabled = true
+}
+
+function setFocusOptionForTasks(timer) {
+  taskSelect.innerHTML = Object.values(TASKS)
+                        .filter(task => task !== TASKS.REST)
+                        .map(task => `<option value="${task}">${task}</option>`)
+                        .join('')
+  taskSelect.value = timer?.task ?? TASKS.WORK
+  taskSelect.disabled = false
 }

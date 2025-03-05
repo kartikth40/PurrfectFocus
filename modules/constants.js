@@ -133,6 +133,15 @@ export const DAYS = {
   7: "Sunday"
 }
 
+export const TASKS = {
+  WORK: "Work",
+  STUDY: "Study",
+  PERSONAL: "Personal",
+  CHORES: "Chores",
+  OTHER: "Other",
+  REST: "Rest"
+}
+
 
 export const breakQuotes = [
   "Relax, Recharge and Reflect. Sometimes it's OK to do nothing.",

@@ -21,7 +21,8 @@ import {
   breakQuotes,
   focusQuotes,
   NEWTABSETTINGSIDKEY,
-  NEWTABHISTORYIDKEY} from "./constants.js"
+  NEWTABHISTORYIDKEY,
+  TASKS} from "./constants.js"
 
 const print = printer()
 
@@ -337,26 +338,22 @@ export async function createNewTabForHistory() {
     } 
 }
 
-export async function resumeTimer(callback) {
-  const result = await getSessionStorage([TIMERKEY, NEWTABTIMERIDKEY])
-  chrome.action.setBadgeText({text: getTimeString(result.timer.time)})
+export async function resumeTimer(timer) {
+  chrome.action.setBadgeText({text: getTimeString(timer.time)})
   chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'})
     print.log('====> ▶')
     const timerObj = {
-        time:  result.timer.time,
+        time:  timer.time,
         status: PLAY,
-        type: result.timer.type,
-        counts: result.timer.counts
+        type: timer.type,
+        counts: timer.counts,
+        task: timer?.task ?? TASKS.WORK
     }
     print.log('new timer -> ')
     print.log(timerObj)
     try {
       await chrome.runtime.sendMessage({startTimer: true, timer: timerObj})
     }catch{e=>console.warn(e)}
-    if(typeof callback === 'function') {
-      try{callback()}
-      catch{e => print.log(e)}
-    }
 }
 
 export const timerDuration = (type, settings) => {
