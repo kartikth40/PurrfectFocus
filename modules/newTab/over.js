@@ -64,7 +64,7 @@ async function init() {
   await handleUntilLongBreakCount(settings, timer.timer)
   if(timer?.timer?.type === LONGBREAK) changeTextTo( untilLongBreak, '')
   if(timer?.timer && (timer?.timer?.status === PLAY || timer?.timer?.status === PAUSE)) {
-    changeTextTo(timerEle, getTimeString(timer.timer.time))
+    changeTextTo(timerEle, getTimeString(timer.timer.time, false))
     changeTextTo(focusBtnText, getFocusText(timer.timer, settings))
     stopBtn.classList.add('active')
     nextBtn.classList.add('active')
@@ -213,7 +213,7 @@ function addEventListeners() {
       stopBtn.classList.remove('active')
       nextBtn.classList.remove('active')
       const store = await getSyncStorage(SETTINGSKEY)
-      changeTextTo(timerEle, getTimeString(store.settings.focus.time * 60))
+      changeTextTo(timerEle, getTimeString(store.settings.focus.time * 60, false))
       await handleUntilLongBreakCount(store.settings, null)
       await pauseMusic()
     }
@@ -284,7 +284,7 @@ function loadSettings(settings) {
     timerTag.classList.remove('simple')
     timerTag.classList.add('cat-walk')
   }
-  changeTextTo(timerEle, getTimeString(timerDuration(timer?.timer?.type, settings)*60))
+  changeTextTo(timerEle, getTimeString(timerDuration(timer?.timer?.type, settings)*60, false))
   if(settings.musicPlayer && !musicPlayerInitialized) setupMusicPlayer()
   else removeMusicPlayer()
 }
@@ -324,7 +324,7 @@ const stopTimer = async (settings) => {
   changeTextTo(focusTitle, 'Start Focusing')
   stopBtn.classList.remove('active')
   nextBtn.classList.remove('active')
-  changeTextTo(timerEle, getTimeString(settings.focus.time * 60))
+  changeTextTo(timerEle, getTimeString(settings.focus.time * 60, false))
   chrome.action.setBadgeText({text: ''})
   chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]})
   await handleUntilLongBreakCount(settings, null)
@@ -340,14 +340,13 @@ const updateNextTimer = async () => {
   const result = await getSessionStorage(TIMERKEY)
   const settingsObj = await getSyncStorage(SETTINGSKEY)
   await handleUntilLongBreakCount(settingsObj.settings, result.timer)
-  changeTextTo(timerEle, getTimeString(timerDuration(result.timer.type, settingsObj?.settings)*60))
+  changeTextTo(timerEle, getTimeString(timerDuration(result.timer.type, settingsObj?.settings)*60, false))
   if(!result?.timer || result?.timer?.type === FOCUS) {
     updateFocusQuote()
     setFocusOptionForTasks(result?.timer)
     return
-  }else {
-    setRestOptionForTasks()
   }
+  setRestOptionForTasks()
   updateBreakQuote()
   changeTextTo(focusBtnText, 'Start ' + result.timer.type)
   changeTextTo(focusTitle, result.timer.type)
@@ -380,7 +379,7 @@ const pause = async (timer) => {
 const resume = async (timer) => {
   print.log('resume timer - new tab')
   const selectedTask = taskSelect.value
-  timer.task = selectedTask ?? TASKS.WORK
+  timer.task = timer.type === FOCUS ? (selectedTask ?? TASKS.WORK) : timer.task
   changeTextTo(focusBtnText, 'Pause')
   changeTextTo(focusTitle, timer?.type)
   await resumeTimer(timer)

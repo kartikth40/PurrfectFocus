@@ -11,7 +11,7 @@ import {
   setSampleHistory,
   setSessionStorage,
 } from '../utils.js'
-import { SETTINGSKEY, LIGHTTHEME } from '../constants.js'
+import { SETTINGSKEY, LIGHTTHEME, TASKS, TASKS_COLORS, chartColors, chartBorderColors, FOCUS } from '../constants.js'
 
 const container = document.querySelector('.container')
 const todayCount = document.querySelector('.today-count')
@@ -30,8 +30,8 @@ const deleteDateInput = document.querySelector("#delete-date")
 const exportDataBtn = document.querySelector('.export-btn')
 const importDataBtn = document.querySelector('.import-btn')
 const isSampleElement = document.querySelectorAll('.is-sample')
-const noWeekDataElement = document.querySelector('.week-no-data')
-const noMonthDataElement = document.querySelector('.month-no-data')
+const noWeekDataElements = document.querySelectorAll('.week-no-data')
+const noMonthDataElements = document.querySelectorAll('.month-no-data')
 const calendarGraph = document.querySelector('.month-calendar-graph')
 const calendarMonthContainers = document.querySelectorAll('.calendar-month-container')
 const calendarMonthLabels = document.querySelectorAll('.calendar-month-label')
@@ -94,7 +94,6 @@ deleteSomeHistoryBtn.addEventListener('click', async () => {
     let currentDateStr = dateSelected.split('-')[2][0] === '0' ? dateSelected.split('-')[2][1] : dateSelected.split('-')[2]
     let currentMonthStr = dateSelected.split('-')[1][0] === '0' ? dateSelected.split('-')[1][1] : dateSelected.split('-')[1]
     const currentDateInHistory = currentDateStr+'-'+currentMonthStr
-    const container = document.querySelector('.specific-sessions-container');
     const oldHistoryObj = await getLocalStorage(currentYear)
     const oldHistory = oldHistoryObj[currentYear]
 
@@ -161,14 +160,6 @@ async function init() {
     deleteSomeContainer.classList.add('disable')
   }
 
-  if(!history) {
-    noWeekDataElement.classList.add('active')
-    noMonthDataElement.classList.add('active')
-  } else {
-    noWeekDataElement.classList.remove('active')
-    noMonthDataElement.classList.remove('active')
-  }
-
   // weekly metrics
   const currentWeekStart = new Date(currentFullDate)
   currentWeekStart.setDate(currentDate - currentDay)
@@ -176,6 +167,10 @@ async function init() {
   const thisWeekData = {}
   let weeklySum = 0
 
+  const weeklyTasks = Object.keys(TASKS).reduce((acc, key) => {
+    acc[TASKS[key]] = new Array(7).fill(0)
+    return acc
+  }, {})
   if (history) {
     for (let i = 1; i <= 7; i++) {
       const currentWeekDateWithMonth = weekDate.getDate() + '-' + (weekDate.getMonth() + 1)
@@ -186,14 +181,16 @@ async function init() {
         let breaks = 0
         data.forEach((d) => {
           if (d.type === 'focus') focus += d.duration
-          else if (d.type === 'break') breaks += d.duration
+          else breaks += d.duration
+          const task = d.task ?? (d.type === 'focus' ? TASKS.WORK : TASKS.REST)
+          weeklyTasks[task][i-1] += Math.round((d.duration / 60) * 100) / 100
         })
 
         focus = parseFloat((focus / 60).toFixed(2))
         breaks = parseFloat((breaks / 60).toFixed(2))
         thisWeekData[i] = {
           focus,
-          breaks,
+          breaks
         }
 
 
@@ -204,11 +201,24 @@ async function init() {
         maxValueOfGraph = Math.max(focus, maxValueOfGraph)
       }
     }
+    console.log(weeklyTasks)
   }
+
+  if(!weeklySum) {
+    noWeekDataElements.forEach(ele => ele.classList.add('active'))
+  } else {
+    noWeekDataElements.forEach(ele => ele.classList.remove('active'))
+  }
+
+  const weeklyData = {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    tasks: weeklyTasks
+  };
 
     // setYAxis(maxValueOfGraph)
     setBars(thisWeekData, maxValueOfGraph)
     setSimpleMetrics(weeklySum, weekCount, true)
+    setWeeklyTasksChart(weeklyData)
 
 
   // monthly metrics
@@ -217,6 +227,10 @@ async function init() {
   let totalDaysInCurrentMonth = 0
   const thisMonthData = {}
   let monthlySum = 0
+  const monthlyTasks = Object.keys(TASKS).reduce((acc, key) => {
+    acc[TASKS[key]] = 0
+    return acc
+  }, {})
   if(history) {
     for (let i = 1; i <= lastDateOfCurrentMonth; i++) {
       totalDaysInCurrentMonth++
@@ -231,6 +245,8 @@ async function init() {
         data.forEach((d) => {
           if (d.type === 'focus') focus += d.duration
           else if (d.type === 'break') breaks += d.duration
+          const task = d.task ?? (d.type === 'focus' ? TASKS.WORK : TASKS.REST)
+          monthlyTasks[task] += Math.round((d.duration / 60) * 100) / 100
         })
         
         focus = parseFloat((focus / 60).toFixed(2))
@@ -245,9 +261,15 @@ async function init() {
       }
     }
   }
-  // setYAxis(maxValueOfGraph, MONTH)
+
+  if(!monthlySum) {
+    noMonthDataElements.forEach(ele => ele.classList.add('active'))
+  } else {
+    noMonthDataElements.forEach(ele => ele.classList.remove('active'))
+  }
   setBars(thisMonthData, maxValueOfGraph, MONTH, totalDaysInCurrentMonth)
   setSimpleMetrics(monthlySum, monthCount, true)
+  setMonthlyTasksChart(monthlyTasks)
   await makecalendarGraph(currentYear, currentDate, currentMonth, currentDay, history)
   
   
@@ -328,6 +350,79 @@ function setSimpleMetrics(time, elementToSetUpon, onlyHrs = false) {
     }
     elementToSetUpon.innerText = getTimeFormatted(count, onlyHrs)
   }, 5)
+}
+
+let taskBarChart;
+let taskPieChart;
+
+function setWeeklyTasksChart(weeklyData) { 
+  const datasets = Object.entries(weeklyData.tasks).map(([label, data], i) => ({
+    label,
+    data,
+    backgroundColor: chartColors[i],
+    borderColor: chartBorderColors[i],
+    borderWidth: 1
+  }));
+
+  const barCtx = document.getElementById('taskBarChart').getContext('2d');
+  if (taskBarChart) {
+    taskBarChart.destroy();
+  }
+  taskBarChart = new Chart(barCtx, {
+    type: 'bar',
+    data: { labels: weeklyData.labels, datasets },
+    options: {
+      responsive: true,
+      scales: { x: { stacked: true }, y: { stacked: true } },
+      plugins: {
+        legend: { position: 'right' },
+        tooltip: {
+          enabled: true,
+          callbacks: {
+            label: function(context) {
+                return ` ${context.dataset.label}: ${getTimeFormatted(context.raw)}`;
+            }
+          }
+        }
+      },
+      barPercentage: 1,
+      borderSkipped: false
+    }
+  });
+}
+
+function setMonthlyTasksChart(taskData) {
+  console.log(taskData)
+  const pieCtx = document.getElementById('taskPieChart').getContext('2d');
+  if (taskPieChart) {
+    taskPieChart.destroy();
+  }
+  taskPieChart = new Chart(pieCtx, {
+    type: 'pie',
+    data: {
+      labels: Object.keys(taskData),
+      datasets: [{
+        data: Object.values(taskData),
+        backgroundColor: chartColors,
+        borderColor: chartBorderColors,
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: {
+          enabled: true,
+          callbacks: {
+            label: function(context) {
+                return ' '+getTimeFormatted(context.raw);
+            }
+          }
+        }
+      },
+    }
+  });
 }
 
 function getTimeFormatted(floatHours, onlyHrs = false) {
@@ -486,7 +581,7 @@ async function generateSessionsToDelete() {
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
 
-  const headers = ["Start Time", "End Time", "Duration", "Type", "Delete"];
+  const headers = ["Start Time", "End Time", "Duration", "Task", "Type", "Delete"];
   headers.forEach(headerText => {
     const th = document.createElement("th");
     th.textContent = headerText;
@@ -515,8 +610,20 @@ async function generateSessionsToDelete() {
     durationCell.textContent = `${duration} mins`;
     row.appendChild(durationCell);
 
+    const taskCell = document.createElement("td");
+    const taskSpan = document.createElement("span");
+    let task = session.task ?? (session.type === 'focus' ? TASKS.WORK : TASKS.REST);
+    taskSpan.textContent = task;
+    taskSpan.classList.add("task-span");
+    taskSpan.style.backgroundColor = TASKS_COLORS[task];
+    taskCell.appendChild(taskSpan);
+    row.appendChild(taskCell);
+
     const typeCell = document.createElement("td");
-    typeCell.textContent = session.type === 'focus' ? '⏳' : '🎈';
+    const typeSpan = document.createElement("span");
+    typeSpan.textContent = session.type === 'focus' ? '⏳ Focus' : '🎈 Break';
+    typeSpan.classList.add("type-span");
+    typeCell.appendChild(typeSpan);
     row.appendChild(typeCell);
 
     const checkboxCell = document.createElement("td");

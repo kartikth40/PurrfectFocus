@@ -362,12 +362,13 @@ export const timerDuration = (type, settings) => {
           : settings.focus.time
 }
 
-export function getTimeString(t) {
+export function getTimeString(t, concise=true) {
   // 00:00
   let minutes = Math.floor(t / 60)
   let seconds = t % 60
   let minutesString = (minutes < 10 ? '0' : '') + minutes
   let secondsString = (seconds < 10 ? '0' : '') + seconds
+  if(concise) return minutes > 0 ? minutesString + 'm' : secondsString + 's'
   let time = minutesString + ':' + secondsString
   return time
 }
@@ -499,17 +500,21 @@ export const setSampleHistory = async () => {
         let duration = 0
         let startTime = "00:00"
         let endTime = "00:00"
-        if(noOfFocusTimers > 0 && getRandomNumber(0,1) === 0) {
+        let task = TASKS.WORK
+        if(noOfFocusTimers > 0 && getRandomNumber(0,3) !== 0) {
           noOfFocusTimers--
           duration = getRandomNumber(10, 180)
-        }else {
+          const taskValues = Object.values(TASKS)
+          task = taskValues[getRandomNumber(0, taskValues.length - 2)]
+        } else {
           type = 'break'
-          duration = getRandomNumber(5, 120)
+          duration = getRandomNumber(5, 30)
+          task = TASKS.REST
         }
-        startTime = getTimeString(start)
-        endTime = getTimeString(start+duration)
+        startTime = getTimeString(start, false)
+        endTime = getTimeString(start+duration, false)
         start+= duration + getRandomNumber(0, 60)
-        currentDayData.push({startTime: startTime, endTime: endTime, duration: duration, type: type})
+        currentDayData.push({startTime: startTime, endTime: endTime, duration: duration, type: type, task: task})
       }
       monthData[currentDateWithMonth] = currentDayData
     }

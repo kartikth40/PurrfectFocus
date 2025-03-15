@@ -21,7 +21,8 @@ import {
   LONGBREAK,
   TIMERKEY,
   SETTINGSKEY,
-  TASKS
+  TASKS,
+  DEVELOPING
  } from "./constants.js"
 
 let intervalId = createState(0)
@@ -125,7 +126,7 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
 })
 
 const startTimer = async (chrome, timer) => {
-  // if(DEVELOPING) timer = 5
+  if(DEVELOPING) timer = 70
   print.log('start timer started 🌠')
   let intId = setInterval(async function() {
     timer--
@@ -140,7 +141,7 @@ const startTimer = async (chrome, timer) => {
       const timerObj = await getSessionStorage(TIMERKEY)
       const settingsObj = await getSyncStorage(SETTINGSKEY)
       const currentDateWithMonth = currentDate.getDate()+'-'+(currentDate.getMonth()+1)
-      const task = timerObj?.timer?.type === SHORTBREAK || timerObj?.timer?.type === LONGBREAK ? TASKS.REST : timerObj?.timer?.task ?? TASKS.WORK
+      const task = timerObj?.timer?.type !== FOCUS ? TASKS.REST : (timerObj?.timer?.task ?? TASKS.WORK)
       if(!oldHistory) {
         let startTime = timerObj?.timer?.startTime
         let endTime = getCurrentTimeString()
@@ -203,12 +204,11 @@ const startTimer = async (chrome, timer) => {
       }
       await setNextTimer(true)
     }else {
-      const timerString = getTimeString(timer)
       print.log('⏲ -> ' + timer +' '+ getTimeString(timer))
-      chrome.action.setBadgeText({text: timerString})
+      chrome.action.setBadgeText({text: getTimeString(timer)})
       chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'})
       try{
-        await chrome.runtime.sendMessage({time: timerString})
+        await chrome.runtime.sendMessage({time: getTimeString(timer, false)})
       } catch{(e) => console.warn(e)}
       const result = await getSessionStorage(TIMERKEY)
       const timerToStore = {
@@ -219,7 +219,7 @@ const startTimer = async (chrome, timer) => {
           counts: result?.timer?.counts,
           startTime: result?.timer?.startTime,
           endTime: null,
-          task: result?.timer?.task ?? TASKS.WORKs
+          task: result?.timer?.task ?? TASKS.WORK
         }
       }
       await setSessionStorage(timerToStore)

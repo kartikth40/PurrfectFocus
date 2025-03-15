@@ -692,7 +692,7 @@ footer {
 }
 .buy-me-a-coffee-container a {
   border: 1px solid black;
-  height: unset;
+  height: 40px;
   min-width: unset;
   width: 100%;
   font-size: 1em;
@@ -748,4 +748,59 @@ footer {
 .made-by:hover {
   opacity: 0.8;
   box-shadow: 0 0 10px var(--primary-color-4);
+}
+
+.task-span {
+  display: inline-block;
+  padding: 2px 5px;
+  border-radius: 3px;
+  color: #000;
+  border: 1px solid rgba(255,255,255,.7);
+}
+
+.type-span {
+  display: inline-block;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background-color: var(--primary-color);
+  color: var(--secondary-color-1);
+  white-space: nowrap;
+  box-shadow: inset 25px 0 0 var(--primary-color-1);
+}
+.light .type-span {
+  background-color: var(--secondary-color-2);
+  color: var(--primary-color);
+}
+
+.task-charts {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: flex-start;
+  margin-bottom: 100px;
+  margin-top: 50px;
+}
+.task-dist-chart {
+  height: 350px;
+}
+.pie-chart {
+  position: relative;
+  border: 2px solid var(--primary-color);
+  box-shadow: 5px 5px 0 0 var(--primary-color);
+  padding: 10px;
+  height: 100%;
+  margin-top: 30px;
+}
+.weekly-task-chart{
+  height: 350px;
+  width: 100%;
+}
+.bar-chart {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  border: 2px solid var(--primary-color);
+  box-shadow: 5px 5px 0 0 var(--primary-color);
+  padding: 10px;
+  margin-top: 30px;
 }

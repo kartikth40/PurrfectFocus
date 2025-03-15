@@ -80,13 +80,12 @@ const updateNextTimer = async () => {
   const result = await getSessionStorage(TIMERKEY)
   const settingsObj = await getSyncStorage(SETTINGSKEY)
   await handleUntilLongBreakCount(settingsObj.settings, result.timer)
-  changeTextTo(timer, getTimeString(timerDuration(result.timer.type, settingsObj?.settings)*60))
+  changeTextTo(timer, getTimeString(timerDuration(result.timer.type, settingsObj?.settings)*60, false))
   if(!result?.timer || result?.timer?.type === FOCUS) {
     setFocusOptionForTasks(result?.timer)
     return
-  }else {
-    setRestOptionForTasks()
   }
+  setRestOptionForTasks()
   changeTextTo(focusBtnText, 'Start ' + result.timer.type)
   changeTextTo(focusTitle, result.timer.type)
 }
@@ -121,13 +120,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     timerTag.classList.add('cat-walk')
   }
   const sessionStore = await getSessionStorage(TIMERKEY)
-  changeTextTo(timer, getTimeString(timerDuration(sessionStore?.timer?.type, settings)*60))
+  changeTextTo(timer, getTimeString(timerDuration(sessionStore?.timer?.type, settings)*60, false))
   await handleUntilLongBreakCount(settings, sessionStore.timer)
   if(!sessionStore?.timer || sessionStore?.timer?.type === FOCUS) setFocusOptionForTasks(sessionStore.timer)
   else setRestOptionForTasks()
   if(sessionStore?.timer?.type === LONGBREAK) changeTextTo( untilLongBreak, '')
   if(sessionStore?.timer && (sessionStore?.timer?.status === PLAY || sessionStore?.timer?.status === PAUSE)) {
-    changeTextTo(timer, getTimeString(sessionStore.timer.time))
+    changeTextTo(timer, getTimeString(sessionStore.timer.time, false))
     changeTextTo(focusBtnText, getFocusText(sessionStore.timer, settings))
     changeTextTo(focusTitle, sessionStore.timer.type)
     stopBtn.classList.add('active')
@@ -204,7 +203,7 @@ const stopTimer = async (settings) => {
   changeTextTo(focusTitle, 'Start Focusing')
   stopBtn.classList.remove('active')
   nextBtn.classList.remove('active')
-  changeTextTo(timer, getTimeString(settings.focus.time * 60))
+  changeTextTo(timer, getTimeString(settings.focus.time * 60, false))
   chrome.action.setBadgeText({text: ''})
   chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]})
   await handleUntilLongBreakCount(settings, null)
@@ -227,7 +226,7 @@ const pause = async (timer) => {
 const resume = async (timer) => {
   print.log('resume timer')
   const selectedTask = taskSelect.value
-  timer.task = selectedTask ?? TASKS.WORK
+  timer.task = timer.type === FOCUS ? (selectedTask ?? TASKS.WORK) : timer.task
   changeTextTo(focusBtnText, 'Pause')
   changeTextTo(focusTitle, timer?.type)
   await resumeTimer(timer)
