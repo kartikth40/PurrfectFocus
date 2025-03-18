@@ -10,6 +10,8 @@ import {
   setLocalStorage,
   setSampleHistory,
   setSessionStorage,
+  getValidTask,
+  updateOldHistoryDataToAccomodateLatestChanges
 } from '../utils.js'
 import { SETTINGSKEY, LIGHTTHEME, TASKS, TASKS_COLORS, chartColors, chartBorderColors, FOCUS, BREAK } from '../constants.js'
 
@@ -140,7 +142,8 @@ async function init() {
   const currentDate = currentFullDate.getDate()
   const currentMonth = currentFullDate.getMonth() + 1
   const currentDay =
-    currentFullDate.getDay() === 0 ? 6 : currentFullDate.getDay() - 1
+  currentFullDate.getDay() === 0 ? 6 : currentFullDate.getDay() - 1
+  await updateOldHistoryDataToAccomodateLatestChanges(currentYear)
   const sampleHistoryObj = await getSessionStorage(currentYear)
   sampleHistory = sampleHistoryObj[currentYear]
   const historyObj = await getLocalStorage(currentYear)
@@ -181,8 +184,7 @@ async function init() {
         data.forEach((d) => {
           if (d.type === FOCUS) focus += d.duration
           else breaks += d.duration
-          const task = TASKS[d.task] ? d.task : (d.type === FOCUS ? TASKS.WORK : TASKS.REST)
-          console.log(currentWeekDateWithMonth,d)
+          const task = getValidTask(d.task, d.type)
           weeklyTasks[task][i-1] += Math.round((d.duration / 60) * 100) / 100
         })
 
@@ -201,7 +203,6 @@ async function init() {
         maxValueOfGraph = Math.max(focus, maxValueOfGraph)
       }
     }
-    console.log(weeklyTasks)
   }
 
   if(!weeklySum) {
@@ -245,7 +246,7 @@ async function init() {
         data.forEach((d) => {
           if (d.type === FOCUS) focus += d.duration
           else if (d.type === BREAK) breaks += d.duration
-          const task = TASKS[d.task] ? d.task : (d.type === FOCUS ? TASKS.WORK : TASKS.REST)
+          const task = getValidTask(d.task, d.type)
           monthlyTasks[task] += Math.round((d.duration / 60) * 100) / 100
         })
         
@@ -392,7 +393,6 @@ function setWeeklyTasksChart(weeklyData) {
 }
 
 function setMonthlyTasksChart(taskData) {
-  console.log(taskData)
   const pieCtx = document.getElementById('taskPieChart').getContext('2d');
   if (taskPieChart) {
     taskPieChart.destroy();
@@ -612,7 +612,7 @@ async function generateSessionsToDelete() {
 
     const taskCell = document.createElement("td");
     const taskSpan = document.createElement("span");
-    let task = TASKS[session.task] ? session.task : (session.type === FOCUS ? TASKS.WORK : TASKS.REST);
+    let task = getValidTask(session.task, session.type)
     taskSpan.textContent = task;
     taskSpan.classList.add("task-span");
     taskSpan.style.backgroundColor = TASKS_COLORS[task];

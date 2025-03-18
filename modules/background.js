@@ -12,7 +12,8 @@ import {
   setLocalStorage,
   getLocalStorage,
   getCurrentTimeString,
-  checkUserActivity} from "./utils.js"
+  checkUserActivity,
+  getValidTask} from "./utils.js"
 import {
   PLAY,
   PAUSE,
@@ -60,7 +61,7 @@ async function startActualTimer(timer) {
       counts: timer?.counts ?? 0,
       startTime: getCurrentTimeString(),
       endTime: null,
-      task: timer?.task ?? TASKS.WORK
+      task: getValidTask(timer?.task)
     }
   }
   await setSessionStorage(timerObj)
@@ -82,7 +83,7 @@ async function pauseActualTimer(timer) {
       counts: timer?.counts ?? 0,
       startTime: timer?.startTime ?? getCurrentTimeString(),
       endTime: null,
-      task: timer?.task ?? TASKS.WORK
+      task: getValidTask(timer?.task)
     }
   }
   await setSessionStorage(timerObj)
@@ -142,7 +143,7 @@ const startTimer = async (chrome, timer) => {
       const timerObj = await getSessionStorage(TIMERKEY)
       const settingsObj = await getSyncStorage(SETTINGSKEY)
       const currentDateWithMonth = currentDate.getDate()+'-'+(currentDate.getMonth()+1)
-      const task = timerObj?.timer?.type !== FOCUS ? TASKS.REST : (timerObj?.timer?.task ?? TASKS.WORK)
+      const task = getValidTask(timerObj?.timer?.task, timerObj?.timer?.type)
       if(!oldHistory) {
         let startTime = timerObj?.timer?.startTime
         let endTime = getCurrentTimeString()
@@ -220,7 +221,7 @@ const startTimer = async (chrome, timer) => {
           counts: result?.timer?.counts,
           startTime: result?.timer?.startTime,
           endTime: null,
-          task: result?.timer?.task ?? TASKS.WORK
+          task: getValidTask(result?.timer?.task)
         }
       }
       await setSessionStorage(timerToStore)
@@ -256,7 +257,7 @@ const setNextTimer = async (timerEnds=false) => {
           status: PAUSE,
           type: SHORTBREAK,
           counts: interval > 0 ? status.timer.counts : 0,
-          task: status?.timer?.task ?? TASKS.WORK
+          task: getValidTask(status?.timer?.task)
         }
       }
       await setSessionStorage(timerToStore)
@@ -271,7 +272,7 @@ const setNextTimer = async (timerEnds=false) => {
           status: PAUSE,
           type: LONGBREAK,
           counts: 0,
-          task: status?.timer?.task ?? TASKS.WORK
+          task: getValidTask(status?.timer?.task)
         }
       }
       await setSessionStorage(timerToStore)
@@ -290,7 +291,7 @@ const setNextTimer = async (timerEnds=false) => {
         status: PAUSE,
         type: FOCUS,
         counts: status.timer.counts + 1,
-        task: status?.timer?.task ?? TASKS.WORK
+        task: getValidTask(status?.timer?.task)
       }
     }
     await setSessionStorage(timerToStore)
@@ -308,7 +309,7 @@ const setNextTimer = async (timerEnds=false) => {
         status: PAUSE,
         type: FOCUS,
         counts: 0,
-        task: status?.timer?.task ?? TASKS.WORK
+        task: getValidTask(status?.timer?.task)
       }
     }
     await setSessionStorage(timerToStore)

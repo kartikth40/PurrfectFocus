@@ -10,7 +10,8 @@ import {
   createNewTabForTimers,
   createNewTabForSettings,
   createNewTabForHistory,
-  setSessionStorage} from "../utils.js"
+  setSessionStorage,
+  getValidTask} from "../utils.js"
 import {
   PLAY,
   PAUSE,
@@ -70,6 +71,9 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
       timerTag.classList.remove('simple')
       timerTag.classList.add('cat-walk')
     }
+  }
+  else if(request.taskChange) {
+    taskSelect.value = request.taskChange
   }
 })
 
@@ -185,8 +189,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const selectedTask = event.target.value
     const timer = await getSessionStorage(TIMERKEY)
     if(timer.timer) {
-      timer.timer.task = selectedTask
+      timer.timer.task = getValidTask(selectedTask, timer?.timer?.type)
       await setSessionStorage({timer: timer.timer})
+      await chrome.runtime.sendMessage({taskChange: timer.timer.task})
     }
   })
 })
@@ -226,7 +231,7 @@ const pause = async (timer) => {
 const resume = async (timer) => {
   print.log('resume timer')
   const selectedTask = taskSelect.value
-  timer.task = timer.type === FOCUS ? (selectedTask ?? TASKS.WORK) : timer.task
+  timer.task = getValidTask(selectedTask, timer.type)
   changeTextTo(focusBtnText, 'Pause')
   changeTextTo(focusTitle, timer?.type)
   await resumeTimer(timer)
@@ -243,7 +248,7 @@ const initiateTimer = async () => {
       status: PLAY,
       type: FOCUS,
       counts: 0,
-      task: selectedTask ?? TASKS.WORK
+      task: getValidTask(selectedTask)
     }
     try{
       await chrome.runtime.sendMessage({startTimer: true, timer: timerObj})
@@ -275,6 +280,6 @@ function setFocusOptionForTasks(timer) {
                         .filter(task => task !== TASKS.REST)
                         .map(task => `<option value="${task}">${task}</option>`)
                         .join('')
-  taskSelect.value = timer?.task ?? TASKS.WORK
+  taskSelect.value = getValidTask(timer?.task)
   taskSelect.disabled = false
 }

@@ -35,6 +35,7 @@ export const LIGHTTHEME = 'light'
 // storage keys
 export const SETTINGSKEY = 'settings'
 export const TIMERKEY = 'timer'
+export const LASTUPDATEKEY = 'lastDataUpdate'
 export const NEWTABTIMERIDKEY = 'newTabTimerId'
 export const NEWTABSETTINGSIDKEY = 'newTabSettingsId'
 export const NEWTABHISTORYIDKEY = 'newTabHistoryId'

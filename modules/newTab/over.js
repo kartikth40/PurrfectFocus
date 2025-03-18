@@ -1,6 +1,6 @@
 import { CONFIG } from "../config.js"
 import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE, TASKS } from "../constants.js"
-import { changeTextTo, createNewTabForHistory, createNewTabForSettings, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setSessionStorage, timerDuration } from "../utils.js"
+import { changeTextTo, createNewTabForHistory, createNewTabForSettings, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setSessionStorage, timerDuration, getValidTask } from "../utils.js"
 
 const container = document.querySelector('.container')
 const focusTitle = document.querySelector('.focus-title')
@@ -222,6 +222,9 @@ function addEventListeners() {
       settings = store.settings
       loadSettings(settings)
     }
+    else if(request.taskChange) {
+      taskSelect.value = request.taskChange
+    }
   })
 
   focusBtn.addEventListener('click', async (event) => {
@@ -263,8 +266,9 @@ function addEventListeners() {
     const selectedTask = event.target.value
     const timer = await getSessionStorage(TIMERKEY)
     if(timer.timer) {
-      timer.timer.task = selectedTask
+      timer.timer.task = getValidTask(selectedTask, timer?.timer?.type)
       await setSessionStorage({timer: timer.timer})
+      await chrome.runtime.sendMessage({taskChange: timer.timer.task})
     }
   })
 }
@@ -299,7 +303,7 @@ const initiateTimer = async () => {
       status: PLAY,
       type: FOCUS,
       counts: 0,
-      task: selectedTask ?? TASKS.WORK
+      task: getValidTask(selectedTask)
     }
     try{
       await chrome.runtime.sendMessage({startTimer: true, timer: timerObj})
@@ -379,7 +383,7 @@ const pause = async (timer) => {
 const resume = async (timer) => {
   print.log('resume timer - new tab')
   const selectedTask = taskSelect.value
-  timer.task = timer.type === FOCUS ? (selectedTask ?? TASKS.WORK) : timer.task
+  timer.task = getValidTask(selectedTask, timer.type)
   changeTextTo(focusBtnText, 'Pause')
   changeTextTo(focusTitle, timer?.type)
   await resumeTimer(timer)
@@ -454,6 +458,6 @@ function setFocusOptionForTasks(timer) {
                         .filter(task => task !== TASKS.REST)
                         .map(task => `<option value="${task}">${task}</option>`)
                         .join('')
-  taskSelect.value = timer?.task ?? TASKS.WORK
+  taskSelect.value = getValidTask(timer?.task)
   taskSelect.disabled = false
 }

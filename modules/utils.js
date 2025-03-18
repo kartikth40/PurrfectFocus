@@ -23,7 +23,8 @@ import {
   NEWTABSETTINGSIDKEY,
   NEWTABHISTORYIDKEY,
   TASKS,
-  BREAK} from "./constants.js"
+  BREAK,
+  LASTUPDATEKEY} from "./constants.js"
 
 const print = printer()
 
@@ -348,7 +349,7 @@ export async function resumeTimer(timer) {
         status: PLAY,
         type: timer.type,
         counts: timer.counts,
-        task: timer?.task ?? TASKS.WORK
+        task: getValidTask(timer?.task)
     }
     print.log('new timer -> ')
     print.log(timerObj)
@@ -723,3 +724,32 @@ chrome.notifications.onClicked.addListener(async (notificationId) => {
     })
   }
 });
+
+
+export function getValidTask(task, type=FOCUS) {
+  return Object.values(TASKS).includes(task) ? task : (type !== BREAK ? TASKS.WORK : TASKS.REST)
+}
+
+export async function updateOldHistoryDataToAccomodateLatestChanges(currentYear) {
+  const lastDataChangeObj = await getLocalStorage(LASTUPDATEKEY);
+  const lastUpdate = lastDataChangeObj[LASTUPDATEKEY]
+  if(lastUpdate && lastUpdate >= 1) return
+  const historyObj = await getLocalStorage(currentYear);
+  const history = historyObj[currentYear];
+  if (!history
+    || !isObject(history)
+    || Object.keys(history).length === 0) {
+    return;
+  }
+  for (const date in history) {
+    if (history[date].length > 0) {
+      for (const index in history[date]) {
+        const session = history[date][index]
+        if(session.type === 'focus') session.type = FOCUS
+        else if(session.type === 'break') session.type = BREAK
+      }
+    }
+  }
+  await setLocalStorage({[currentYear]: history});
+  await setLocalStorage({[LASTUPDATEKEY]: 1});
+}
