@@ -32,7 +32,6 @@ const importDataBtn = document.querySelector('.import-btn')
 const isSampleElement = document.querySelectorAll('.is-sample')
 const noWeekDataElements = document.querySelectorAll('.week-no-data')
 const noMonthDataElements = document.querySelectorAll('.month-no-data')
-const calendarGraph = document.querySelector('.month-calendar-graph')
 const calendarMonthContainers = document.querySelectorAll('.calendar-month-container')
 const calendarMonthLabels = document.querySelectorAll('.calendar-month-label')
 const calendarMonthBoxesContainers = document.querySelectorAll('.calendar-month-boxes-container')
@@ -180,9 +179,10 @@ async function init() {
         let focus = 0
         let breaks = 0
         data.forEach((d) => {
-          if (d.type === 'focus') focus += d.duration
+          if (d.type === FOCUS) focus += d.duration
           else breaks += d.duration
-          const task = d.task ?? (d.type === 'focus' ? TASKS.WORK : TASKS.REST)
+          const task = TASKS[d.task] ? d.task : (d.type === FOCUS ? TASKS.WORK : TASKS.REST)
+          console.log(currentWeekDateWithMonth,d)
           weeklyTasks[task][i-1] += Math.round((d.duration / 60) * 100) / 100
         })
 
@@ -243,9 +243,9 @@ async function init() {
         let focus = 0
         let breaks = 0
         data.forEach((d) => {
-          if (d.type === 'focus') focus += d.duration
-          else if (d.type === 'break') breaks += d.duration
-          const task = d.task ?? (d.type === 'focus' ? TASKS.WORK : TASKS.REST)
+          if (d.type === FOCUS) focus += d.duration
+          else if (d.type === BREAK) breaks += d.duration
+          const task = TASKS[d.task] ? d.task : (d.type === FOCUS ? TASKS.WORK : TASKS.REST)
           monthlyTasks[task] += Math.round((d.duration / 60) * 100) / 100
         })
         
@@ -287,8 +287,8 @@ async function init() {
         let focus = 0
         let breaks = 0
         data.forEach((d) => {
-          if (d.type === 'focus') focus += d.duration
-          else if (d.type === 'break') breaks += d.duration
+          if (d.type === FOCUS) focus += d.duration
+          else if (d.type === BREAK) breaks += d.duration
         })
 
         focus = parseFloat((focus / 60).toFixed(2))
@@ -459,7 +459,7 @@ async function makecalendarGraph(currentYear, currentDate, currentMonth, current
   const boxes = []
   let totalFocus = 0
   let totalFocusCount = 0
-  for(const [index, conatainer] of calendarMonthContainers.entries()) {
+  for(const [index, container] of calendarMonthContainers.entries()) {
     const m = calendarMonthContainers.length - index - 1
     const previousYear = (new Date().getFullYear() - 1).toString()
     const curDate = new Date(currentYear, currentMonth-m-1, 1)
@@ -492,11 +492,11 @@ async function makecalendarGraph(currentYear, currentDate, currentMonth, current
         let breaks = 0
         let focusCount = 0
         for(const d of data) {
-          if (d.type === 'focus') {
+          if (d.type === FOCUS) {
             focus += d.duration
             focusCount++
           }
-          else if (d.type === 'break') breaks += d.duration
+          else if (d.type === BREAK) breaks += d.duration
         }
         
         focus = parseFloat((focus).toFixed(2))
@@ -612,7 +612,7 @@ async function generateSessionsToDelete() {
 
     const taskCell = document.createElement("td");
     const taskSpan = document.createElement("span");
-    let task = session.task ?? (session.type === 'focus' ? TASKS.WORK : TASKS.REST);
+    let task = TASKS[session.task] ? session.task : (session.type === FOCUS ? TASKS.WORK : TASKS.REST);
     taskSpan.textContent = task;
     taskSpan.classList.add("task-span");
     taskSpan.style.backgroundColor = TASKS_COLORS[task];
@@ -621,7 +621,7 @@ async function generateSessionsToDelete() {
 
     const typeCell = document.createElement("td");
     const typeSpan = document.createElement("span");
-    typeSpan.textContent = session.type === 'focus' ? '⏳ Focus' : '🎈 Break';
+    typeSpan.textContent = session.type === FOCUS ? '⏳ Focus' : '🎈 Break';
     typeSpan.classList.add("type-span");
     typeCell.appendChild(typeSpan);
     row.appendChild(typeCell);

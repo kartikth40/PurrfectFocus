@@ -496,7 +496,7 @@ export const setSampleHistory = async () => {
       let start = getRandomNumber(0, 720)
       const currentDayData = []
       for(let j = 0; j < noOfTimers; j++) {
-        let type = 'focus' 
+        let type = FOCUS 
         let duration = 0
         let startTime = "00:00"
         let endTime = "00:00"
@@ -507,7 +507,7 @@ export const setSampleHistory = async () => {
           const taskValues = Object.values(TASKS)
           task = taskValues[getRandomNumber(0, taskValues.length - 2)]
         } else {
-          type = 'break'
+          type = BREAK
           duration = getRandomNumber(5, 30)
           task = TASKS.REST
         }

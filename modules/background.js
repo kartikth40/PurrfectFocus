@@ -155,7 +155,7 @@ const startTimer = async (chrome, timer) => {
             startTime: startTime,
             endTime: endTime,
             duration: duration,
-            type: timerObj?.timer?.type === FOCUS ? 'focus' : 'break',
+            type: timerObj?.timer?.type === FOCUS ? FOCUS : BREAK,
             task: task
             }]
           } 
@@ -173,7 +173,7 @@ const startTimer = async (chrome, timer) => {
           startTime: startTime,
           endTime: endTime,
           duration: duration,
-          type: timerObj?.timer?.type === FOCUS ? 'focus' : 'break',
+          type: timerObj?.timer?.type === FOCUS ? FOCUS : BREAK,
           task: task
           })
         if(startTime && endTime) await setLocalStorage({[currentDate.getFullYear().toString()]: {
@@ -195,7 +195,7 @@ const startTimer = async (chrome, timer) => {
             startTime: startTime,
             endTime: endTime,
             duration: duration,
-            type: timerObj?.timer?.type === FOCUS ? 'focus' : 'break',
+            type: timerObj?.timer?.type === FOCUS ? FOCUS : BREAK,
             task: task
             }],
             ...oldHistory
