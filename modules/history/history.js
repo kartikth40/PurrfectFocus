@@ -11,7 +11,7 @@ import {
   setSampleHistory,
   setSessionStorage,
 } from '../utils.js'
-import { SETTINGSKEY, LIGHTTHEME, TASKS, TASKS_COLORS, chartColors, chartBorderColors, FOCUS } from '../constants.js'
+import { SETTINGSKEY, LIGHTTHEME, TASKS, TASKS_COLORS, chartColors, chartBorderColors, FOCUS, BREAK } from '../constants.js'
 
 const container = document.querySelector('.container')
 const todayCount = document.querySelector('.today-count')

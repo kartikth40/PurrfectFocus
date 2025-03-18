@@ -22,7 +22,8 @@ import {
   TIMERKEY,
   SETTINGSKEY,
   TASKS,
-  DEVELOPING
+  DEVELOPING,
+  BREAK
  } from "./constants.js"
 
 let intervalId = createState(0)

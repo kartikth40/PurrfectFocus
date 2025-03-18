@@ -22,7 +22,8 @@ import {
   focusQuotes,
   NEWTABSETTINGSIDKEY,
   NEWTABHISTORYIDKEY,
-  TASKS} from "./constants.js"
+  TASKS,
+  BREAK} from "./constants.js"
 
 const print = printer()
 
