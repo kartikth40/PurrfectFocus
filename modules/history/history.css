@@ -15,14 +15,13 @@
 }
 .container.light {
   background-image:  radial-gradient(#000 .5px, transparent .5px), radial-gradient(#000 .5px, var(--secondary-color-1) .5px);
-  /* background-color: var(--secondary-color-1); */
   color: #000;
 }
 
 .metrics-container{
   margin: 50px;
   padding: 30px 50px;
-  border: 2px dashed var(--secondary-color-1);
+  border: 1px dashed var(--secondary-color-2);
   width: max-content;
   border-radius: 10px;
   font-size: 16px;
@@ -37,10 +36,12 @@
   height: 100%;
   font-family: "Poppins", sans-serif;
   font-weight: 700;
+  backdrop-filter: blur(2px);
+  background-color: #0000001a;
 }
 .container.light .metrics-container {
-  background-color: var(--secondary-color-1);
-  border: 2px dashed black;
+  backdrop-filter: blur(3px);
+  background-color: #ffffff85;
 }
 .data-btns {
   position: absolute;
@@ -228,8 +229,12 @@ p{
   border-bottom: none;
   background-color: var(--secondary-color-2);
   color: var(--primary-color);
-  box-shadow: inset 5px 10px 70px var(--secondary-color-1), inset -5px 5px 90px var(--primary-color)
-              ,  -5px 5px 100px var(--primary-color), 0 2px 0 var(--primary-color);
+  box-shadow: inset 5px 10px 30px var(--secondary-color-1), inset -5px 5px 90px var(--primary-color-3)
+              ,  -5px 5px 20px var(--primary-color-2), 0 2px 0 var(--primary-color);
+  &::after, &::before {
+    background: linear-gradient(45deg, var(--primary-color-4), var(--primary-color));
+    box-shadow: inset 0 0 10px var(--primary-color-2);
+  }            
 }
 .no-data:not(.active)::before, .no-data:not(.active)::after {
   height: 0;

@@ -3,7 +3,6 @@
   min-width: 270px;
   color: var(--secondary-color-1);
   position: relative;
-  /* overflow: hidden; */
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -16,7 +15,6 @@
 }
 .container.light {
   background-image:  radial-gradient(#000 .5px, transparent .5px), radial-gradient(#000 .5px, var(--secondary-color-1) .5px);
-  /* background-color: var(--secondary-color-1); */
   color: #000;
 }
 
@@ -29,7 +27,8 @@
   font-size: 12px;
   position:relative;
   z-index: 1;
-  /* overflow: hidden; */
+  backdrop-filter: blur(1px);
+  background-color: #23232385;
 }
 .row{
   display: flex;
@@ -43,7 +42,8 @@
   width: 100%;
 }
 .container.light #settings-form {
-  background-color: var(--secondary-color-1);
+  backdrop-filter: blur(2px);
+  background-color: #ffffff85;
 }
 #settings-form::before{
   content: '';

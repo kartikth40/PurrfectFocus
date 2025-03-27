@@ -1,6 +1,6 @@
 import { CONFIG } from "../config.js"
-import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE, TASKS } from "../constants.js"
-import { changeTextTo, createNewTabForHistory, createNewTabForSettings, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setSessionStorage, timerDuration, getValidTask } from "../utils.js"
+import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE, TASKS, TASKSALIASKEY, CURRENTTASKKEY } from "../constants.js"
+import { changeTextTo, createNewTabForHistory, createNewTabForSettings, createNewTabForStreak, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setSessionStorage, timerDuration, getValidTask } from "../utils.js"
 
 const container = document.querySelector('.container')
 const focusTitle = document.querySelector('.focus-title')
@@ -16,7 +16,9 @@ const quote = document.querySelector('.quote')
 const breakActivitiesSuggestions = document.querySelector('.break-suggestions-container')
 const settingsBtn = document.querySelector('.settings-tab-btn')
 const historyBtn = document.querySelector('.history-tab-btn')
+const streakBtn = document.querySelector('.streak-tab-btn')
 const taskSelect = document.getElementById('tasks-select')
+const taskEdit = document.querySelector('.task-edit')
 
 let audio = null
 let settings
@@ -29,7 +31,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   addEventListeners()
   await init()
 })
-
 async function init() {
   const timer = await getSessionStorage(TIMERKEY)
   if(!timer?.timer || timer?.timer?.type === FOCUS) {
@@ -38,7 +39,7 @@ async function init() {
     focusBtnText.innerText = 'Start Focusing'
     breakActivitiesSuggestions.classList.remove('show')
     updateFocusQuote()
-    setFocusOptionForTasks(timer?.timer)
+    await setFocusOptionForTasks(timer?.timer)
   }
   else if(timer.timer.type === SHORTBREAK) {
     untilLongBreak.style.visibility = 'visible'
@@ -46,14 +47,14 @@ async function init() {
     focusBtnText.innerText = 'Start Short Break'
     breakActivitiesSuggestions.classList.add('show')
     updateBreakQuote()
-    setRestOptionForTasks()
+    await setRestOptionForTasks()
   }else {
     untilLongBreak.style.visibility = 'hidden'
     focusTitle.innerText = 'Take a Long Break'
     focusBtnText.innerText = 'Start Long Break'
     breakActivitiesSuggestions.classList.add('show')
     updateBreakQuote()
-    setRestOptionForTasks()
+    await setRestOptionForTasks()
   }
   const store = await getSyncStorage(SETTINGSKEY)
   settings = store.settings
@@ -261,6 +262,9 @@ function addEventListeners() {
   historyBtn.addEventListener('click',async () => {
     await createNewTabForHistory()
   })
+  streakBtn.addEventListener('click',async () => {
+    await createNewTabForStreak()
+  })
 
   taskSelect.addEventListener('change', async (event) => {
     const selectedTask = event.target.value
@@ -269,8 +273,41 @@ function addEventListeners() {
       timer.timer.task = getValidTask(selectedTask, timer?.timer?.type)
       await setSessionStorage({timer: timer.timer})
       await chrome.runtime.sendMessage({taskChange: timer.timer.task})
+      await setLocalStorage({[CURRENTTASKKEY]: timer.timer.task})
+    }else {
+      const timerObj = {
+        time: null,
+        status: PAUSE,
+        type: FOCUS,
+        counts: 0,
+        task: getValidTask(selectedTask)
+      };
+      await setSessionStorage({ timer: timerObj });
+      await chrome.runtime.sendMessage({ taskChange: timerObj.task });
+      await setLocalStorage({ [CURRENTTASKKEY]: timerObj.task });
     }
   })
+
+  taskEdit.addEventListener('click', async (event) => {
+    const tasksAliasObj = await getLocalStorage(TASKSALIASKEY)
+    const tasksAlias = tasksAliasObj[TASKSALIASKEY] || {}
+    const oldSelectedTask = taskSelect.value
+    const oldTaskAlias = tasksAlias[oldSelectedTask] || oldSelectedTask
+    showCustomPrompt(
+        "🌱 Heads up! 🌱",
+        "Renaming this task will update it everywhere, including history.\n\nEnter the new task name:", 
+        oldTaskAlias,
+        async (response) => {
+          if (response !== null && response.length <= 10) {
+            tasksAlias[oldSelectedTask] = response
+            await chrome.runtime.sendMessage({taskAliasUpdated: true})
+            await setLocalStorage({[TASKSALIASKEY]: tasksAlias})
+            setFocusOptionForTasks()
+          } else if (response !== null && response.length > 10) {
+            showCustomAlert("Oops! 😋", "Task name should be less than 10 characters.", () => {})
+          }
+      });
+    })
 }
 
 function loadSettings(settings) {
@@ -347,10 +384,10 @@ const updateNextTimer = async () => {
   changeTextTo(timerEle, getTimeString(timerDuration(result.timer.type, settingsObj?.settings)*60, false))
   if(!result?.timer || result?.timer?.type === FOCUS) {
     updateFocusQuote()
-    setFocusOptionForTasks(result?.timer)
+    await setFocusOptionForTasks(result?.timer)
     return
   }
-  setRestOptionForTasks()
+  await setRestOptionForTasks()
   updateBreakQuote()
   changeTextTo(focusBtnText, 'Start ' + result.timer.type)
   changeTextTo(focusTitle, result.timer.type)
@@ -431,7 +468,7 @@ async function handleNotificationTone(fromSession=false) {
   const notificationTone = new Audio(`/assets/audio/${sound}.mp3`)
   notificationTone.play()
 
-  window.addEventListener('focus', function() {
+  window.addEventListener(FOCUS, function() {
     notificationTone.pause()
     notificationTone.currentTime = 0
   })
@@ -445,19 +482,82 @@ const votePoll = document?.getElementById("votePoll")
 }
 
 
-function setRestOptionForTasks() {
-  taskSelect.innerHTML = Object.values(TASKS)
-  .map(task => `<option value="${task}">${task}</option>`)
-  .join('')
+async function setRestOptionForTasks() {
+  const tasksAliasObj = await getLocalStorage(TASKSALIASKEY)
+  const tasksAlias = tasksAliasObj[TASKSALIASKEY] || {}
+  taskSelect.innerHTML = Object.keys(TASKS)
+                          .map(taskKey => {
+                              const task = TASKS[taskKey]
+                              const alias = tasksAlias[task] || task
+                              return `<option value="${task}">${alias}</option>`
+                          })
+                          .join('')
   taskSelect.value = TASKS.REST
   taskSelect.disabled = true
 }
 
-function setFocusOptionForTasks(timer) {
-  taskSelect.innerHTML = Object.values(TASKS)
-                        .filter(task => task !== TASKS.REST)
-                        .map(task => `<option value="${task}">${task}</option>`)
-                        .join('')
+async function setFocusOptionForTasks(timer) {
+  if(!timer) {
+    const result = await getSessionStorage(TIMERKEY)
+    timer = result[TIMERKEY]
+  }
+  const tasksAliasObj = await getLocalStorage(TASKSALIASKEY)
+  const tasksAlias = tasksAliasObj[TASKSALIASKEY] || {}
+  taskSelect.innerHTML = Object.keys(TASKS)
+                          .filter(taskKey => TASKS[taskKey] !== TASKS.REST)
+                          .map(taskKey => {
+                              const task = TASKS[taskKey]
+                              const alias = tasksAlias[task] || task
+                              return `<option value="${task}">${alias}</option>`
+                          })
+                          .join('')
   taskSelect.value = getValidTask(timer?.task)
   taskSelect.disabled = false
+}
+
+function showCustomPrompt(title, message, value, callback) {
+  const modal = document.getElementById("customPrompt");
+  const promptMessage = document.getElementById("promptMessage");
+  const promptTitle = document.getElementById("promptTitle");
+  const promptInput = document.getElementById("promptInput");
+  const promptOk = document.getElementById("promptOk");
+  const promptCancel = document.getElementById("promptCancel");
+
+  if(!title) promptTitle.style.display = "none";
+  else promptTitle.innerHTML = title;
+
+  promptMessage.innerHTML = message.replace(/\n/g, "<br>");
+  promptInput.value = value;
+  promptInput.focus();
+  modal.style.display = "flex";
+
+  setTimeout(() => promptInput.focus(), 0);
+
+  promptOk.onclick = function () {
+      modal.style.display = "none";
+      callback(promptInput.value);
+  };
+
+  promptCancel.onclick = function () {
+      modal.style.display = "none";
+      callback(null);
+  };
+}
+
+function showCustomAlert(title, message, callback) {
+  const modal = document.getElementById("customAlert");
+  const alertMessage = document.getElementById("alertMessage");
+  const alertTitle = document.getElementById("alertTitle");
+  const alertOk = document.getElementById("alertOk");
+
+  if(!title) alertTitle.style.display = "none";
+  else alertTitle.innerHTML = title;
+
+  alertMessage.innerHTML = message.replace(/\n/g, "<br>");
+  modal.style.display = "flex";
+
+  alertOk.onclick = function () {
+      modal.style.display = "none";
+      callback(true);
+  };
 }

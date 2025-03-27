@@ -27,6 +27,10 @@
             <span class="tooltip">help</span>
             <img src="/assets/icons/help.png" alt="help icon">
           </a>
+          <button class="tab-btn streak-tab-btn">
+            <span class="tooltip">streak</span>
+            <img src="/assets/icons/fire.png" alt="streak icon">
+          </button>
           <button class="tab-btn history-tab-btn">
             <span class="tooltip">history</span>
             <img src="/assets/icons/history.png" alt="history icon">
@@ -42,12 +46,10 @@
         <div class="tasks-select-container">
           <label for="tasks-select">Task: </label>
           <select id="tasks-select">
-            <option value="Work">Work</option>
-            <option value="Study">Study</option>
-            <option value="Personal">Personal</option>
-            <option value="Chores">Chores</option>
-            <option value="Other">Other</option>
           </select>
+        </div>
+        <div class="task-edit">
+          <img src="../../assets/icons/pencil.png" alt="pencil">
         </div>
       </div>
       <div class="time-container">
@@ -63,6 +65,26 @@
         </div>
       </div>
     </div>   
+</div>
+<div id="customPrompt" class="modal">
+  <div class="modal-content">
+    <h2 id="promptTitle"></h2>
+    <p id="promptMessage"></p>
+    <input type="text" id="promptInput" value="Task..." />
+    <div class="modal-buttons">
+      <button id="promptOk">✅OK</button>
+      <button id="promptCancel">❌Cancel</button>
+    </div>
+  </div>
+</div>
+<div id="customAlert" class="modal">
+  <div class="modal-content">
+    <h2 id="alertTitle"></h2>
+    <p id="alertMessage"></p>
+    <div class="modal-buttons">
+      <button id="alertOk">✅OK</button>
+    </div>
+  </div>
 </div>
 </body>
 </html>

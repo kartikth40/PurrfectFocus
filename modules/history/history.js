@@ -13,7 +13,7 @@ import {
   getValidTask,
   updateOldHistoryDataToAccomodateLatestChanges
 } from '../utils.js'
-import { SETTINGSKEY, LIGHTTHEME, TASKS, TASKS_COLORS, chartColors, chartBorderColors, FOCUS, BREAK } from '../constants.js'
+import { SETTINGSKEY, LIGHTTHEME, TASKS, TASKS_COLORS, chartColors, chartBorderColors, FOCUS, BREAK, DARKTHEME, TASKSALIASKEY } from '../constants.js'
 
 const container = document.querySelector('.container')
 const todayCount = document.querySelector('.today-count')
@@ -40,6 +40,8 @@ const calendarMonthBoxesContainers = document.querySelectorAll('.calendar-month-
 const totalFocusCountEle = document.querySelector('.total-focus-count')
 let sampleHistory;
 let sessions = []
+let theme = DARKTHEME
+
 
 
 const WEEK = 'week'
@@ -124,12 +126,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   const store = await getSyncStorage(SETTINGSKEY)
   if (store.settings?.theme === LIGHTTHEME) {
     container.classList.add('light')
-  } else container.classList.remove('light')
+    theme = LIGHTTHEME
+  } else {
+    container.classList.remove('light')
+    theme = DARKTHEME
+  }
 
   chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
     if(request.saveSettings){
           loadSettings(request.newSettings.settings)
-      }
+    }else if(request.taskAliasUpdated) {
+      location.reload()
+    }
     })
 
   await init()
@@ -183,6 +191,7 @@ async function init() {
         let breaks = 0
         data.forEach((d) => {
           if (d.type === FOCUS) focus += d.duration
+          if (d.type === FOCUS) focus += d.duration
           else breaks += d.duration
           const task = getValidTask(d.task, d.type)
           weeklyTasks[task][i-1] += Math.round((d.duration / 60) * 100) / 100
@@ -219,7 +228,7 @@ async function init() {
     // setYAxis(maxValueOfGraph)
     setBars(thisWeekData, maxValueOfGraph)
     setSimpleMetrics(weeklySum, weekCount, true)
-    setWeeklyTasksChart(weeklyData)
+    await setWeeklyTasksChart(weeklyData)
 
 
   // monthly metrics
@@ -270,8 +279,8 @@ async function init() {
   }
   setBars(thisMonthData, maxValueOfGraph, MONTH, totalDaysInCurrentMonth)
   setSimpleMetrics(monthlySum, monthCount, true)
-  setMonthlyTasksChart(monthlyTasks)
   await makecalendarGraph(currentYear, currentDate, currentMonth, currentDay, history)
+  await setMonthlyTasksChart(monthlyTasks)
   
   
   // yearly metrics
@@ -356,13 +365,16 @@ function setSimpleMetrics(time, elementToSetUpon, onlyHrs = false) {
 let taskBarChart;
 let taskPieChart;
 
-function setWeeklyTasksChart(weeklyData) { 
+async function setWeeklyTasksChart(weeklyData) {
+  const tasksAliasObj = await getLocalStorage(TASKSALIASKEY)
+  const tasksAlias = tasksAliasObj[TASKSALIASKEY] || {}
   const datasets = Object.entries(weeklyData.tasks).map(([label, data], i) => ({
-    label,
+    label: (tasksAlias[label] || label),
     data,
     backgroundColor: chartColors[i],
-    borderColor: chartBorderColors[i],
-    borderWidth: 1
+    borderColor: chartBorderColors,
+    borderRadius: { topLeft: 10, topRight: 10, bottomLeft: 10, bottomRight: 10 },
+    borderWidth: 1,
   }));
 
   const barCtx = document.getElementById('taskBarChart').getContext('2d');
@@ -387,12 +399,15 @@ function setWeeklyTasksChart(weeklyData) {
         }
       },
       barPercentage: 1,
-      borderSkipped: false
+      borderSkipped: false,
+      categoryPercentage : .9
     }
   });
 }
 
-function setMonthlyTasksChart(taskData) {
+async function setMonthlyTasksChart(taskData) {
+  const tasksAliasObj = await getLocalStorage(TASKSALIASKEY)
+  const tasksAlias = tasksAliasObj[TASKSALIASKEY] || {}
   const pieCtx = document.getElementById('taskPieChart').getContext('2d');
   if (taskPieChart) {
     taskPieChart.destroy();
@@ -400,12 +415,13 @@ function setMonthlyTasksChart(taskData) {
   taskPieChart = new Chart(pieCtx, {
     type: 'pie',
     data: {
-      labels: Object.keys(taskData),
+      labels: Object.keys(taskData).map((label) => tasksAlias[label] || label),
       datasets: [{
         data: Object.values(taskData),
         backgroundColor: chartColors,
         borderColor: chartBorderColors,
-        borderWidth: 1
+        borderWidth: 3,
+        borderRadius: 10
       }]
     },
     options: {
@@ -448,9 +464,11 @@ function getTimeFormatted(floatHours, onlyHrs = false) {
 function loadSettings(settings) {
   if(settings?.theme === LIGHTTHEME) {
     container.classList.add('light')
+    theme = LIGHTTHEME
   }else {
     container.classList.remove('light')
-  } 
+    theme = DARKTHEME
+  }
 }
 
 async function makecalendarGraph(currentYear, currentDate, currentMonth, currentDay, history) {
@@ -512,9 +530,6 @@ async function makecalendarGraph(currentYear, currentDate, currentMonth, current
           calendarBox.setAttribute('data-value', `0 pomodoros on ${formatDateWithOrdinal(currentDate)}`)
           boxes.push({"ele": calendarBox, "focus": 0})
         }
-      } else {
-        calendarBox.setAttribute('data-value', `0 pomodoros on ${formatDateWithOrdinal(currentDate)}`)
-        boxes.push({"ele": calendarBox, "focus": 0})
       }
       calendarCol.appendChild(calendarBox)
       if(i%7 == 0 || i === noOfDaysThisMonth) {
@@ -581,10 +596,24 @@ async function generateSessionsToDelete() {
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
 
-  const headers = ["Start Time", "End Time", "Duration", "Task", "Type", "Delete"];
-  headers.forEach(headerText => {
+  const headers = ["Start Time", "End Time", "Duration", "Task", "Type", "Select"];
+  headers.forEach((headerText, index) => {
     const th = document.createElement("th");
-    th.textContent = headerText;
+    if (headerText === "Select") {
+      const selectAllCheckbox = document.createElement("input");
+      selectAllCheckbox.type = "checkbox";
+      selectAllCheckbox.addEventListener("change", (e) => {
+        const checkboxes = container.querySelectorAll(".session-checkbox");
+        checkboxes.forEach((checkbox) => {
+          checkbox.checked = e.target.checked;
+          const row = checkbox.closest("tr");
+          row.style.backgroundColor = checkbox.checked ? "#733a8e31" : "";
+        });
+      });
+      th.appendChild(selectAllCheckbox);
+    } else {
+      th.textContent = headerText;
+    }
     headerRow.appendChild(th);
   });
   thead.appendChild(headerRow);
@@ -592,30 +621,34 @@ async function generateSessionsToDelete() {
 
   const tbody = document.createElement("tbody");
 
-  sessions && sessions.forEach((session, id) => {
+  for (let id = 0; id < sessions.length; id++) {
+    const session = sessions[id];
+    const tasksAliasObj = await getLocalStorage(TASKSALIASKEY);
+    const tasksAlias = tasksAliasObj[TASKSALIASKEY] || {};
+
     const row = document.createElement("tr");
     row.style.cursor = "pointer";
     const startCell = document.createElement("td");
     startCell.textContent = formatTimeWithLabel(session.startTime);
-    if(startCell.textContent === '') return
+    if (startCell.textContent === '') continue;
     row.appendChild(startCell);
 
     const endCell = document.createElement("td");
     endCell.textContent = formatTimeWithLabel(session.endTime);
-    if(endCell.textContent === '') return
+    if (endCell.textContent === '') continue;
     row.appendChild(endCell);
 
     const durationCell = document.createElement("td");
-    const duration = session.duration
+    const duration = session.duration;
     durationCell.textContent = `${duration} mins`;
     row.appendChild(durationCell);
 
     const taskCell = document.createElement("td");
     const taskSpan = document.createElement("span");
-    let task = getValidTask(session.task, session.type)
-    taskSpan.textContent = task;
+    let task = getValidTask(session.task, session.type);
+    taskSpan.textContent = tasksAlias[task];
     taskSpan.classList.add("task-span");
-    taskSpan.style.backgroundColor = TASKS_COLORS[task];
+    taskSpan.style.backgroundColor = chartColors[Object.values(TASKS).indexOf(task)];
     taskCell.appendChild(taskSpan);
     row.appendChild(taskCell);
 
@@ -644,9 +677,8 @@ async function generateSessionsToDelete() {
       row.style.backgroundColor = checkbox.checked ? "#733a8e31" : "";
     });
     tbody.appendChild(row);
-  });
+  }
 
   table.appendChild(tbody);
   container.appendChild(table);
-
 }

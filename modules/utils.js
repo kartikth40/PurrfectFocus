@@ -24,6 +24,7 @@ import {
   NEWTABHISTORYIDKEY,
   TASKS,
   BREAK,
+  NEWTABSTREAKIDKEY,
   LASTUPDATEKEY} from "./constants.js"
 
 const print = printer()
@@ -336,6 +337,27 @@ export async function createNewTabForHistory() {
     } else {
       // Tab exists
       await chrome.tabs.update(res[NEWTABHISTORYIDKEY], {active: true}, async (tab) => {})
+      }
+    } 
+}
+
+export async function createNewTabForStreak() {
+  const res = await getSessionStorage(NEWTABSTREAKIDKEY)
+  if(res[NEWTABSTREAKIDKEY]) {
+    await chrome.tabs.get(res[NEWTABSTREAKIDKEY],callback);
+  }else {
+    await chrome.tabs.create({url:"modules/streak/streak.html", active: true}, async function(tab){
+      await setSessionStorage({[NEWTABSTREAKIDKEY]: tab.id})
+    })
+  }
+  async function callback() {
+    if (chrome.runtime.lastError) {
+      await chrome.tabs.create({url:"modules/streak/streak.html", active: true}, async function(tab){
+        await setSessionStorage({[NEWTABSTREAKIDKEY]: tab.id})
+      })
+    } else {
+      // Tab exists
+      await chrome.tabs.update(res[NEWTABSTREAKIDKEY], {active: true}, async (tab) => {})
       }
     } 
 }

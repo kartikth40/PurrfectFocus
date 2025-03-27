@@ -24,7 +24,10 @@ import {
   SETTINGSKEY,
   TASKS,
   DEVELOPING,
-  BREAK
+  BREAK,
+  TASKSALIASKEY,
+  TASKS_ALIAS,
+  CURRENTTASKKEY
  } from "./constants.js"
 
 let intervalId = createState(0)
@@ -34,6 +37,14 @@ const print = printer()
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === "install") {
     await chrome.tabs.create({url:"modules/userGuide/userGuide.html", active: true})
+    await setLocalStorage({[TASKSALIASKEY]: TASKS_ALIAS})
+  }
+  else if(details.reason === "update") {
+    const tasksAliasObj = await getLocalStorage(TASKSALIASKEY)
+    const tasksAlias = tasksAliasObj[TASKSALIASKEY] || {}
+    if(Object.keys(tasksAlias).length === 0) {
+      await setLocalStorage({[TASKSALIASKEY]: TASKS_ALIAS})
+    }
   }
   await initBackgroundJs();
   storageChangesLogger();
@@ -41,6 +52,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   if (!alarms.some(alarm => alarm.name === "checkActivity")) {
     chrome.alarms.create("checkActivity", { periodInMinutes: 1440 });
   }
+
 });
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
@@ -128,7 +140,7 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
 })
 
 const startTimer = async (chrome, timer) => {
-  if(DEVELOPING) timer = 70
+  if(DEVELOPING) timer = 10
   print.log('start timer started 🌠')
   let intId = setInterval(async function() {
     timer--
@@ -241,6 +253,8 @@ const setNextTimer = async (timerEnds=false) => {
   print.log('setting next timer --------->')
   if(!status?.timer) return
 
+  const currentTaskObj = await getLocalStorage(CURRENTTASKKEY)
+  const currentTask = currentTaskObj[CURRENTTASKKEY] || null
   print.helper('NEXT ID  => ' + intervalId.getState())
   clearInterval(intervalId.getState())
   chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'})
@@ -257,7 +271,7 @@ const setNextTimer = async (timerEnds=false) => {
           status: PAUSE,
           type: SHORTBREAK,
           counts: interval > 0 ? status.timer.counts : 0,
-          task: getValidTask(status?.timer?.task)
+          task: TASKS.REST
         }
       }
       await setSessionStorage(timerToStore)
@@ -272,7 +286,7 @@ const setNextTimer = async (timerEnds=false) => {
           status: PAUSE,
           type: LONGBREAK,
           counts: 0,
-          task: getValidTask(status?.timer?.task)
+          task: TASKS.REST
         }
       }
       await setSessionStorage(timerToStore)
@@ -291,7 +305,7 @@ const setNextTimer = async (timerEnds=false) => {
         status: PAUSE,
         type: FOCUS,
         counts: status.timer.counts + 1,
-        task: getValidTask(status?.timer?.task)
+        task: currentTask
       }
     }
     await setSessionStorage(timerToStore)
@@ -309,7 +323,7 @@ const setNextTimer = async (timerEnds=false) => {
         status: PAUSE,
         type: FOCUS,
         counts: 0,
-        task: getValidTask(status?.timer?.task)
+        task: currentTask
       }
     }
     await setSessionStorage(timerToStore)

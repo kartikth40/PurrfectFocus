@@ -1,0 +1,227 @@
+.container {
+  margin: 0;
+  min-width: 270px;
+  color: var(--secondary-color-1);
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #000;
+  background-image:  radial-gradient(var(--primary-color) .5px, transparent .5px), radial-gradient(var(--primary-color) .5px, #000 .5px);
+  background-size: 20px 20px;
+  background-position: 0 0,30px 30px;
+}
+
+.container.light {
+  background-image:  radial-gradient(#000 .5px, transparent .5px), radial-gradient(#000 .5px, var(--secondary-color-1) .5px);
+  color: #000;
+}
+
+.sub-container {
+  padding: 10px 20px;
+  max-width: 80vw;
+  min-width: 70vw;
+  border-radius: 10px;
+  font-size: 12px;
+  position:relative;
+  z-index: 1;
+  /* SOOON... */
+  filter: blur(1px);
+  backdrop-filter: blur(2px);
+}
+
+.main-streak-top {
+  border-radius: 20px;
+  background: 2px solid var(--primary-color);
+  padding: 10px;
+  margin: 10px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  & > :first-child {
+    width: 30%;
+  }
+}
+
+.main-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  width: 100%;
+  backdrop-filter: blur(1px);
+  background-color: #23232385;
+  border-radius: 40px;
+  border: 1px solid #292929;
+
+
+  & .icon {
+    margin: 0;
+    padding: 0;
+    filter: drop-shadow(0 0 30px rgb(255, 137, 41));
+  }
+}
+.light .main-left {
+  backdrop-filter: blur(2px);
+  background-color: #ffffff85;
+  box-shadow: 0 0 10px  #9a9a9a85;
+}
+
+.main-left-title {
+  & p {
+    margin:0;
+    padding:0;
+    text-align: center;
+  }
+  & p:nth-child(1) {
+    font-size: 2em;
+    font-weight: bolder;
+  }
+}
+
+.main-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+}
+
+.today-metric {
+  font-size: 2em;
+  font-weight: bolder;
+  padding: 5px 30px;
+  border-radius: 20px;
+  backdrop-filter: blur(2px);
+  background-color: #23232385;
+  border: 1px solid #292929;
+
+}
+
+.light .today-metric {
+  backdrop-filter: blur(2px);
+  background-color: #ffffff85;
+  box-shadow: 0 0 10px  #9a9a9a85;
+
+}
+
+.weekly-streak-container {
+  background-color: #23232385;
+  backdrop-filter: blur(1px);
+  display: flex;
+  gap: 5px;
+  width: 100%;
+  border-radius: 40px;
+  padding: 20px 10px;
+  border: 1px solid #292929;
+}
+
+.light .weekly-streak-container {
+  backdrop-filter: blur(2px);
+  background-color: #ffffff85;
+  box-shadow: 0 0 10px  #9a9a9a85;
+
+} 
+
+.day-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-items: center;
+  gap: 5px;
+  width: 100%;
+  & .day-name {
+    font-size: 1.3em;
+    font-weight: 700;
+  }
+}
+
+.streak-check {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  position: relative;
+  background-color: rgb(31, 31, 31);
+
+  &.current {
+    border: 2px solid var(--primary-color-4);
+    }
+  
+  &.check {
+    border: none;
+    background: linear-gradient(135deg, var(--primary-color-4), var(--primary-color-1));
+    &::before {
+      content: '';
+      width: 10px;
+      height: 4px;
+      background-color: #fff;
+      position: absolute;
+      transform: rotate(45deg);
+      left: 10px;
+      top: 20px;
+      border-radius: 4px;
+    }
+  
+    &::after {
+      content: '';
+      width: 15px;
+      height: 4px;
+      background-color: #fff;
+      position: absolute;
+      transform: rotate(-45deg);
+      left: 14px;
+      top: 18px;
+      border-radius: 4px;
+    }
+  }
+}
+
+
+.coming-soon{
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 2rem;
+  box-shadow: 0 0 10px  var(--primary-color);
+  font-weight: bolder;
+  letter-spacing: 5px;
+  background: linear-gradient(135deg, var(--primary-color-2), var(--primary-color-1));
+  line-height: 0;
+
+  border-radius: 2em;
+  padding: 40px 30px;
+  animation: soon 4s infinite cubic-bezier(0.86, 0, 0.07, 1);
+
+  & p {
+    font-size: .5em;
+    padding-top: 1em;
+  }
+}
+.light .coming-soon {
+  background-color: var(--secondary-color-2);
+}
+
+@keyframes soon {
+  0% {
+    border-radius: 2em 1em 2em 1em;
+  }
+  25% {
+    border-radius: 1em 2em 1em 2em;
+  }
+  50% {
+    border-radius: 2em 1em 2em 1em;
+  }
+  75% {
+    border-radius: 1em 2em 1em 2em;
+  }
+  100% {
+    border-radius: 2em 1em 2em 1em;
+  }
+}

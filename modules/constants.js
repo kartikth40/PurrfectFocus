@@ -5,7 +5,7 @@ export const HELPERLOGTYPE = false
 export const STACKTRACELOGTYPE = false
 
 // env
-export const DEVELOPING = false
+export const DEVELOPING = true
 
 // status
 export const STOP = 'Stop'
@@ -36,9 +36,12 @@ export const LIGHTTHEME = 'light'
 export const SETTINGSKEY = 'settings'
 export const TIMERKEY = 'timer'
 export const LASTUPDATEKEY = 'lastDataUpdate'
+export const CURRENTTASKKEY = 'currentTask'
 export const NEWTABTIMERIDKEY = 'newTabTimerId'
 export const NEWTABSETTINGSIDKEY = 'newTabSettingsId'
 export const NEWTABHISTORYIDKEY = 'newTabHistoryId'
+export const NEWTABSTREAKIDKEY = 'newTabStreakId'
+export const TASKSALIASKEY = 'tasks_alias'
 
 // others
 export const tabNames = ['focus', 'settings']
@@ -83,20 +86,20 @@ export const DAYS = {
 }
 
 export const chartColors = [
-  'rgba(255, 99, 132, 0.4)',
-  'rgba(54, 162, 235, 0.4)',
-  'rgba(255, 206, 86, 0.4)',
-  'rgba(75, 192, 192, 0.4)',
-  'rgba(153, 102, 255, 0.4)',
-  'rgba(255, 159, 64, 0.4)'
+  '#FF8C69', // Soft Red
+  '#85E085', // Light Green
+  '#85A9FF', // Gentle Blue
+  '#FF85C1', // Soft Pink
+  '#FFD580', // Warm Yellow
+  '#B39CD0'  // Muted Purple
 ]
 export const chartBorderColors = [
-  'rgba(255, 99, 132, 1)',
-  'rgba(54, 162, 235, 1)',
-  'rgba(255, 206, 86, 1)',
-  'rgba(75, 192, 192, 1)',
-  'rgba(153, 102, 255, 1)',
-  'rgba(255, 159, 64, 1)'
+  '#ffffff10',
+  '#ffffff10',
+  '#ffffff10',
+  '#ffffff10',
+  '#ffffff10',
+  '#ffffff10'
 ]
 
 export const TASKS = {
@@ -106,6 +109,14 @@ export const TASKS = {
   CHORES: "Chores",
   OTHER: "Other",
   REST: "Rest"
+}
+export const TASKS_ALIAS = {
+  [TASKS.WORK]: "Work",
+  [TASKS.STUDY]: "Study",
+  [TASKS.PERSONAL]: "Personal",
+  [TASKS.CHORES]: "Chores",
+  [TASKS.OTHER]: "Other",
+  [TASKS.REST]: "Rest"
 }
 export const TASKS_COLORS = {
   [TASKS.WORK]: "#b7d9ff",

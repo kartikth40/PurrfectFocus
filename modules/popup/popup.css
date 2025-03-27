@@ -25,6 +25,10 @@
   z-index: -1;
 }
 
+.tab-btn {
+  width: 35px;
+}
+
 
 .title {
   position: absolute;
@@ -76,6 +80,6 @@ p.until-long {
   box-shadow:inset -7px 7px 5px var(--secondary-color-2),inset 5px -5px 10px var(--primary-color), 0 0 10px var(--primary-color);
 }
 
-.tasks-select-container {
+.middle {
   margin-top: -5px;
 }
