@@ -82,6 +82,9 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
   else if(request.taskChange) {
     taskSelect.value = request.taskChange
   }
+  else if(request.taskAliasUpdated) {
+    await setFocusOptionForTasks()
+  }
 })
 
 const updateNextTimer = async () => {
@@ -227,7 +230,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         "🌱 Heads up! 🌱",
         "Renaming this task will update it everywhere, including history.\n\nEnter the new task name:", 
         oldTaskAlias,
-        async (response) => {
+        async (response) => {8
           if (response !== null && response.length <= 10) {
             tasksAlias[oldSelectedTask] = response
             await chrome.runtime.sendMessage({taskAliasUpdated: true})
@@ -352,7 +355,7 @@ function showCustomPrompt(title, message, value, callback) {
   const promptOk = document.getElementById("promptOk");
   const promptCancel = document.getElementById("promptCancel");
 
-  if(!title) promptTitle.style.display = "none";
+  if (!title) promptTitle.style.display = "none";
   else promptTitle.innerHTML = title;
 
   promptMessage.innerHTML = message.replace(/\n/g, "<br>");
@@ -362,14 +365,31 @@ function showCustomPrompt(title, message, value, callback) {
 
   setTimeout(() => promptInput.focus(), 0);
 
+  function handleKeyDown(event) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      promptOk.click();
+    }else if (event.key === "Escape") {
+      event.preventDefault();
+      promptCancel.click();
+    }
+  }
+
+  promptInput.addEventListener("keydown", handleKeyDown);
+
+  function closeModal() {
+    modal.style.display = "none";
+    promptInput.removeEventListener("keydown", handleKeyDown);
+  }
+
   promptOk.onclick = function () {
-      modal.style.display = "none";
-      callback(promptInput.value);
+    closeModal();
+    callback(promptInput.value);
   };
 
   promptCancel.onclick = function () {
-      modal.style.display = "none";
-      callback(null);
+    closeModal();
+    callback(null);
   };
 }
 
@@ -379,14 +399,23 @@ function showCustomAlert(title, message, callback) {
   const alertTitle = document.getElementById("alertTitle");
   const alertOk = document.getElementById("alertOk");
 
-  if(!title) alertTitle.style.display = "none";
+  if (!title) alertTitle.style.display = "none";
   else alertTitle.innerHTML = title;
 
   alertMessage.innerHTML = message.replace(/\n/g, "<br>");
   modal.style.display = "flex";
 
+  function handleKeyDown(event) {
+    if (event.key === "Enter" || event.key === "Escape") {
+      event.preventDefault();
+      alertOk.click();
+    }
+  }
+
   alertOk.onclick = function () {
-      modal.style.display = "none";
-      callback(true);
+    modal.style.display = "none";
+    document.removeEventListener("keydown", handleKeyDown);
+    callback(true);
   };
+  setTimeout(() => document.addEventListener("keydown", handleKeyDown), 100);
 }

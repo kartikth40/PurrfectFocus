@@ -5,7 +5,7 @@ export const HELPERLOGTYPE = false
 export const STACKTRACELOGTYPE = false
 
 // env
-export const DEVELOPING = true
+export const DEVELOPING = false
 
 // status
 export const STOP = 'Stop'

@@ -123,6 +123,7 @@
             <h2 class="metrics-title">This Week's Task Breakdown</h2>
             <div class="bar-chart">
               <div class="no-data week-no-data">Nothing To Display!</div>
+              <div class="is-sample">*sample data</div>
               <canvas id="taskBarChart"></canvas>
             </div>
           </div>
@@ -130,23 +131,24 @@
             <h2 class="metrics-title">This Month's Task Breakdown</h2>
             <div class="pie-chart">
               <div class="no-data month-no-data">Nothing To Display!</div>
+              <div class="is-sample">*sample data</div>
               <canvas id="taskPieChart"></canvas>
             </div>
           </div>
         </div>
       </div>
-      <footer>
-        <div class="delete-some-container">
-          <div class="top-row">
-            <div class="title">Daily Logs</div>
-            <div class="right-col">
-              <input type="date" id="delete-date" name="delete-date"/>
-              <button class="delete-some-btn">Delete</button>
-            </div>
-          </div>
-          <div class="specific-sessions-container">
+      <div class="delete-some-container">
+        <div class="top-row">
+          <div class="title">Daily Logs</div>
+          <div class="right-col">
+            <input type="date" id="delete-date" name="delete-date"/>
+            <button class="delete-some-btn">Delete</button>
           </div>
         </div>
+        <div class="specific-sessions-container">
+        </div>
+      </div>
+      <footer>
         <div class="footer-btns">
         <button class="export-btn">Export Data</button>
         <button class="import-btn">Import Data</button>

@@ -156,6 +156,7 @@ const startTimer = async (chrome, timer) => {
       const settingsObj = await getSyncStorage(SETTINGSKEY)
       const currentDateWithMonth = currentDate.getDate()+'-'+(currentDate.getMonth()+1)
       const task = getValidTask(timerObj?.timer?.task, timerObj?.timer?.type)
+      if(timerObj?.timer?.type === FOCUS) await setLocalStorage({[CURRENTTASKKEY]: task})
       if(!oldHistory) {
         let startTime = timerObj?.timer?.startTime
         let endTime = getCurrentTimeString()

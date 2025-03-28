@@ -134,7 +134,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
     if(request.saveSettings){
-          loadSettings(request.newSettings.settings)
+      location.reload()
+      loadSettings(request.newSettings.settings)
     }else if(request.taskAliasUpdated) {
       location.reload()
     }
@@ -190,7 +191,6 @@ async function init() {
         let focus = 0
         let breaks = 0
         data.forEach((d) => {
-          if (d.type === FOCUS) focus += d.duration
           if (d.type === FOCUS) focus += d.duration
           else breaks += d.duration
           const task = getValidTask(d.task, d.type)
@@ -271,6 +271,7 @@ async function init() {
       }
     }
   }
+
 
   if(!monthlySum) {
     noMonthDataElements.forEach(ele => ele.classList.add('active'))
@@ -386,9 +387,33 @@ async function setWeeklyTasksChart(weeklyData) {
     data: { labels: weeklyData.labels, datasets },
     options: {
       responsive: true,
-      scales: { x: { stacked: true }, y: { stacked: true } },
+      scales: { 
+        x: { 
+          stacked: true,
+          ticks: {
+            color: theme === LIGHTTHEME ? '#000' : '#fff'
+          },
+          grid: {
+            color: theme === LIGHTTHEME ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)'
+          }
+        }, 
+        y: { 
+          stacked: true,
+          ticks: {
+            color: theme === LIGHTTHEME ? '#000' : '#fff'
+          },
+          grid: {
+            color: theme === LIGHTTHEME ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)'
+          }
+        } 
+      },
       plugins: {
-        legend: { position: 'right' },
+        legend: { 
+          position: 'right',
+          labels: {
+            color: theme === LIGHTTHEME ? '#000' : '#fff'
+          }
+        },
         tooltip: {
           enabled: true,
           callbacks: {
@@ -427,7 +452,11 @@ async function setMonthlyTasksChart(taskData) {
     options: {
       responsive: true,
       plugins: {
-        legend: { position: 'bottom' },
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: theme === LIGHTTHEME ? '#000' : '#fff'
+        }},
         tooltip: {
           enabled: true,
           callbacks: {

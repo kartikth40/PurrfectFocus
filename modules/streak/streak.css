@@ -28,8 +28,9 @@
   position:relative;
   z-index: 1;
   /* SOOON... */
-  filter: blur(1px);
-  backdrop-filter: blur(2px);
+  filter: blur(2px);
+  /* backdrop-filter: blur(1px); */
+  border-radius: 50px;
 }
 
 .main-streak-top {

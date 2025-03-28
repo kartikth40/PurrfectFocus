@@ -181,10 +181,11 @@ label {
   transform: translateX(-50%);
   bottom: -15px;
   font-size: 10px;
-  color: var(--secondary-color-1);
+  color: rgb(255, 114, 114);
+  text-decoration: underline;
 }
 .container.light .alert {
-  color: var(--primary-color);
+  color: red;
 }
 .submit-btn:not(:disabled) + .alert {
   opacity: 1;

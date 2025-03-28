@@ -44,7 +44,7 @@
   background-color: #ffffff85;
 }
 .data-btns {
-  position: absolute;
+  position: fixed;
   top:5px;
   right:5px;
   border: none;
@@ -67,14 +67,12 @@
   box-shadow: inset 5px 10px 70px var(--primary-color), inset -5px 5px 90px var(--secondary-color-1)
               ,  -5px 5px 100px var(--primary-color), 0 2px 0 var(--primary-color);
 }
-.sample-history-btn:hover, 
-.sample-history-btn-remove:hover,
 .delete-btn:hover,
 .footer-btns button:hover {
   box-shadow: 0 0 0 var(--primary-color);
 }
-.container.light .sample-history-btn:hover {
-  color: black;
+.sample-history-btn-remove:hover, .sample-history-btn:hover {
+  filter: brightness(1.2);
 }
 .sample-history-btn {
   display: none;
@@ -93,7 +91,6 @@
 }
 .sample-history-btn-remove.active {
   font-weight: 700;
-  font-size: 15px;
 }
 
 
@@ -147,6 +144,7 @@ p{
   position: relative;
   margin-top: 30px;
   padding-bottom: 30px;
+  backdrop-filter: blur(2px);
 }
 .is-sample{
   font-family: "Poppins", sans-serif;
@@ -594,6 +592,9 @@ footer {
   width: 100%;
   border-collapse: collapse; /* Ensures borders don't double up */
   text-align: left;
+  & * {
+    white-space: nowrap;
+  }
 }
 
 
@@ -795,6 +796,7 @@ footer {
   padding: 10px;
   height: 100%;
   margin-top: 30px;
+  backdrop-filter: blur(2px);
 }
 .weekly-task-chart{
   height: 350px;
@@ -808,4 +810,5 @@ footer {
   box-shadow: 5px 5px 0 0 var(--primary-color);
   padding: 10px;
   margin-top: 30px;
+  backdrop-filter: blur(2px);
 }
