@@ -26,7 +26,8 @@ import {
   SETTINGSKEY,
   TASKS,
   TASKSALIASKEY,
-  CURRENTTASKKEY
+  CURRENTTASKKEY,
+  showSurvey
  } from "../constants.js"
 import { CONFIG } from "../config.js"
 
@@ -40,6 +41,8 @@ const untilLongBreak = document.querySelector('.until-long')
 const stopBtn = document.querySelector('.focus-btn-stop')
 const nextBtn = document.querySelector('.focus-btn-next')
 const timerTag = document.querySelector('.timer-tag')
+const pollBtn = document?.querySelector(".poll-btn")
+
 
 const settingsBtn = document.querySelector('.settings-tab-btn')
 const historyBtn = document.querySelector('.history-tab-btn')
@@ -307,11 +310,16 @@ const initiateTimer = async () => {
   nextBtn.classList.add('active')
 }
 
-const votePoll = document?.getElementById("votePoll")
-  if(votePoll) {
-    votePoll.addEventListener("click", function() {
-    chrome.tabs.create({ url: CONFIG.POLL_FORM_URL });
-  });
+if(showSurvey) {
+  pollBtn.classList.add('active')
+  const votePoll = document?.getElementById("votePoll")
+    if(votePoll) {
+      votePoll.addEventListener("click", function() {
+      chrome.tabs.create({ url: CONFIG.POLL_FORM_URL });
+    });
+  }
+}else {
+  pollBtn.classList.remove('active')
 }
 
 async function setRestOptionForTasks() {

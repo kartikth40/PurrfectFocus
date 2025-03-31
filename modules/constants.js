@@ -45,6 +45,7 @@ export const TASKSALIASKEY = 'tasks_alias'
 
 // others
 export const tabNames = ['focus', 'settings']
+export const showSurvey = false
 
 export const defaultSettings = {
   settings: {

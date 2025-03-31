@@ -98,7 +98,8 @@ p{
   margin-block: 3px;  
 }
 .simple-metrics-container{
-  width: 50vw;
+  margin-top: 20px;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -131,6 +132,9 @@ p{
 .row {
   display: flex;
   gap: 20px;
+  &.spaced {
+    justify-content: space-between;
+  }
 }
 .graph-container{
   border: 2px solid var(--primary-color);
@@ -144,7 +148,7 @@ p{
   position: relative;
   margin-top: 30px;
   padding-bottom: 30px;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
 }
 .is-sample{
   font-family: "Poppins", sans-serif;
@@ -414,14 +418,16 @@ p{
   transform: scale(0);
   position: absolute;
   top: -10px;
+  left: -20px;
   content: attr(data-value);
+  width: 140px;
   transition: .25s all;
   background-color: var(--secondary-color-1);
   color: var(--primary-color);
   padding: 5px 7px;
   font-size: 10px;
   font-weight: 500;
-  white-space: nowrap;
+  /* white-space: nowrap; */
   z-index: 10;
   border-radius: 5px;
 }
@@ -438,7 +444,8 @@ p{
 .calendar-box:hover::after{
   opacity: 1;
   transform: scale(1);
-  top: -30px;
+  top: 15px;
+  left: 15px;
 }
 .container.light .calendar-box:hover::after{
   background-color: var(--primary-color-4);
@@ -747,6 +754,7 @@ footer {
 .made-by a {
   text-decoration: none;
   padding: 5px;
+  color: var(--primary-color);
 }
 .made-by a:active{
   color: var(--primary-color);
@@ -796,7 +804,7 @@ footer {
   padding: 10px;
   height: 100%;
   margin-top: 30px;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
 }
 .weekly-task-chart{
   height: 350px;
@@ -810,5 +818,41 @@ footer {
   box-shadow: 5px 5px 0 0 var(--primary-color);
   padding: 10px;
   margin-top: 30px;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
+}
+.date-range-container {
+  position: relative;
+  display: flex;
+  gap: 5px;
+  & button {
+    position: absolute;
+    bottom: -20px;
+    right:0;
+    outline: none;
+    background-color: transparent;
+    color: var(--secondary-color-1);
+    border: none;
+    border-radius: 10px;
+    text-align: right;
+    cursor: pointer;
+    width: min-content;
+    font-family: "Share Tech Mono", monospace;
+    font-weight: bolder;
+    &:hover{
+      text-decoration: underline;
+    }
+  }
+}
+.light .date-range-container button {
+  color: black;
+}
+#date-range {
+  border-radius: 10px;
+  height: min-content;
+  font-weight: bolder;
+  font-size: 2em;
+  padding: 0 10px;
+  font-family: "Share Tech Mono", monospace;
+  height: 2.3em;
+  /* box-shadow: inset 4px 0 7px var(--secondary-color-1), inset 0 -6px 7px var(--secondary-color-1), 0 0 5px rgba(0, 0, 0, 0.5); */
 }

@@ -6,9 +6,16 @@ Purrfect Pomodoro Timer: Productivity & Time Management
 
 ✅ Before Publishing
  [] Update version number in manifest.json.
+
  [] Set development variables as false.
+
  [] Test all features (including new ones) thoroughly.
+
  [] Check both light and dark themes for UI consistency.
+
  [] Remove console logs and unused code.
+
  [] Minimize permissions—only request what’s necessary.
+
  [] Update the store listing (description, screenshots, changelog).
+ 

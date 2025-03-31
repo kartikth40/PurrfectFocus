@@ -19,6 +19,8 @@ const historyBtn = document.querySelector('.history-tab-btn')
 const streakBtn = document.querySelector('.streak-tab-btn')
 const taskSelect = document.getElementById('tasks-select')
 const taskEdit = document.querySelector('.task-edit')
+const pollBtn = document?.querySelector(".poll-btn")
+
 
 let audio = null
 let settings
@@ -477,11 +479,17 @@ async function handleNotificationTone(fromSession=false) {
   })
 
 }
-const votePoll = document?.getElementById("votePoll")
-  if(votePoll) {
-    votePoll.addEventListener("click", function() {
-    chrome.tabs.create({ url: CONFIG.POLL_FORM_URL });
-  });
+
+if(showSurvey) {
+  pollBtn.classList.add('active')
+  const votePoll = document?.getElementById("votePoll")
+    if(votePoll) {
+      votePoll.addEventListener("click", function() {
+      chrome.tabs.create({ url: CONFIG.POLL_FORM_URL });
+    });
+  }
+}else {
+  pollBtn.classList.remove('active')
 }
 
 

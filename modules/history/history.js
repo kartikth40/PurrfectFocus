@@ -38,6 +38,19 @@ const calendarMonthContainers = document.querySelectorAll('.calendar-month-conta
 const calendarMonthLabels = document.querySelectorAll('.calendar-month-label')
 const calendarMonthBoxesContainers = document.querySelectorAll('.calendar-month-boxes-container')
 const totalFocusCountEle = document.querySelector('.total-focus-count')
+const dateInput = document.getElementById('date-range');
+const resetButton = dateInput.parentElement.querySelector('button');
+
+
+const today = new Date();
+const threeYearsAgo = new Date();
+
+today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+dateInput.value = today.toISOString().split('T')[0];
+threeYearsAgo.setFullYear(today.getFullYear() - 3);
+dateInput.max = today.toISOString().split('T')[0];
+dateInput.min = threeYearsAgo.toISOString().split('T')[0];
+
 let sampleHistory;
 let sessions = []
 let theme = DARKTHEME
@@ -51,11 +64,31 @@ const YEAR = 'year'
 const maxHeightOfGraph = monthBarsContainer.clientHeight - 15
 let maxValueOfGraph = 0
 
+dateInput.addEventListener('change', async () => {
+  const newValue = dateInput.value
+  if(newValue !== today.toISOString().split('T')[0]) {
+    if (resetButton) {
+      resetButton.style.display = 'block';
+    }
+  }else if(resetButton) {
+    resetButton.style.display = 'none';
+  }
+  await init()
+} )
+
+resetButton.addEventListener('click', async ()=> {
+  dateInput.value = today.toISOString().split('T')[0];
+  resetButton.style.display = 'none';
+  await init()
+})
+
 sampleHistoryBtn.addEventListener('click', async () => {
+  dateInput.disabled = true
   await setSampleHistory()
   await init()
 })
 sampleHistoryRemoveBtn.addEventListener('click', async () => {
+  dateInput.disabled = false
   const currentFullDate = new Date()
   const currentYear = currentFullDate.getFullYear().toString()
   await setSessionStorage({[currentYear]: null})
@@ -146,7 +179,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function init() {
   maxValueOfGraph = 0
-  const currentFullDate = new Date()
+  const currentFullDate = new Date(dateInput.value)
   const currentYear = currentFullDate.getFullYear().toString()
   const currentDate = currentFullDate.getDate()
   const currentMonth = currentFullDate.getMonth() + 1
@@ -162,13 +195,13 @@ async function init() {
     sampleHistoryBtn.classList.add('active')
     sampleHistoryRemoveBtn.classList.remove('active')
     isSampleElement.forEach(el => el.classList.remove('active'))
-    deleteSomeContainer.classList.remove('disable')
+    // deleteSomeContainer.classList.remove('disable')
   }
   else {
     sampleHistoryBtn.classList.remove('active')
     sampleHistoryRemoveBtn.classList.add('active')
-    isSampleElement.forEach(el => el.classList.add('active'))
-    deleteSomeContainer.classList.add('disable')
+    // isSampleElement.forEach(el => el.classList.add('active'))
+    // deleteSomeContainer.classList.add('disable')
   }
 
   // weekly metrics
@@ -191,10 +224,10 @@ async function init() {
         let focus = 0
         let breaks = 0
         data.forEach((d) => {
-          if (d.type === FOCUS) focus += d.duration
+          if (d.type.toLowerCase() === FOCUS.toLowerCase()) focus += d.duration
           else breaks += d.duration
           const task = getValidTask(d.task, d.type)
-          weeklyTasks[task][i-1] += Math.round((d.duration / 60) * 100) / 100
+          weeklyTasks[task][i-1] += d.duration
         })
 
         focus = parseFloat((focus / 60).toFixed(2))
@@ -203,7 +236,6 @@ async function init() {
           focus,
           breaks
         }
-
 
         if (i-1 === currentDay) {
           setSimpleMetrics(focus, todayCount)
@@ -219,6 +251,10 @@ async function init() {
   } else {
     noWeekDataElements.forEach(ele => ele.classList.remove('active'))
   }
+
+  Object.keys(weeklyTasks).forEach(task => {
+    weeklyTasks[task] = weeklyTasks[task].map(data => parseFloat((data / 60).toFixed(2)));
+  });
 
   const weeklyData = {
     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
@@ -253,12 +289,11 @@ async function init() {
         let focus = 0
         let breaks = 0
         data.forEach((d) => {
-          if (d.type === FOCUS) focus += d.duration
-          else if (d.type === BREAK) breaks += d.duration
+          if (d.type.toLowerCase() === FOCUS.toLowerCase()) focus += d.duration
+          else breaks += d.duration
           const task = getValidTask(d.task, d.type)
-          monthlyTasks[task] += Math.round((d.duration / 60) * 100) / 100
+          monthlyTasks[task] += d.duration
         })
-        
         focus = parseFloat((focus / 60).toFixed(2))
         breaks = parseFloat((breaks / 60).toFixed(2))
         thisMonthData[i] = {
@@ -281,6 +316,10 @@ async function init() {
   setBars(thisMonthData, maxValueOfGraph, MONTH, totalDaysInCurrentMonth)
   setSimpleMetrics(monthlySum, monthCount, true)
   await makecalendarGraph(currentYear, currentDate, currentMonth, currentDay, history)
+
+  Object.keys(monthlyTasks).forEach(task => {
+    monthlyTasks[task] = parseFloat((monthlyTasks[task] / 60).toFixed(2));
+  });
   await setMonthlyTasksChart(monthlyTasks)
   
   
@@ -298,8 +337,8 @@ async function init() {
         let focus = 0
         let breaks = 0
         data.forEach((d) => {
-          if (d.type === FOCUS) focus += d.duration
-          else if (d.type === BREAK) breaks += d.duration
+          if (d.type.toLowerCase() === FOCUS.toLowerCase()) focus += d.duration
+          else breaks += d.duration
         })
 
         focus = parseFloat((focus / 60).toFixed(2))
@@ -311,7 +350,7 @@ async function init() {
   }
   setSimpleMetrics(yearlySum, yearCount, true)
 
-  const today = new Date();
+  const today = new Date(dateInput.value);
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
   const day = String(today.getDate()).padStart(2, '0');
@@ -438,7 +477,7 @@ async function setMonthlyTasksChart(taskData) {
     taskPieChart.destroy();
   }
   taskPieChart = new Chart(pieCtx, {
-    type: 'pie',
+    type: 'doughnut',
     data: {
       labels: Object.keys(taskData).map((label) => tasksAlias[label] || label),
       datasets: [{
@@ -446,7 +485,8 @@ async function setMonthlyTasksChart(taskData) {
         backgroundColor: chartColors,
         borderColor: chartBorderColors,
         borderWidth: 3,
-        borderRadius: 10
+        borderRadius: 10,
+        spacing: 5
       }]
     },
     options: {
@@ -466,6 +506,7 @@ async function setMonthlyTasksChart(taskData) {
           }
         }
       },
+      cutout: '40%'
     }
   });
 }
@@ -508,7 +549,7 @@ async function makecalendarGraph(currentYear, currentDate, currentMonth, current
   let totalFocusCount = 0
   for(const [index, container] of calendarMonthContainers.entries()) {
     const m = calendarMonthContainers.length - index - 1
-    const previousYear = (new Date().getFullYear() - 1).toString()
+    const previousYear = (new Date(dateInput.value).getFullYear() - 1).toString()
     const curDate = new Date(currentYear, currentMonth-m-1, 1)
     if(curDate.getFullYear().toString() === previousYear) {
       const historyObj = await getLocalStorage(previousYear)
@@ -539,11 +580,11 @@ async function makecalendarGraph(currentYear, currentDate, currentMonth, current
         let breaks = 0
         let focusCount = 0
         for(const d of data) {
-          if (d.type === FOCUS) {
+          if (d.type.toLowerCase() === FOCUS.toLowerCase()) {
             focus += d.duration
             focusCount++
           }
-          else if (d.type === BREAK) breaks += d.duration
+          else breaks += d.duration
         }
         
         focus = parseFloat((focus).toFixed(2))
@@ -683,7 +724,7 @@ async function generateSessionsToDelete() {
 
     const typeCell = document.createElement("td");
     const typeSpan = document.createElement("span");
-    typeSpan.textContent = session.type === FOCUS ? '⏳ Focus' : '🎈 Break';
+    typeSpan.textContent = session.type.toLowerCase() === FOCUS.toLowerCase() ? '⏳ Focus' : '🎈 Break';
     typeSpan.classList.add("type-span");
     typeCell.appendChild(typeSpan);
     row.appendChild(typeCell);

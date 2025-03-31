@@ -1,6 +1,6 @@
 {
     "name": "Purrfect Pomodoro Timer: Productivity & Time Management",
-    "version": "1.2.8",
+    "version": "1.2.9",
     "description": "Purrfect Pomodoro Timer",
     "permissions": ["storage", "notifications", "alarms"],
     "background": {
@@ -25,28 +25,5 @@
         "48": "assets/cat.png",
         "128": "assets/cat.png"
     },
-    "manifest_version": 3,
-    "commands": {
-    "start_timer": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+S",
-        "mac": "Command+Shift+S"
-      },
-      "description": "Start Pomodoro Timer"
-    },
-    "pause_timer": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+P",
-        "mac": "Command+Shift+P"
-      },
-      "description": "Pause Pomodoro Timer"
-    },
-    "open_popup": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+O",
-        "mac": "Command+Shift+O"
-      },
-      "description": "Open Pomodoro Popup"
-    }
-  }
+    "manifest_version": 3
 }

@@ -494,8 +494,10 @@ input:hover, select:hover {
   }
 }
 
-
 .poll-btn {
+  display: none;
+}
+.poll-btn.active {
   position: absolute;
   top: 0;
   left: 50%;
