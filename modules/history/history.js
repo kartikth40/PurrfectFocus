@@ -195,13 +195,13 @@ async function init() {
     sampleHistoryBtn.classList.add('active')
     sampleHistoryRemoveBtn.classList.remove('active')
     isSampleElement.forEach(el => el.classList.remove('active'))
-    // deleteSomeContainer.classList.remove('disable')
+    deleteSomeContainer.classList.remove('disable')
   }
   else {
     sampleHistoryBtn.classList.remove('active')
     sampleHistoryRemoveBtn.classList.add('active')
-    // isSampleElement.forEach(el => el.classList.add('active'))
-    // deleteSomeContainer.classList.add('disable')
+    isSampleElement.forEach(el => el.classList.add('active'))
+    deleteSomeContainer.classList.add('disable')
   }
 
   // weekly metrics

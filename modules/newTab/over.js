@@ -1,5 +1,5 @@
 import { CONFIG } from "../config.js"
-import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE, TASKS, TASKSALIASKEY, CURRENTTASKKEY } from "../constants.js"
+import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE, TASKS, TASKSALIASKEY, CURRENTTASKKEY, showSurvey } from "../constants.js"
 import { changeTextTo, createNewTabForHistory, createNewTabForSettings, createNewTabForStreak, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setSessionStorage, timerDuration, getValidTask } from "../utils.js"
 
 const container = document.querySelector('.container')
@@ -224,6 +224,7 @@ function addEventListeners() {
       const store = await getSyncStorage(SETTINGSKEY)
       settings = store.settings
       loadSettings(settings)
+      await setFocusOptionForTasks()
     }
     else if(request.taskChange) {
       taskSelect.value = request.taskChange
