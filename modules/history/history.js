@@ -13,7 +13,7 @@ import {
   getValidTask,
   updateOldHistoryDataToAccomodateLatestChanges
 } from '../utils.js'
-import { SETTINGSKEY, LIGHTTHEME, TASKS, TASKS_COLORS, chartColors, chartBorderColors, FOCUS, BREAK, DARKTHEME, TASKSALIASKEY } from '../constants.js'
+import { SETTINGSKEY, LIGHTTHEME, TASKS, chartColors, chartBorderColors, FOCUS, DARKTHEME, TASKSALIASKEY } from '../constants.js'
 
 const container = document.querySelector('.container')
 const todayCount = document.querySelector('.today-count')
@@ -112,7 +112,7 @@ deleteDateInput.addEventListener('change', async () => {
   }else deleteSomeHistoryBtn.disabled = true
 })
 deleteSomeHistoryBtn.addEventListener('click', async () => {
-  if(!sessions || !sessions.length) return
+  if(!sessions?.length) return
   const checkboxes = container.querySelectorAll('.session-checkbox');
   const checkedSessions = new Set;
 
@@ -183,8 +183,7 @@ async function init() {
   const currentYear = currentFullDate.getFullYear().toString()
   const currentDate = currentFullDate.getDate()
   const currentMonth = currentFullDate.getMonth() + 1
-  const currentDay =
-  currentFullDate.getDay() === 0 ? 6 : currentFullDate.getDay() - 1
+  const currentDay = currentFullDate.getDay() === 0 ? 6 : currentFullDate.getDay() - 1
   await updateOldHistoryDataToAccomodateLatestChanges(currentYear)
   const sampleHistoryObj = await getSessionStorage(currentYear)
   sampleHistory = sampleHistoryObj[currentYear]
@@ -283,7 +282,6 @@ async function init() {
       const date = new Date(currentYear, currentMonth - 1, i)
       const currentDateWithMonth = date.getDate() + '-' + (date.getMonth() + 1)
       
-      if (!history) break
       if (currentDateWithMonth in history) {
         const data = history[currentDateWithMonth]
         let focus = 0
@@ -359,7 +357,7 @@ async function init() {
 
   deleteDateInput.value = formattedDate;
   await generateSessionsToDelete()
-  if(!sessions || !sessions.length) deleteSomeHistoryBtn.disabled = true
+  if(!sessions?.length) deleteSomeHistoryBtn.disabled = true
 }
 
 function setBars(data, maxValueOfGraph, range=WEEK, totalDays=7) {
@@ -543,11 +541,11 @@ function loadSettings(settings) {
 
 async function makecalendarGraph(currentYear, currentDate, currentMonth, currentDay, history) {
   let maxPomos = 0
-  let prevYearHistory = undefined
+  let prevYearHistory
   const boxes = []
   let totalFocus = 0
   let totalFocusCount = 0
-  for(const [index, container] of calendarMonthContainers.entries()) {
+  for(const [index] of calendarMonthContainers.entries()) {
     const m = calendarMonthContainers.length - index - 1
     const previousYear = (new Date(dateInput.value).getFullYear() - 1).toString()
     const curDate = new Date(currentYear, currentMonth-m-1, 1)

@@ -44,6 +44,7 @@
 .container.light #settings-form {
   backdrop-filter: blur(2px);
   background-color: #ffffff85;
+  border: 2px dashed black;
 }
 #settings-form::before{
   content: '';
@@ -81,9 +82,6 @@ label {
 .container.light input, .container.light select {
   background-color: var(--secondary-color-1);
   border: 1px solid black;
-}
-.container.light #settings-form {
-  border: 2px dashed black;
 }
 .notification {
   white-space: nowrap;

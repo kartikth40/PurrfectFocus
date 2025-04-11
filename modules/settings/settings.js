@@ -105,7 +105,9 @@ settingsForm.addEventListener('submit', async (e) => {
     try{
       await chrome.runtime.sendMessage({stopTimer: true})
       await chrome.runtime.sendMessage({saveSettings: true, newSettings: settingsObj})
-    }catch{e=>console.warn(e)}
+    }catch (e) {
+      console.warn(e);
+    }
 })
 
 const musicPlayerCheckbox = document.getElementById("music-player");

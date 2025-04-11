@@ -206,8 +206,6 @@ body.light .timer-tag.simple {
   justify-content: space-between;
   align-items: center;
   width: 70%;
-  display: flex;
-  justify-content: space-between;
 }
 
 #music-player button {

@@ -18,10 +18,9 @@
             <div class="focus-container">
               <h2>Focus</h2>
               <div class="duration ">
-                <label for="focus-duration-input">Duration: <input type="number" id="focus-duration-input" name="focusDuration" value="25" required> minutes</label>
+                <label for="focus-duration-input">Duration: <input type="number" id="focus-duration-input" name="focusDuration" value="25" min="1" required> minutes</label>
               </div>
               <div class="settings-checkbox-container ">
-                <!-- <p>When complete</p> -->
                 <label class="notification" for="focus-desktop-notification">
                   <input type='hidden' value='off' name='focusDesktopNotification'>
                   <input type="checkbox" class="notification-checkbox" checked name="focusDesktopNotification" id="focus-desktop-notification"> 
@@ -76,26 +75,13 @@
                 </label>
               </div>
             </div>
-            <div class="timer-style-container">
-              <h2>Timer Style</h2>
-              <div class="settings-checkbox-container flex-row">
-                <label class="timer-style" for="simple-style">
-                  <input type="radio" name="timerStyle" id="simple-style" value="simple"> 
-                  Basic
-                </label>
-                <label class="timer-style" for="cat-walk-style">
-                  <input type="radio" checked name="timerStyle" id="cat-walk-style" value="catWalk"> 
-                  Cat Walk
-                </label>
-              </div>
-              <div class="theme-cards-container">
-                <label class="theme-card theme-card-light" for="app-theme-light">
-                  <input type='radio' value='light' name='theme' class="theme-radio" id="app-theme-light" style="display: none;">
-                  Light Mode
-                </label>
-                <label class="theme-card theme-card-dark checked" for="app-theme-dark">
-                  <input type='radio' value='dark' name='theme' class="theme-radio" id="app-theme-dark" style="display: none;">
-                  Dark Mode
+            <div class="open-new-tab-container">
+              <h2>General</h2>
+              <div class="settings-checkbox-container">
+                <label class="open-new-tab" for="open-new-tab">
+                  <input type='hidden' value='off' name='openNewTabOnCompletion'>
+                  <input type="checkbox" class="open-new-tab-checkbox" name="openNewTabOnCompletion" id="open-new-tab"> 
+                  Open new tab on session completion
                 </label>
               </div>
             </div>
@@ -104,10 +90,9 @@
             <div class="short-break-container">
               <h2>Short Break</h2>
               <div class="duration ">
-                <label for="short-break-duration-input">Duration: <input type="number" id="short-break-duration-input" name="shortBreakDuration" value="5" required> minutes</label>
+                <label for="short-break-duration-input">Duration: <input type="number" id="short-break-duration-input" name="shortBreakDuration" min="1" value="5" required> minutes</label>
               </div>
               <div class="settings-checkbox-container ">
-                <!-- <p>When complete</p> -->
                 <label class="notification" for="short-break-desktop-notification">
                   <input type='hidden' value='off' name='shortBreakDesktopNotification'>
                   <input type="checkbox" class="notification-checkbox" checked name="shortBreakDesktopNotification" id="short-break-desktop-notification"> 
@@ -147,7 +132,32 @@
                 </label>
               </div>
             </div>
+            <div class="timer-style-container">
+              <h2>Timer Style</h2>
+              <div class="settings-checkbox-container flex-row">
+                <label class="timer-style" for="simple-style">
+                  <input type="radio" name="timerStyle" id="simple-style" value="simple"> 
+                  Basic
+                </label>
+                <label class="timer-style" for="cat-walk-style">
+                  <input type="radio" checked name="timerStyle" id="cat-walk-style" value="catWalk"> 
+                  Cat Walk
+                </label>
+              </div>
+              <div class="theme-cards-container">
+                <label class="theme-card theme-card-light" for="app-theme-light">
+                  <input type='radio' value='light' name='theme' class="theme-radio" id="app-theme-light" style="display: none;">
+                  Light Mode
+                </label>
+                <label class="theme-card theme-card-dark checked" for="app-theme-dark">
+                  <input type='radio' value='dark' name='theme' class="theme-radio" id="app-theme-dark" style="display: none;">
+                  Dark Mode
+                </label>
+              </div>
+            </div>
         
+          </div>
+          <div class="col">
             <div class="long-break-container">
               <h2>Long Break</h2>
               <div class="long-break-interval ">
@@ -167,10 +177,9 @@
               </label>
               </div>
               <div class="duration ">
-                <label for="long-break-duration-input">Duration: <input type="number" id="long-break-duration-input" name="longBreakDuration" value="15" required> minutes</label>
+                <label for="long-break-duration-input">Duration: <input type="number" id="long-break-duration-input" name="longBreakDuration" min="1" value="15" required> minutes</label>
               </div>
-              <div class="settings-checkbox-container ">
-                <!-- <p>When complete</p> -->
+              <div class="settings-checkbox-container">
                 <label class="notification" for="long-break-desktop-notification">
                   <input type='hidden' value='off' name='longBreakDesktopNotification'>
                   <input type="checkbox" class="notification-checkbox" checked name="longBreakDesktopNotification" id="long-break-desktop-notification"> 

@@ -71,7 +71,7 @@ async function startActualTimer(timer) {
       status: PLAY,
       type: timer?.type ?? FOCUS,
       counts: timer?.counts ?? 0,
-      startTime: getCurrentTimeString(),
+      startTime: timer?.startTime ?? getCurrentTimeString(),
       endTime: null,
       task: getValidTask(timer?.task)
     }
@@ -80,7 +80,9 @@ async function startActualTimer(timer) {
   startTimer(chrome, timer?.time ?? 0)
   try{
     await chrome.runtime.sendMessage({timerStarted: true})
-  }catch{e=>console.warn(e)}
+  }catch (e) {
+    console.warn(e);
+  }
 }
 
 async function pauseActualTimer(timer) {
@@ -117,25 +119,33 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
     await pauseActualTimer(request?.timer)
     try{
       await chrome.runtime.sendMessage({timerPaused: true})
-    }catch{e=>console.warn(e)}
+    }catch (e) {
+    console.warn(e);
+  }
   }
   else if(request.stopTimer) {
     await stopActualTimer()
     try{
       await chrome.runtime.sendMessage({timerStopped: true})
-    }catch{e=>console.warn(e)}
+    }catch (e) {
+    console.warn(e);
+  }
   }
   else if(request.nextTimer) {
     await setNextTimer()
     try{
       await chrome.runtime.sendMessage({timerNext: true})
-    }catch{e=>console.warn(e)}
+    }catch (e) {
+    console.warn(e);
+  }
   }
   if(request.saveSettings) {
     await setSyncStorage(request.newSettings)
     try{
       await chrome.runtime.sendMessage({settingsSaved: true})
-    }catch{e=>console.warn(e)}
+    }catch (e) {
+    console.warn(e);
+  }
   }
 })
 
@@ -165,7 +175,7 @@ const startTimer = async (chrome, timer) => {
                         : timerObj?.timer?.type === LONGBREAK
                         ? settingsObj?.settings?.longBreak?.time
                         : settingsObj?.settings?.focus?.time
-        if(startTime && endTime) await setLocalStorage({[currentDate.getFullYear().toString()]: {
+        if(startTime && endTime && startTime !== endTime) await setLocalStorage({[currentDate.getFullYear().toString()]: {
           [currentDateWithMonth]: [{
             startTime: startTime,
             endTime: endTime,
@@ -191,7 +201,7 @@ const startTimer = async (chrome, timer) => {
           type: timerObj?.timer?.type === FOCUS ? FOCUS : BREAK,
           task: task
           })
-        if(startTime && endTime) await setLocalStorage({[currentDate.getFullYear().toString()]: {
+        if(startTime && endTime && startTime !== endTime) await setLocalStorage({[currentDate.getFullYear().toString()]: {
           [currentDateWithMonth]: todaysPomodoros,
             ...oldHistory
           } 
@@ -205,7 +215,7 @@ const startTimer = async (chrome, timer) => {
                         : timerObj?.timer?.type === LONGBREAK
                         ? settingsObj?.settings?.longBreak?.time
                         : settingsObj?.settings?.focus?.time
-        if(startTime && endTime) await setLocalStorage({[currentDate.getFullYear().toString()]: {
+        if(startTime && endTime && startTime !== endTime) await setLocalStorage({[currentDate.getFullYear().toString()]: {
           [currentDateWithMonth]: [{
             startTime: startTime,
             endTime: endTime,
@@ -295,7 +305,9 @@ const setNextTimer = async (timerEnds=false) => {
     }
     try{
       await chrome.runtime.sendMessage({updateNextTimer: true})
-    }catch{e=>console.warn(e)}
+    }catch (e) {
+    console.warn(e);
+  }
   } else if(status?.timer?.type === SHORTBREAK) {
     prevTimer = SHORTBREAK
     print.log('next is focus after short one')
@@ -313,7 +325,9 @@ const setNextTimer = async (timerEnds=false) => {
     print.log('session -> short -> focus')
     try{
       await chrome.runtime.sendMessage({updateNextTimer: true})
-    }catch{e=>console.warn(e)}
+    }catch (e) {
+    console.warn(e);
+  }
   } else if(status?.timer?.type === LONGBREAK) {
     prevTimer = LONGBREAK
     print.log('next is focus after long one')
@@ -331,16 +345,16 @@ const setNextTimer = async (timerEnds=false) => {
     print.log('session -> long -> focus')
     try{
       await chrome.runtime.sendMessage({updateNextTimer: true})
-    }catch{e=>console.warn(e)}
+    }catch (e) {
+    console.warn(e);
+  }
   }
   if(timerEnds) {
     await createNotification(prevTimer, nextTimer)
   }
-  if(nextTimer === SHORTBREAK && settingsObj?.settings?.shortBreak?.autoStart) {
-    await startActualTimer(timerToStore.timer)
-  } else if(nextTimer === LONGBREAK && settingsObj?.settings?.longBreak?.autoStart) {
-    await startActualTimer(timerToStore.timer)
-  } else if(nextTimer === FOCUS && settingsObj?.settings?.focus?.autoStart) {
+  if(settingsObj?.settings?.shortBreak?.autoStart 
+    || settingsObj?.settings?.longBreak?.autoStart 
+    || settingsObj?.settings?.focus?.autoStart) {
     await startActualTimer(timerToStore.timer)
   }
 }

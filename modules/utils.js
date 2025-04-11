@@ -8,7 +8,6 @@ import {
   SETTINGSKEY,
   SHORTBREAK,
   SIMPLETIMERSTYLE,
-  TIMERKEY,
   STOP,
   PLAY,
   PAUSE,
@@ -175,7 +174,7 @@ export async function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
   const settingsObj = await getSyncStorage(SETTINGSKEY)
   if(prevTimer === FOCUS) {
     if(settingsObj.settings.focus.notifications) {
-      await createNewTabForTimers()
+      await createNewTabForTimers(true, settingsObj?.settings?.openNewTab)
       const notificationId = `my-notification-${Date.now()}`
       await chrome.notifications.create(
         notificationId,
@@ -203,7 +202,7 @@ export async function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
     }
   }else if(prevTimer === SHORTBREAK) {
     if(settingsObj.settings.shortBreak.notifications) {
-      await createNewTabForTimers()
+      await createNewTabForTimers(true, settingsObj?.settings?.openNewTab)
       const notificationId = `my-notification-${Date.now()}`
       await chrome.notifications.create(
         notificationId,
@@ -231,7 +230,7 @@ export async function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
     }
   }else if(prevTimer === LONGBREAK) {
     if(settingsObj.settings.longBreak.notifications) {
-      await createNewTabForTimers()
+      await createNewTabForTimers(true, settingsObj?.settings?.openNewTab)
       const notificationId = `my-notification-${Date.now()}`
       await chrome.notifications.create(
         notificationId,
@@ -260,7 +259,16 @@ export async function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
   }
 }
 
-export async function createNewTabForTimers(notify=true) {
+export async function createNewTabForTimers(notify=true, openNewTab=true) {
+  if(notify && !openNewTab) {
+    await chrome.storage.session.set({notificationTriggered:true})
+    try {
+      await chrome.runtime.sendMessage({notificationTriggered: true})
+    }catch (e) {
+    console.warn(e);
+  }
+    return
+  }
   const res = await getSessionStorage(NEWTABTIMERIDKEY)
   async function callback() {
     if (chrome.runtime.lastError) {
@@ -270,7 +278,9 @@ export async function createNewTabForTimers(notify=true) {
           await chrome.storage.session.set({notificationTriggered:true})
           try {
             await chrome.runtime.sendMessage({notificationTriggered: true})
-          }catch{e=>console.warn(e)}
+          }catch (e) {
+    console.warn(e);
+  }
         }
       })
     } else {
@@ -279,7 +289,9 @@ export async function createNewTabForTimers(notify=true) {
         if(notify) {
           try {
               await chrome.runtime.sendMessage({notificationTriggered: true})
-            }catch{e=>console.warn(e)}
+            }catch (e) {
+    console.warn(e);
+  }
           }
         })
       }
@@ -293,7 +305,9 @@ export async function createNewTabForTimers(notify=true) {
           await chrome.storage.session.set({notificationTriggered:true})
           try {
             await chrome.runtime.sendMessage({notificationTriggered: true})
-          }catch{e=>console.warn(e)}
+          }catch (e) {
+    console.warn(e);
+  }
         }
       })
     }
@@ -371,13 +385,16 @@ export async function resumeTimer(timer) {
         status: PLAY,
         type: timer.type,
         counts: timer.counts,
+        startTime: timer.startTime,
         task: getValidTask(timer?.task)
     }
     print.log('new timer -> ')
     print.log(timerObj)
     try {
       await chrome.runtime.sendMessage({startTimer: true, timer: timerObj})
-    }catch{e=>console.warn(e)}
+    }catch (e) {
+    console.warn(e);
+  }
 }
 
 export const timerDuration = (type, settings) => {
@@ -409,27 +426,28 @@ export const setNewSettings = (formValues) => {
     settings: {
       focus: {
         time: parseInt(formValues.focusDuration),
-        notifications: formValues.focusDesktopNotification === 'on' ? true : false,
-        autoStart: formValues.focusDesktopAutoStart === 'on' ? true : false,
+        notifications: formValues.focusDesktopNotification === 'on',
+        autoStart: formValues.focusDesktopAutoStart === 'on',
         sound: formValues.focusTimerSound
       },
       shortBreak: {
         time: parseInt(formValues.shortBreakDuration),
-        notifications: formValues.shortBreakDesktopNotification === 'on' ? true : false,
-        autoStart: formValues.shortBreakDesktopAutoStart === 'on' ? true : false,
+        notifications: formValues.shortBreakDesktopNotification === 'on',
+        autoStart: formValues.shortBreakDesktopAutoStart === 'on',
         sound: formValues.shortBreakTimerSound
       },
       longBreak: {
         time: parseInt(formValues.longBreakDuration),
         interval: formValues.longBreakInterval,
-        notifications: formValues.longBreakDesktopNotification === 'on' ? true : false,
-        autoStart: formValues.longBreakDesktopAutoStart === 'on' ? true : false,
+        notifications: formValues.longBreakDesktopNotification === 'on',
+        autoStart: formValues.longBreakDesktopAutoStart === 'on',
         sound: formValues.longBreakTimerSound
       },
       timerStyle: formValues.timerStyle,
       theme: formValues.theme === 'light' ? LIGHTTHEME : DARKTHEME,
-      musicPlayer: formValues.musicPlayer === 'on' ? true : false,
-      musicPlayerAutoStart: formValues.musicPlayerAutoStart === 'on' ? true : false
+      musicPlayer: formValues.musicPlayer === 'on',
+      musicPlayerAutoStart: formValues.musicPlayerAutoStart === 'on',
+      openNewTab: formValues.openNewTab === 'on',
     }
   }
 }
@@ -455,6 +473,7 @@ export const setFormValues = (data) => {
   document.querySelector('#app-theme-dark').checked = settings.theme === DARKTHEME
   document.querySelector('#music-player').checked = settings.musicPlayer
   document.querySelector('#music-auto-start').checked = settings.musicPlayerAutoStart
+  document.querySelector('#open-new-tab').checked = settings.openNewTab
 }
 
 export function changeTextTo(element, text) {
@@ -524,7 +543,7 @@ export const setSampleHistory = async () => {
         let duration = 0
         let startTime = "00:00"
         let endTime = "00:00"
-        let task = TASKS.WORK
+        let task
         if(noOfFocusTimers > 0 && getRandomNumber(0,3) !== 0) {
           noOfFocusTimers--
           duration = getRandomNumber(10, 180)
@@ -774,4 +793,8 @@ export async function updateOldHistoryDataToAccomodateLatestChanges(currentYear)
   }
   await setLocalStorage({[currentYear]: history});
   await setLocalStorage({[LASTUPDATEKEY]: 1});
+}
+
+export function isEdge() {
+  return navigator.userAgent.includes("Edg")
 }

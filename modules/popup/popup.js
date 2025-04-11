@@ -65,10 +65,6 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
   if(request.updateNextTimer) {
     await updateNextTimer()
   }
-  else if(request.resumeTimer) {
-    const status = await getSessionStorage(TIMERKEY)
-    resume(status.timer)
-  }
   else if(request.saveSettings) {
     const store = await getSyncStorage(SETTINGSKEY)
     if(store?.settings?.theme === LIGHTTHEME) {
@@ -124,7 +120,6 @@ async function handleUntilLongBreakCount(settings, timer, tryOnce=false) {
 // on DOM loading
 document.addEventListener('DOMContentLoaded', async () => {
   const store = await getSyncStorage(SETTINGSKEY)
-  let settingsObj = store
   let settings = store.settings
   if(settings?.theme === LIGHTTHEME) {
     container.classList.add('light')
@@ -180,7 +175,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   })
 
   timerTag.addEventListener('click', async () => {
-    await createNewTabForTimers(false)
+    await createNewTabForTimers(false, true)
   })
 
   settingsBtn.addEventListener('click',async () => {
@@ -233,7 +228,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         "🌱 Heads up! 🌱",
         "Renaming this task will update it everywhere, including history.\n\nEnter the new task name:", 
         oldTaskAlias,
-        async (response) => {8
+        async (response) => {
           if (response !== null && response.length <= 10) {
             tasksAlias[oldSelectedTask] = response
             await chrome.runtime.sendMessage({taskAliasUpdated: true})
@@ -249,7 +244,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function nextTimer() {
   try{
     await chrome.runtime.sendMessage({nextTimer: true})
-  }catch{e=>console.warn(e)}
+  } catch (e) {
+    console.warn(e);
+  }
 }
 
 const stopTimer = async (settings) => {
@@ -264,7 +261,9 @@ const stopTimer = async (settings) => {
   await handleUntilLongBreakCount(settings, null)
   try{
     await chrome.runtime.sendMessage({stopTimer: true})
-  }catch{e=>console.warn(e)}
+  } catch (e) {
+    console.warn(e);
+  }
 }
 
 const pause = async (timer) => {
@@ -272,7 +271,9 @@ const pause = async (timer) => {
   const timerObj = await getSessionStorage(TIMERKEY)
   try{
     await chrome.runtime.sendMessage({pauseTimer: true, timer: timerObj.timer})
-  }catch{e=>console.warn(e)}
+  }catch (e) {
+    console.warn(e);
+  }
   changeTextTo(focusBtnText, 'Resume')
   changeTextTo(focusTitle, timer.type)
   chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'})
@@ -302,7 +303,9 @@ const initiateTimer = async () => {
     }
     try{
       await chrome.runtime.sendMessage({startTimer: true, timer: timerObj})
-    }catch{e=>console.warn(e)}
+    }catch (e) {
+      console.warn(e);
+    }
   })
   changeTextTo(focusBtnText, 'Pause')
   changeTextTo(focusTitle, timer?.type ?? FOCUS)

@@ -71,7 +71,8 @@ export const defaultSettings = {
     timerStyle: SIMPLETIMERSTYLE,
     theme: DARKTHEME,
     musicPlayer: true,
-    musicPlayerAutoStart: true
+    musicPlayerAutoStart: true,
+    openNewTab: true
   }
     
 }
