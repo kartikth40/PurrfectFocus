@@ -1,6 +1,6 @@
 import { CONFIG } from "../config.js"
 import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE, TASKS, TASKSALIASKEY, CURRENTTASKKEY, showSurvey } from "../constants.js"
-import { changeTextTo, createNewTabForHistory, createNewTabForSettings, createNewTabForStreak, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setSessionStorage, timerDuration, getValidTask } from "../utils.js"
+import { changeTextTo, createNewTabForHistory, createNewTabForSettings, createNewTabForStreak, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setSessionStorage, timerDuration, getValidTask, handleNotificationTone } from "../utils.js"
 
 const container = document.querySelector('.container')
 const focusTitle = document.querySelector('.focus-title')
@@ -29,7 +29,7 @@ let musicPlayerInitialized = false
 
 const print = printer()
 document.addEventListener('DOMContentLoaded', async () => {
-  handleNotificationTone(true)
+  // await handleNotificationTone(true)
   addEventListeners()
   await init()
 })
@@ -192,9 +192,6 @@ function addEventListeners() {
     if (request.time) {
       changeTextTo(timerEle, request.time)
       if(settings.musicPlayer && settings.musicPlayerAutoStart && !audio) await loadTrack()
-    }
-    if(request.notificationTriggered) {
-      handleNotificationTone()
     }
     if(request.timerStarted){
       changeTextTo(focusBtnText, 'Pause')
@@ -440,45 +437,6 @@ const updateBreakQuote = () => {
 const updateFocusQuote = () => {
   breakActivitiesSuggestions.classList.remove('show')
   quote.innerText = getRandomFocusQuote()
-}
-
-async function handleNotificationTone(fromSession=false) {
-  let stopHere = false
-  let timer = null
-  let sound = 'Alarm Clock Old'
-  await chrome.storage.session.get(['notificationTriggered', 'timer']).then( async res => {
-    if(fromSession) {
-      if(res.notificationTriggered) {
-        await chrome.storage.session.set({notificationTriggered:false})
-      }
-      else stopHere = true
-    }
-    if(res?.timer) {
-      timer = res.timer
-    }
-  })
-  if(stopHere) return
-  
-  await chrome.storage.sync.get('settings').then( async res => {
-    if(timer.type === FOCUS && res.settings.focus.notifications) {
-      sound = res.settings.focus.sound
-    }else if(timer.type === SHORTBREAK && res.settings.shortBreak.notifications) {
-      sound = res.settings.shortBreak.sound
-    }else if(timer.type === LONGBREAK && res.settings.longBreak.notifications) {
-      sound = res.settings.longBreak.sound
-    }
-    else stopHere = true
-  }) 
-  if(stopHere || sound === 'None') return
-
-  const notificationTone = new Audio(`/assets/audio/${sound}.mp3`)
-  notificationTone.play()
-
-  window.addEventListener(FOCUS, function() {
-    notificationTone.pause()
-    notificationTone.currentTime = 0
-  })
-
 }
 
 if(showSurvey) {

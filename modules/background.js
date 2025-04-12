@@ -263,7 +263,6 @@ const setNextTimer = async (timerEnds=false) => {
   let prevTimer = FOCUS
   print.log('setting next timer --------->')
   if(!status?.timer) return
-
   const currentTaskObj = await getLocalStorage(CURRENTTASKKEY)
   const currentTask = currentTaskObj[CURRENTTASKKEY] || null
   print.helper('NEXT ID  => ' + intervalId.getState())
@@ -304,10 +303,10 @@ const setNextTimer = async (timerEnds=false) => {
       print.log('session -> focus -> long')
     }
     try{
-      await chrome.runtime.sendMessage({updateNextTimer: true})
+      settingsObj?.settings?.openNewTab && await chrome.runtime.sendMessage({updateNextTimer: true})
     }catch (e) {
-    console.warn(e);
-  }
+      console.warn(e);
+    }
   } else if(status?.timer?.type === SHORTBREAK) {
     prevTimer = SHORTBREAK
     print.log('next is focus after short one')
@@ -324,7 +323,7 @@ const setNextTimer = async (timerEnds=false) => {
     await setSessionStorage(timerToStore)
     print.log('session -> short -> focus')
     try{
-      await chrome.runtime.sendMessage({updateNextTimer: true})
+      settingsObj?.settings?.openNewTab && await chrome.runtime.sendMessage({updateNextTimer: true})
     }catch (e) {
     console.warn(e);
   }
@@ -344,7 +343,7 @@ const setNextTimer = async (timerEnds=false) => {
     await setSessionStorage(timerToStore)
     print.log('session -> long -> focus')
     try{
-      await chrome.runtime.sendMessage({updateNextTimer: true})
+      settingsObj?.settings?.openNewTab && await chrome.runtime.sendMessage({updateNextTimer: true})
     }catch (e) {
     console.warn(e);
   }

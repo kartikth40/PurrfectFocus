@@ -63,6 +63,7 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
   }
 
   if(request.updateNextTimer) {
+    console.log('come')
     await updateNextTimer()
   }
   else if(request.saveSettings) {
@@ -87,6 +88,7 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
 })
 
 const updateNextTimer = async () => {
+  console.log('update man')
   print.log('udateNextTimer (UI change)')
   changeTextTo(focusBtnText, 'Start Focusing')
   changeTextTo(focusTitle, 'Start Focusing')

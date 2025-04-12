@@ -24,7 +24,8 @@ import {
   TASKS,
   BREAK,
   NEWTABSTREAKIDKEY,
-  LASTUPDATEKEY} from "./constants.js"
+  LASTUPDATEKEY,
+  TIMERKEY} from "./constants.js"
 
 const print = printer()
 
@@ -78,9 +79,12 @@ export function createState(initialState) {
 }
 
 export async function initBackgroundJs() {
-  const store = await getSyncStorage(SETTINGSKEY)
-  if(!Object.keys(store).length) {
-    await setSyncStorage(defaultSettings)
+  const store = await getSyncStorage(SETTINGSKEY);
+  if (!Object.keys(store).length) {
+    await setSyncStorage(defaultSettings);
+  } else {
+    const updatedSettings = { ...defaultSettings.settings, ...store.settings };
+    await setSyncStorage({ [SETTINGSKEY]: updatedSettings });
   }
 }
 
@@ -260,10 +264,25 @@ export async function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
 }
 
 export async function createNewTabForTimers(notify=true, openNewTab=true) {
+  let sound = 'Alarm Clock Old'
+  let timerObj = await getSessionStorage(TIMERKEY)
+  const timer = timerObj[TIMERKEY]
+
+  if(notify){
+    await chrome.storage.sync.get([SETTINGSKEY]).then( async res => {
+      if(timer?.type === FOCUS && res?.settings?.focus?.notifications) {
+        sound = res.settings.focus.sound
+      }else if(timer?.type === SHORTBREAK && res?.settings?.shortBreak?.notifications) {
+        sound = res.settings.shortBreak.sound
+      }else if(timer?.type === LONGBREAK && res?.settings?.longBreak?.notifications) {
+        sound = res.settings.longBreak.sound
+      }
+    }) 
+  }
   if(notify && !openNewTab) {
     await chrome.storage.session.set({notificationTriggered:true})
     try {
-      await chrome.runtime.sendMessage({notificationTriggered: true})
+      await playNotificationSound(sound)
     }catch (e) {
     console.warn(e);
   }
@@ -277,7 +296,7 @@ export async function createNewTabForTimers(notify=true, openNewTab=true) {
         if(notify) {
           await chrome.storage.session.set({notificationTriggered:true})
           try {
-            await chrome.runtime.sendMessage({notificationTriggered: true})
+            await playNotificationSound(sound)
           }catch (e) {
     console.warn(e);
   }
@@ -288,7 +307,7 @@ export async function createNewTabForTimers(notify=true, openNewTab=true) {
       await chrome.tabs.update(res[NEWTABTIMERIDKEY], {active: true}, async (tab) => { 
         if(notify) {
           try {
-              await chrome.runtime.sendMessage({notificationTriggered: true})
+              await playNotificationSound(sound)
             }catch (e) {
     console.warn(e);
   }
@@ -304,7 +323,7 @@ export async function createNewTabForTimers(notify=true, openNewTab=true) {
         if(notify) {
           await chrome.storage.session.set({notificationTriggered:true})
           try {
-            await chrome.runtime.sendMessage({notificationTriggered: true})
+            await playNotificationSound(sound)
           }catch (e) {
     console.warn(e);
   }
@@ -447,7 +466,7 @@ export const setNewSettings = (formValues) => {
       theme: formValues.theme === 'light' ? LIGHTTHEME : DARKTHEME,
       musicPlayer: formValues.musicPlayer === 'on',
       musicPlayerAutoStart: formValues.musicPlayerAutoStart === 'on',
-      openNewTab: formValues.openNewTab === 'on',
+      openNewTab: formValues.openNewTabOnCompletion === 'on',
     }
   }
 }
@@ -744,7 +763,7 @@ function showReminderNotification() {
   });
 }
 
-chrome.notifications.onButtonClicked.addListener(async (notificationId, buttonIndex) => {
+chrome?.notifications?.onButtonClicked?.addListener(async (notificationId, buttonIndex) => {
   if (notificationId === "userReminder") {
     if (buttonIndex === 0) {
       await chrome.tabs.create({url:"modules/newTab/over.html", active: true}, async function(tab){
@@ -758,7 +777,7 @@ chrome.notifications.onButtonClicked.addListener(async (notificationId, buttonIn
   }
 });
 
-chrome.notifications.onClicked.addListener(async (notificationId) => {
+chrome?.notifications?.onClicked?.addListener(async (notificationId) => {
   if (notificationId === "userReminder") {
     await chrome.tabs.create({url:"modules/newTab/over.html", active: true}, async function(tab){
       await setSessionStorage({[NEWTABHISTORYIDKEY]: tab.id})
@@ -797,4 +816,49 @@ export async function updateOldHistoryDataToAccomodateLatestChanges(currentYear)
 
 export function isEdge() {
   return navigator.userAgent.includes("Edg")
+}
+
+export async function handleNotificationTone(fromSession=false, sound='Alarm Clock Old') {
+  let stopHere = false
+  await chrome?.storage?.session?.get(['notificationTriggered', 'timer']).then( async res => {
+    if(fromSession) {
+      if(res.notificationTriggered) {
+        await chrome.storage.session.set({notificationTriggered:false})
+      }
+      else stopHere = true
+    }
+  })
+  if(stopHere) return
+  
+  
+  if(stopHere || sound === 'None') return
+  const notificationTone = new Audio(`/assets/audio/${sound}.mp3`)
+  notificationTone.play()
+  function handleFocusEvent() {
+    notificationTone.pause();
+    notificationTone.currentTime = 0;
+    window.removeEventListener(FOCUS, handleFocusEvent);
+  }
+
+  window.addEventListener(FOCUS, handleFocusEvent);
+
+}
+
+
+async function ensureOffscreen() {
+  if (await chrome.offscreen.hasDocument()) return;
+  try {
+    await chrome.offscreen.createDocument({
+      url: 'modules/offScreen/offScreen.html',
+      reasons: ['AUDIO_PLAYBACK'],
+      justification: 'Play audio alert when timer ends',
+    });
+  } catch (e) {
+    console.error('❌ Failed to create offscreen:', e);
+  }
+}
+
+async function playNotificationSound(sound='Alarm Clock Old') {
+  await ensureOffscreen();
+  chrome.runtime.sendMessage({ playNotificationTone: true , sound:sound})
 }
