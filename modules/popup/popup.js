@@ -66,14 +66,12 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
   }
 
   if(request.updateNextTimer) {
-    console.log('come')
     await updateNextTimer()
   }
   if(request.timerReset){
     const store = await getSyncStorage(SETTINGSKEY)
     const timerObj = await getSessionStorage(TIMERKEY)
     const timer = timerObj[TIMERKEY]
-    console.log(timer)
     if (!timer || timer.type === FOCUS) {
       changeTextTo(focusBtnText, 'Start Focusing')
       changeTextTo(focusTitle, 'Start Focusing')
@@ -114,7 +112,6 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
 })
 
 const updateNextTimer = async () => {
-  console.log('update man')
   print.log('udateNextTimer (UI change)')
   changeTextTo(focusBtnText, 'Start Focusing')
   changeTextTo(focusTitle, 'Start Focusing')

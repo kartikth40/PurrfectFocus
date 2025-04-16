@@ -68,7 +68,6 @@ async function init() {
   await handleUntilLongBreakCount(settings, timer.timer)
   if(timer?.timer?.type === LONGBREAK) changeTextTo( untilLongBreak, '')
   if(timer?.timer && (timer?.timer?.status === PLAY || timer?.timer?.status === PAUSE)) {
-    console.log('Timer is running', timer)
     changeTextTo(timerEle, getTimeString(timer.timer.time, false))
     changeTextTo(focusBtnText, getFocusText(timer.timer, settings))
     stopBtn.classList.add('active')
@@ -224,7 +223,6 @@ function addEventListeners() {
       const timerObj = await getSessionStorage(TIMERKEY)
       const timer = timerObj[TIMERKEY]
       await pauseMusic()
-      console.log(timer)
       if (!timer || timer.type === FOCUS) {
         changeTextTo(focusBtnText, 'Start Focusing')
         changeTextTo(focusTitle, 'Start Focusing')

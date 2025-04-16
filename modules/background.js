@@ -116,11 +116,9 @@ async function resetCurrentTimer() {
   const timerObj = await getSessionStorage(TIMERKEY)
   const timer = timerObj[TIMERKEY]
   if(!timer || (timer?.counts === 0 && timer?.type === FOCUS)) {
-    console.log('resetting timer 1', timer)
     await setSessionStorage({[TIMERKEY]: null})
     return
   } 
-  console.log('resetting timer 2', timer)
   const settingsObj = await getSyncStorage(SETTINGSKEY)
   const settings = settingsObj[SETTINGSKEY]
   let time;
@@ -131,7 +129,6 @@ async function resetCurrentTimer() {
   } else if(timer?.type === LONGBREAK) {
     time = settings?.longBreak?.time * 60
   }
-  console.log(time)
   const newTimerObj = {
     [TIMERKEY]: {
       time: time ?? 0,
