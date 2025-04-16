@@ -18,6 +18,7 @@ let settingsChanged = false
 chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
   // settings status change
   if(request.settingsSaved) {
+    if(request.reload) location.reload()
     saveBtn.classList.add('saved')
     changeTextTo(saveBtn, 'Saved')
     saveBtn.disabled = true
@@ -103,7 +104,7 @@ settingsForm.addEventListener('submit', async (e) => {
   chrome.action.setBadgeText({text: ''})
   chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]})
     try{
-      await chrome.runtime.sendMessage({stopTimer: true})
+      await chrome.runtime.sendMessage({resetCurrentTimer: true})
       await chrome.runtime.sendMessage({saveSettings: true, newSettings: settingsObj})
     }catch (e) {
       console.warn(e);

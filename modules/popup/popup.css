@@ -83,3 +83,14 @@ p.until-long {
 .middle {
   margin-top: -5px;
 }
+
+.timer-edit {
+  top: 40px;
+  right: -10px;
+  background-color: var(--secondary-color-2);
+  &::after {
+    top: 50%;
+    width: 200%;
+    left: -170%;
+  }
+}

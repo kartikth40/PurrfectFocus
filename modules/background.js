@@ -50,7 +50,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   storageChangesLogger();
   const alarms = await chrome.alarms.getAll();
   if (!alarms.some(alarm => alarm.name === "checkActivity")) {
-    chrome.alarms.create("checkActivity", { periodInMinutes: 1440 });
+    chrome.alarms.create("checkActivity", { periodInMinutes: 180 });
   }
 
 });
@@ -110,6 +110,41 @@ async function stopActualTimer() {
   clearInterval(intervalId.getState())
   await setSessionStorage({[TIMERKEY]: null})
 }
+
+async function resetCurrentTimer() {
+  clearInterval(intervalId.getState())
+  const timerObj = await getSessionStorage(TIMERKEY)
+  const timer = timerObj[TIMERKEY]
+  if(!timer || (timer?.counts === 0 && timer?.type === FOCUS)) {
+    console.log('resetting timer 1', timer)
+    await setSessionStorage({[TIMERKEY]: null})
+    return
+  } 
+  console.log('resetting timer 2', timer)
+  const settingsObj = await getSyncStorage(SETTINGSKEY)
+  const settings = settingsObj[SETTINGSKEY]
+  let time;
+  if(!timer || timer?.type === FOCUS) {
+    time = settings?.focus?.time * 60
+  } else if(timer?.type === SHORTBREAK) {
+    time = settings?.shortBreak?.time * 60
+  } else if(timer?.type === LONGBREAK) {
+    time = settings?.longBreak?.time * 60
+  }
+  console.log(time)
+  const newTimerObj = {
+    [TIMERKEY]: {
+      time: time ?? 0,
+      status: PAUSE,
+      type: timer?.type ?? FOCUS,
+      counts: timer?.counts ?? 0,
+      startTime: null,
+      endTime: null,
+      task: getValidTask(timer?.task)
+    }
+  }
+  await setSessionStorage(newTimerObj)
+}
   
 chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
   if (request.startTimer) {
@@ -120,7 +155,7 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
     try{
       await chrome.runtime.sendMessage({timerPaused: true})
     }catch (e) {
-    console.warn(e);
+      console.warn(e);
   }
   }
   else if(request.stopTimer) {
@@ -128,15 +163,23 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
     try{
       await chrome.runtime.sendMessage({timerStopped: true})
     }catch (e) {
-    console.warn(e);
+      console.warn(e);
+    }
   }
+  else if(request.resetCurrentTimer) {
+    await resetCurrentTimer()
+    try{
+      await chrome.runtime.sendMessage({timerReset: true})
+    }catch (e) {
+      console.warn(e);
+    }
   }
   else if(request.nextTimer) {
     await setNextTimer()
     try{
       await chrome.runtime.sendMessage({timerNext: true})
     }catch (e) {
-    console.warn(e);
+      console.warn(e);
   }
   }
   if(request.saveSettings) {
@@ -144,7 +187,7 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
     try{
       await chrome.runtime.sendMessage({settingsSaved: true})
     }catch (e) {
-    console.warn(e);
+      console.warn(e);
   }
   }
 })
@@ -158,7 +201,7 @@ const startTimer = async (chrome, timer) => {
       print.log('start timer 🔚')
       clearInterval(intervalId.getState())
       chrome.action.setBadgeText({text: getTimeString(0)})
-      chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'})
+      chrome.action.setBadgeBackgroundColor({color: 'rgb(255, 202, 118)'})
       const currentDate = new Date()
       const oldHistoryObj = await getLocalStorage(currentDate.getFullYear().toString())
       const oldHistory = oldHistoryObj[currentDate.getFullYear().toString()]
@@ -230,12 +273,17 @@ const startTimer = async (chrome, timer) => {
       await setNextTimer(true)
     }else {
       print.log('⏲ -> ' + timer +' '+ getTimeString(timer))
+      const result = await getSessionStorage(TIMERKEY)
       chrome.action.setBadgeText({text: getTimeString(timer)})
-      chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'})
+      if(result?.timer?.type === FOCUS) {
+        chrome.action.setBadgeBackgroundColor({color: '#e19be7'})
+      }
+      else {
+        chrome.action.setBadgeBackgroundColor({color: '#9CCC65'})
+      }
       try{
         await chrome.runtime.sendMessage({time: getTimeString(timer, false)})
       } catch{(e) => console.warn(e)}
-      const result = await getSessionStorage(TIMERKEY)
       const timerToStore = {
         [TIMERKEY]: {
           time: timer,
@@ -267,7 +315,7 @@ const setNextTimer = async (timerEnds=false) => {
   const currentTask = currentTaskObj[CURRENTTASKKEY] || null
   print.helper('NEXT ID  => ' + intervalId.getState())
   clearInterval(intervalId.getState())
-  chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'})
+  chrome.action.setBadgeBackgroundColor({color: 'rgb(255, 202, 118)'})
   let timerToStore = {}
   if(status?.timer?.type === FOCUS) {
     const interval = parseInt(settingsObj?.settings?.longBreak?.interval)

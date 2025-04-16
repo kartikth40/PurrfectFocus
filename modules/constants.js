@@ -19,7 +19,7 @@ export const SHORTBREAK = 'Short Break'
 export const LONGBREAK = 'Long Break'
 
 // defaults
-const defaultFocusTime = 25
+export const defaultFocusTime = 25
 const defaultShortBreakTime = 5
 const defaultLongBreakTime = 15
 const defaultInterval = 3
@@ -45,7 +45,7 @@ export const TASKSALIASKEY = 'tasks_alias'
 
 // others
 export const tabNames = ['focus', 'settings']
-export const showSurvey = false
+export const showSurvey = true
 
 export const defaultSettings = {
   settings: {

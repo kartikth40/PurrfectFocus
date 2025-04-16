@@ -1,6 +1,6 @@
 import { CONFIG } from "../config.js"
 import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE, TASKS, TASKSALIASKEY, CURRENTTASKKEY, showSurvey } from "../constants.js"
-import { changeTextTo, createNewTabForHistory, createNewTabForSettings, createNewTabForStreak, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setSessionStorage, timerDuration, getValidTask, handleNotificationTone } from "../utils.js"
+import { changeTextTo, createNewTabForHistory, createNewTabForSettings, createNewTabForStreak, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setSessionStorage, timerDuration, getValidTask, setSyncStorage } from "../utils.js"
 
 const container = document.querySelector('.container')
 const focusTitle = document.querySelector('.focus-title')
@@ -19,6 +19,7 @@ const historyBtn = document.querySelector('.history-tab-btn')
 const streakBtn = document.querySelector('.streak-tab-btn')
 const taskSelect = document.getElementById('tasks-select')
 const taskEdit = document.querySelector('.task-edit')
+const timerEdit = document.querySelector('.timer-edit')
 const pollBtn = document?.querySelector(".poll-btn")
 
 
@@ -67,6 +68,7 @@ async function init() {
   await handleUntilLongBreakCount(settings, timer.timer)
   if(timer?.timer?.type === LONGBREAK) changeTextTo( untilLongBreak, '')
   if(timer?.timer && (timer?.timer?.status === PLAY || timer?.timer?.status === PAUSE)) {
+    console.log('Timer is running', timer)
     changeTextTo(timerEle, getTimeString(timer.timer.time, false))
     changeTextTo(focusBtnText, getFocusText(timer.timer, settings))
     stopBtn.classList.add('active')
@@ -74,7 +76,7 @@ async function init() {
   }
   if(timer?.timer && timer?.timer?.status === PAUSE) {
     chrome.action.setBadgeText({text: getTimeString(timer.timer.time)})
-    chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'})
+    chrome.action.setBadgeBackgroundColor({color: 'rgb(255, 202, 118)'})
   }
   if(!timer?.timer) {
     stopBtn.classList.remove('active')
@@ -217,6 +219,30 @@ function addEventListeners() {
       await handleUntilLongBreakCount(store.settings, null)
       await pauseMusic()
     }
+    else if(request.timerReset){
+      const store = await getSyncStorage(SETTINGSKEY)
+      const timerObj = await getSessionStorage(TIMERKEY)
+      const timer = timerObj[TIMERKEY]
+      await pauseMusic()
+      console.log(timer)
+      if (!timer || timer.type === FOCUS) {
+        changeTextTo(focusBtnText, 'Start Focusing')
+        changeTextTo(focusTitle, 'Start Focusing')
+        changeTextTo(timerEle, getTimeString(store.settings.focus.time * 60, false))
+      } else if (timer.type === SHORTBREAK) {
+        changeTextTo(focusBtnText, 'Start Short Break')
+        changeTextTo(focusTitle, 'Take a Short Break')
+        changeTextTo(timerEle, getTimeString(store.settings.shortBreak.time * 60, false))
+      } else {
+        changeTextTo(focusBtnText, 'Start Long Break')
+        changeTextTo(focusTitle, 'Take a Long Break')
+        changeTextTo(timerEle, getTimeString(store.settings.longBreak.time * 60, false))
+      }
+      if(!timer) {
+        stopBtn.classList.remove('active')
+        nextBtn.classList.remove('active')
+      }
+    }
     else if(request.saveSettings){
       const store = await getSyncStorage(SETTINGSKEY)
       settings = store.settings
@@ -265,7 +291,7 @@ function addEventListeners() {
   historyBtn.addEventListener('click',async () => {
     await createNewTabForHistory()
   })
-  streakBtn.addEventListener('click',async () => {
+  streakBtn?.addEventListener('click',async () => {
     await createNewTabForStreak()
   })
 
@@ -310,7 +336,60 @@ function addEventListeners() {
             showCustomAlert("Oops! 😋", "Task name should be less than 10 characters.", () => {})
           }
       });
-    })
+  })
+
+  timerEdit.addEventListener('click', async (event) => {
+    const settingsObj = await getSyncStorage(SETTINGSKEY)
+    const settings = settingsObj[SETTINGSKEY] || {}
+    const timerObj = await getSessionStorage(TIMERKEY)
+    const timer = timerObj[TIMERKEY]
+    let time;
+    if (!timer || timer.type === FOCUS) {
+        time = settings?.focus?.time;
+    } else if (timer.type === SHORTBREAK) {
+        time = settings?.shortBreak?.time;
+    } else {
+        time = settings?.longBreak?.time;
+    }
+    let [min, max] = [1, 180]
+
+    showCustomPrompt(
+      "⏱ Adjust Timer Duration",
+      "Modify the current timer duration.\n\nPlease enter the new time in minutes:", 
+      time,
+      async (response) => {
+        if (response !== null && !isNaN(response) && Number.isInteger(Number(response)) && Number(response) >= min && Number(response) <= max) {
+          chrome.action.setBadgeText({text: ''})
+          chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]})
+          try{
+            if (!timer || timer.type === FOCUS) {
+                settingsObj.settings.focus.time = parseInt(response)
+            } else if (timer.type === SHORTBREAK) {
+                settingsObj.settings.shortBreak.time = parseInt(response)
+            } else {
+                settingsObj.settings.longBreak.time = parseInt(response)
+            }
+            await setSyncStorage(settingsObj)
+            await chrome.runtime.sendMessage({
+              newSettings: settingsObj, 
+              saveSettings: true, 
+              reload: true,
+              resetCurrentTimer: true
+            })
+          }catch (e) {
+          console.warn(e);
+          }
+        } else if(response !== null && !isNaN(response) && Number.isInteger(Number(response)) && Number(response) < min) {
+          showCustomAlert("⚠️ Invalid Time", `The time must be at least ${min} minute(s). Please try again.`, () => {})
+        } else if(response !== null && !isNaN(response) && Number.isInteger(Number(response)) && Number(response) > max) {
+          showCustomAlert("⚠️ Invalid Time", `The time must not exceed ${max} minute(s). Please try again.`, () => {})
+        } else if (response !== null && (isNaN(response) || response.length > 10)) {
+          showCustomAlert("⚠️ Invalid Input", "Please enter a valid numeric value for the time.", () => {})
+        }
+      },
+      "number"
+    );
+  })
 }
 
 function loadSettings(settings) {
@@ -414,7 +493,7 @@ const pause = async (timer) => {
   print.log('pause timer - new tab')
   changeTextTo(focusBtnText, 'Resume')
   changeTextTo(focusTitle, timer.type)
-  chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'})
+  chrome.action.setBadgeBackgroundColor({color: 'rgb(255, 202, 118)'})
   try{
     await chrome.runtime.sendMessage({pauseTimer: true, timer: timer})
   }catch{e=>console.warn(e)}
@@ -442,7 +521,8 @@ const updateFocusQuote = () => {
 if(showSurvey) {
   pollBtn.classList.add('active')
   const votePoll = document?.getElementById("votePoll")
-    if(votePoll) {
+  if(votePoll) {
+      votePoll.innerText = CONFIG.POLL_TITLE
       votePoll.addEventListener("click", function() {
       chrome.tabs.create({ url: CONFIG.POLL_FORM_URL });
     });
@@ -485,7 +565,7 @@ async function setFocusOptionForTasks(timer) {
   taskSelect.disabled = false
 }
 
-function showCustomPrompt(title, message, value, callback) {
+function showCustomPrompt(title, message, value, callback, inputType = "text") {
   const modal = document.getElementById("customPrompt");
   const promptMessage = document.getElementById("promptMessage");
   const promptTitle = document.getElementById("promptTitle");
@@ -498,7 +578,9 @@ function showCustomPrompt(title, message, value, callback) {
 
   promptMessage.innerHTML = message.replace(/\n/g, "<br>");
   promptInput.value = value;
+  promptInput.type = inputType;
   promptInput.focus();
+  promptInput.select();
   modal.style.display = "flex";
 
   setTimeout(() => promptInput.focus(), 0);

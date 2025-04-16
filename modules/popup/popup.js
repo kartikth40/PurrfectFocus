@@ -14,7 +14,8 @@ import {
   getValidTask,
   createNewTabForStreak,
   getLocalStorage,
-  setLocalStorage} from "../utils.js"
+  setLocalStorage,
+  setSyncStorage} from "../utils.js"
 import {
   PLAY,
   PAUSE,
@@ -27,12 +28,13 @@ import {
   TASKS,
   TASKSALIASKEY,
   CURRENTTASKKEY,
-  showSurvey
+  showSurvey,
+  SHORTBREAK
  } from "../constants.js"
 import { CONFIG } from "../config.js"
 
 const container = document.querySelector('.container')
-const timer = document.querySelector('.timer')
+const timerEle = document.querySelector('.timer')
 const focusBtn = document.querySelector('.focus-btn')
 const focusBtnText = document.querySelector('#focus-btn-text')
 const focusTitle = document.querySelector('.focus-title')
@@ -41,6 +43,7 @@ const untilLongBreak = document.querySelector('.until-long')
 const stopBtn = document.querySelector('.focus-btn-stop')
 const nextBtn = document.querySelector('.focus-btn-next')
 const timerTag = document.querySelector('.timer-tag')
+const timerEdit = document.querySelector('.timer-edit')
 const pollBtn = document?.querySelector(".poll-btn")
 
 
@@ -58,13 +61,36 @@ const print = printer()
 chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
   // tick with timer
   if (request.time) {
-    changeTextTo(timer, request.time)
+    changeTextTo(timerEle, request.time)
     print.log('UI --> ' + request.time)
   }
 
   if(request.updateNextTimer) {
     console.log('come')
     await updateNextTimer()
+  }
+  if(request.timerReset){
+    const store = await getSyncStorage(SETTINGSKEY)
+    const timerObj = await getSessionStorage(TIMERKEY)
+    const timer = timerObj[TIMERKEY]
+    console.log(timer)
+    if (!timer || timer.type === FOCUS) {
+      changeTextTo(focusBtnText, 'Start Focusing')
+      changeTextTo(focusTitle, 'Start Focusing')
+      changeTextTo(timerEle, getTimeString(store.settings.focus.time * 60, false))
+    } else if (timer.type === SHORTBREAK) {
+      changeTextTo(focusBtnText, 'Start Short Break')
+      changeTextTo(focusTitle, 'Short Break')
+      changeTextTo(timerEle, getTimeString(store.settings.shortBreak.time * 60, false))
+    } else {
+      changeTextTo(focusBtnText, 'Start Long Break')
+      changeTextTo(focusTitle, 'Long Break')
+      changeTextTo(timerEle, getTimeString(store.settings.longBreak.time * 60, false))
+    }
+    if(!timer) {
+      stopBtn.classList.remove('active')
+      nextBtn.classList.remove('active')
+    }
   }
   else if(request.saveSettings) {
     const store = await getSyncStorage(SETTINGSKEY)
@@ -95,7 +121,7 @@ const updateNextTimer = async () => {
   const result = await getSessionStorage(TIMERKEY)
   const settingsObj = await getSyncStorage(SETTINGSKEY)
   await handleUntilLongBreakCount(settingsObj.settings, result.timer)
-  changeTextTo(timer, getTimeString(timerDuration(result.timer.type, settingsObj?.settings)*60, false))
+  changeTextTo(timerEle, getTimeString(timerDuration(result.timer.type, settingsObj?.settings)*60, false))
   if(!result?.timer || result?.timer?.type === FOCUS) {
     await setFocusOptionForTasks(result?.timer)
     return
@@ -134,13 +160,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     timerTag.classList.add('cat-walk')
   }
   const sessionStore = await getSessionStorage(TIMERKEY)
-  changeTextTo(timer, getTimeString(timerDuration(sessionStore?.timer?.type, settings)*60, false))
+  changeTextTo(timerEle, getTimeString(timerDuration(sessionStore?.timer?.type, settings)*60, false))
   await handleUntilLongBreakCount(settings, sessionStore.timer)
   if(!sessionStore?.timer || sessionStore?.timer?.type === FOCUS) await setFocusOptionForTasks(sessionStore.timer)
   else await setRestOptionForTasks()
   if(sessionStore?.timer?.type === LONGBREAK) changeTextTo( untilLongBreak, '')
   if(sessionStore?.timer && (sessionStore?.timer?.status === PLAY || sessionStore?.timer?.status === PAUSE)) {
-    changeTextTo(timer, getTimeString(sessionStore.timer.time, false))
+    changeTextTo(timerEle, getTimeString(sessionStore.timer.time, false))
     changeTextTo(focusBtnText, getFocusText(sessionStore.timer, settings))
     changeTextTo(focusTitle, sessionStore.timer.type)
     stopBtn.classList.add('active')
@@ -148,7 +174,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   if(sessionStore?.timer && sessionStore?.timer?.status === PAUSE) {
     chrome.action.setBadgeText({text: getTimeString(sessionStore.timer.time)})
-    chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'})
+    chrome.action.setBadgeBackgroundColor({color: 'rgb(255, 202, 118)'})
   }
   focusBtn.addEventListener('click', async () => {
     const timer = await getSessionStorage(TIMERKEY)
@@ -186,7 +212,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   historyBtn.addEventListener('click',async () => {
     await createNewTabForHistory()
   })
-  streakBtn.addEventListener('click',async () => {
+  streakBtn?.addEventListener('click',async () => {
     await createNewTabForStreak()
   })
   supportBtn.addEventListener('click',async function(event){
@@ -241,6 +267,60 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
       });
     })
+
+    timerEdit.addEventListener('click', async (event) => {
+        const settingsObj = await getSyncStorage(SETTINGSKEY)
+        const settings = settingsObj[SETTINGSKEY] || {}
+        const timerObj = await getSessionStorage(TIMERKEY)
+        const timer = timerObj[TIMERKEY]
+        let time;
+        if (!timer || timer.type === FOCUS) {
+            time = settings?.focus?.time;
+        } else if (timer.type === SHORTBREAK) {
+            time = settings?.shortBreak?.time;
+        } else {
+            time = settings?.longBreak?.time;
+        }
+        let [min, max] = [1, 180]
+    
+        showCustomPrompt(
+          "⏱ Adjust Timer Duration",
+          "Modify the current timer duration.\n\nPlease enter the new time in minutes:", 
+          time,
+          async (response) => {
+            if (response !== null && !isNaN(response) && Number.isInteger(Number(response)) && Number(response) >= min && Number(response) <= max) {
+              chrome.action.setBadgeText({text: ''})
+              chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]})
+              try{
+               if (!timer || timer.type === FOCUS) {
+                    settingsObj.settings.focus.time = parseInt(response)
+                } else if (timer.type === SHORTBREAK) {
+                    settingsObj.settings.shortBreak.time = parseInt(response)
+                } else {
+                    settingsObj.settings.longBreak.time = parseInt(response)
+                }
+                await setSyncStorage(settingsObj)
+                await chrome.runtime.sendMessage({
+                  newSettings: settingsObj, 
+                  saveSettings: true, 
+                  reload: true,
+                  resetCurrentTimer: true
+                })
+                changeTextTo(timerEle, getTimeString(response*60, false))
+              }catch (e) {
+              console.warn(e);
+              }
+            } else if(response !== null && !isNaN(response) && Number.isInteger(Number(response)) && Number(response) < min) {
+              showCustomAlert("⚠️ Invalid Time", `The time must be at least ${min} minute(s). Please try again.`, () => {})
+            } else if(response !== null && !isNaN(response) && Number.isInteger(Number(response)) && Number(response) > max) {
+              showCustomAlert("⚠️ Invalid Time", `The time must not exceed ${max} minute(s). Please try again.`, () => {})
+            } else if (response !== null && (isNaN(response) || response.length > 10)) {
+              showCustomAlert("⚠️ Invalid Input", "Please enter a valid numeric value for the time.", () => {})
+            }
+          },
+          "number"
+        );
+      })
 })
 
 async function nextTimer() {
@@ -257,7 +337,7 @@ const stopTimer = async (settings) => {
   changeTextTo(focusTitle, 'Start Focusing')
   stopBtn.classList.remove('active')
   nextBtn.classList.remove('active')
-  changeTextTo(timer, getTimeString(settings.focus.time * 60, false))
+  changeTextTo(timerEle, getTimeString(settings.focus.time * 60, false))
   chrome.action.setBadgeText({text: ''})
   chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]})
   await handleUntilLongBreakCount(settings, null)
@@ -278,7 +358,7 @@ const pause = async (timer) => {
   }
   changeTextTo(focusBtnText, 'Resume')
   changeTextTo(focusTitle, timer.type)
-  chrome.action.setBadgeBackgroundColor({color: 'rgb(245, 176, 66)'})
+  chrome.action.setBadgeBackgroundColor({color: 'rgb(255, 202, 118)'})
 }
 
 const resume = async (timer) => {
@@ -310,7 +390,7 @@ const initiateTimer = async () => {
     }
   })
   changeTextTo(focusBtnText, 'Pause')
-  changeTextTo(focusTitle, timer?.type ?? FOCUS)
+  changeTextTo(focusTitle, timerEle?.type ?? FOCUS)
   stopBtn.classList.add('active')
   nextBtn.classList.add('active')
 }
@@ -318,7 +398,8 @@ const initiateTimer = async () => {
 if(showSurvey) {
   pollBtn.classList.add('active')
   const votePoll = document?.getElementById("votePoll")
-    if(votePoll) {
+  if(votePoll) {
+      votePoll.innerText = CONFIG.POLL_TITLE
       votePoll.addEventListener("click", function() {
       chrome.tabs.create({ url: CONFIG.POLL_FORM_URL });
     });
@@ -360,7 +441,7 @@ async function setFocusOptionForTasks(timer) {
   taskSelect.disabled = false
 }
 
-function showCustomPrompt(title, message, value, callback) {
+function showCustomPrompt(title, message, value, callback, inputType = "text") {
   const modal = document.getElementById("customPrompt");
   const promptMessage = document.getElementById("promptMessage");
   const promptTitle = document.getElementById("promptTitle");
@@ -373,7 +454,9 @@ function showCustomPrompt(title, message, value, callback) {
 
   promptMessage.innerHTML = message.replace(/\n/g, "<br>");
   promptInput.value = value;
+  promptInput.type = inputType;
   promptInput.focus();
+  promptInput.select();
   modal.style.display = "flex";
 
   setTimeout(() => promptInput.focus(), 0);

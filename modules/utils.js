@@ -397,7 +397,12 @@ export async function createNewTabForStreak() {
 
 export async function resumeTimer(timer) {
   chrome.action.setBadgeText({text: getTimeString(timer.time)})
-  chrome.action.setBadgeBackgroundColor({color: 'rgb(202, 250, 197)'})
+  if(timer?.type === FOCUS) {
+    chrome.action.setBadgeBackgroundColor({color: '#e19be7'})
+  }
+  else {
+    chrome.action.setBadgeBackgroundColor({color: '#9CCC65'})
+  }
     print.log('====> ▶')
     const timerObj = {
         time:  timer.time,

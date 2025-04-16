@@ -35,7 +35,7 @@ body.light .focus-title, body.light .until-long {
   width: 80vh;
   aspect-ratio: 2/1;
   border-radius: 1em;
-  background-size: 10% 20%;
+  background-size: 17% 34%;
   border: 3px solid black;
   box-shadow:inset 0 0 5px black;
 }
@@ -282,4 +282,21 @@ body.light .timer-tag.simple {
 }
 .light #music-player p {
   color: black;
+}
+
+.timer-edit {
+  top:0;
+  right:0;
+  border: none;
+  & img {
+    height: 16px;
+    width: 16px;
+  }
+  &::after{
+    content: none;
+  }
+  &:hover {
+    border: none;
+    box-shadow: none;
+  }
 }
