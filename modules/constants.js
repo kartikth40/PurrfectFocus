@@ -46,6 +46,10 @@ export const TASKSALIASKEY = 'tasks_alias'
 // others
 export const tabNames = ['focus', 'settings']
 export const showSurvey = true
+export const modes = {
+  POMODORO: 'Pomodoro',
+  STOPWATCH: 'Stopwatch'
+}
 
 export const defaultSettings = {
   settings: {
@@ -72,9 +76,9 @@ export const defaultSettings = {
     theme: DARKTHEME,
     musicPlayer: true,
     musicPlayerAutoStart: true,
-    openNewTab: true
+    openNewTab: true,
+    mode: modes.POMODORO
   }
-    
 }
 
 export const DAYS = {

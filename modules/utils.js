@@ -25,7 +25,8 @@ import {
   BREAK,
   NEWTABSTREAKIDKEY,
   LASTUPDATEKEY,
-  TIMERKEY} from "./constants.js"
+  TIMERKEY,
+  modes} from "./constants.js"
 
 const print = printer()
 
@@ -445,33 +446,35 @@ export function getCurrentTimeString() {
   return `${hours}:${minutes}`
 }
 
-export const setNewSettings = (formValues) => {
+export const setNewSettings = async (formValues) => {
+  const store = await getSyncStorage(SETTINGSKEY)
   return {
     settings: {
       focus: {
         time: parseInt(formValues.focusDuration),
         notifications: formValues.focusDesktopNotification === 'on',
         autoStart: formValues.focusDesktopAutoStart === 'on',
-        sound: formValues.focusTimerSound
+        sound: formValues.focusTimerSound ?? store.settings.focus.sound
       },
       shortBreak: {
         time: parseInt(formValues.shortBreakDuration),
         notifications: formValues.shortBreakDesktopNotification === 'on',
         autoStart: formValues.shortBreakDesktopAutoStart === 'on',
-        sound: formValues.shortBreakTimerSound
+        sound: formValues.shortBreakTimerSound ?? store.settings.shortBreak.sound
       },
       longBreak: {
         time: parseInt(formValues.longBreakDuration),
         interval: formValues.longBreakInterval,
         notifications: formValues.longBreakDesktopNotification === 'on',
         autoStart: formValues.longBreakDesktopAutoStart === 'on',
-        sound: formValues.longBreakTimerSound
+        sound: formValues.longBreakTimerSound ?? store.settings.longBreak.sound
       },
       timerStyle: formValues.timerStyle,
       theme: formValues.theme === 'light' ? LIGHTTHEME : DARKTHEME,
       musicPlayer: formValues.musicPlayer === 'on',
       musicPlayerAutoStart: formValues.musicPlayerAutoStart === 'on',
       openNewTab: formValues.openNewTabOnCompletion === 'on',
+      mode: formValues.timerModeSelect ?? modes.POMODORO
     }
   }
 }
@@ -498,6 +501,7 @@ export const setFormValues = (data) => {
   document.querySelector('#music-player').checked = settings.musicPlayer
   document.querySelector('#music-auto-start').checked = settings.musicPlayerAutoStart
   document.querySelector('#open-new-tab').checked = settings.openNewTab
+  document.querySelector('#timer-mode-select').value = settings.mode
 }
 
 export function changeTextTo(element, text) {
@@ -866,4 +870,111 @@ async function ensureOffscreen() {
 async function playNotificationSound(sound='Alarm Clock Old') {
   await ensureOffscreen();
   chrome.runtime.sendMessage({ playNotificationTone: true , sound:sound})
+}
+
+
+export function showCustomPrompt(title, message, value, callback, inputType = "text", warn = "", options=null) {
+  const modal = document.getElementById("customPrompt");
+  const promptMessage = document.getElementById("promptMessage");
+  const promptTitle = document.getElementById("promptTitle");
+  const promptInput = document.getElementById("promptInput");
+  const promptSelect = document.getElementById("promptSelect")
+  const promptOk = document.getElementById("promptOk");
+  const promptCancel = document.getElementById("promptCancel");
+  const promptWarning = document.getElementById("promptwarning");
+  modal.style.display = "flex";
+  if(warn && warn.length > 0 && promptWarning){
+    promptWarning.style.display = "block";
+    promptWarning.innerHTML = warn.replace(/\n/g, "<br>");
+  } else {
+    promptWarning.style.display = "none"
+    promptWarning.innerHTML = null
+  } 
+
+  if (!title) promptTitle.style.display = "none";
+  else promptTitle.innerHTML = title;
+
+  promptMessage.innerHTML = message.replace(/\n/g, "<br>");
+  if (inputType === "select") {
+    promptSelect.style.display = "block"
+    promptInput.style.display = "none"
+    promptSelect.innerHTML = options
+  } else {
+    promptSelect.style.display = "none"
+    promptInput.style.display = "block"
+    setTimeout(() => {
+      promptInput.value = value;
+      promptInput.focus();
+      promptInput.select();
+    }, 0);
+    
+    promptInput.type = inputType;
+  }
+
+  function handleKeyDown(event) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      promptOk.click();
+    }else if (event.key === "Escape") {
+      event.preventDefault();
+      promptCancel.click();
+    }
+  }
+
+  promptInput.addEventListener("keydown", handleKeyDown);
+
+  function closeModal() {
+    modal.style.display = "none";
+    promptInput.removeEventListener("keydown", handleKeyDown);
+  }
+
+  promptOk.onclick = function () {
+    closeModal();
+    callback(inputType === 'select' ? promptSelect.value : promptInput.value);
+  };
+
+  promptCancel.onclick = function () {
+    closeModal();
+    callback(null);
+  };
+}
+
+
+export function showCustomAlert(title, message, callback) {
+  const modal = document.getElementById("customAlert");
+  const alertMessage = document.getElementById("alertMessage");
+  const alertTitle = document.getElementById("alertTitle");
+  const alertOk = document.getElementById("alertOk");
+
+  if (!title) alertTitle.style.display = "none";
+  else alertTitle.innerHTML = title;
+
+  alertMessage.innerHTML = message.replace(/\n/g, "<br>");
+  modal.style.display = "flex";
+
+  function handleKeyDown(event) {
+    if (event.key === "Enter" || event.key === "Escape") {
+      event.preventDefault();
+      alertOk.click();
+    }
+  }
+
+  alertOk.onclick = function () {
+    modal.style.display = "none";
+    document.removeEventListener("keydown", handleKeyDown);
+    callback(true);
+  };
+  setTimeout(() => document.addEventListener("keydown", handleKeyDown), 100);
+}
+
+
+export function getFocusOptionsForTasks(tasksAlias) {
+  return Object.keys(TASKS)
+  .filter(taskKey => TASKS[taskKey] !== TASKS.REST)
+  .map(taskKey => {
+      const task = TASKS[taskKey]
+      const alias = tasksAlias[task] || task
+      return `<option value="${task}">${alias}</option>`
+  })
+  .join('')
 }

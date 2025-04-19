@@ -45,16 +45,16 @@
         <label for="tasks-select">Task: </label>
         <select id="tasks-select"></select>
       </div>
-      <div class="task-edit">
+      <button class="task-edit">
         <img src="../../assets/icons/pencil.png" alt="pencil">
-      </div>
+      </butto>
     </div>
     <div class="time-container bigTimer">
       <div class="timer-tag simple">
         <div class="timer" id="timer">00:00</div>
-        <div class="timer-edit">
+        <button class="timer-edit">
           <img src="../../assets/icons/pencil.png" alt="pencil">
-        </div>
+        </button>
       </div>
     </div>
     <div class="bottom">
@@ -116,11 +116,13 @@
     <div class="modal-content">
       <h2 id="promptTitle"></h2>
       <p id="promptMessage"></p>
-      <input type="text" id="promptInput" value="Task..." />
+      <input type="text" id="promptInput"/>
+      <select id="promptSelect"></select>
       <div class="modal-buttons">
         <button id="promptOk">✅OK</button>
         <button id="promptCancel">❌Cancel</button>
       </div>
+      <p id="promptwarning"></p>
     </div>
   </div>
   <div id="customAlert" class="modal">

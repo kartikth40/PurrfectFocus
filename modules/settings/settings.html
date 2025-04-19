@@ -21,10 +21,10 @@
                 <label for="focus-duration-input">Duration: <input type="number" id="focus-duration-input" name="focusDuration" value="25" min="1" max="180" required> minutes</label>
               </div>
               <div class="settings-checkbox-container ">
-                <label class="notification" for="focus-desktop-notification">
+                <label class="notification label-indicator" for="focus-desktop-notification">
+                  Notifications
                   <input type='hidden' value='off' name='focusDesktopNotification'>
                   <input type="checkbox" class="notification-checkbox" checked name="focusDesktopNotification" id="focus-desktop-notification"> 
-                  Notifications
                 </label>
                 <label class="notification" for="focus-timer-sound">
                     <select name="focusTimerSound" id="focus-timer-sound" class="sound-select" required>
@@ -60,22 +60,7 @@
                 </label>
               </div>
             </div>
-            <div class="music-player-container">
-              <h2>Music Player</h2>
-              <div class="flex-row">
-                <label class="music-player" for="music-player">
-                  <input type='hidden' value='off' name='music-player'>
-                  <input type="checkbox" class="music-player-checkbox" checked name="musicPlayer" id="music-player"> 
-                  Enable
-                </label>
-                <label class="auto-start" for="music-auto-start">
-                  <input type='hidden' value='off' name='musicPlayerAutoStart'>
-                  <input type="checkbox" class="auto-start-checkbox" checked name="musicPlayerAutoStart" id="music-auto-start"> 
-                  Auto Start with timer
-                </label>
-              </div>
-            </div>
-            <div class="open-new-tab-container">
+            <div>
               <h2>General</h2>
               <div class="settings-checkbox-container">
                 <label class="open-new-tab" for="open-new-tab">
@@ -83,6 +68,14 @@
                   <input type="checkbox" checked class="open-new-tab-checkbox" name="openNewTabOnCompletion" id="open-new-tab"> 
                   Open tab on completion
                 </label>
+              </div>
+              <div class="settings-checkbox-container  timer-mode-container">
+                <label class="label-indicator" for="timer-mode-select">Mode</label>
+                <select name="timerModeSelect" disabled id="timer-mode-select" required>
+                  <option value="Pomodoro" selected>Pomodoro mode</option>
+                  <option value="Stopwatch">Stopwatch mode</option>
+                </select>
+                <p class="coming-soon-p-tag">*coming soon...</p>
               </div>
             </div>
           </div>
@@ -93,10 +86,10 @@
                 <label for="short-break-duration-input">Duration: <input type="number" id="short-break-duration-input" name="shortBreakDuration" min="1" max="180" value="5" required> minutes</label>
               </div>
               <div class="settings-checkbox-container ">
-                <label class="notification" for="short-break-desktop-notification">
+                <label class="notification label-indicator" for="short-break-desktop-notification">
+                  Notifications
                   <input type='hidden' value='off' name='shortBreakDesktopNotification'>
                   <input type="checkbox" class="notification-checkbox" checked name="shortBreakDesktopNotification" id="short-break-desktop-notification"> 
-                  Notifications
                 </label>
                 <label class="notification" for="short-break-timer-sound">
                     <select name="shortBreakTimerSound" id="short-break-timer-sound" class="sound-select" required>
@@ -161,7 +154,8 @@
             <div class="long-break-container">
               <h2>Long Break</h2>
               <div class="long-break-interval ">
-                <label for="interval-input">Take a long break:
+                <label class="label-indicator" for="interval-input">Take a long break:
+                </label>
                 <select name="longBreakInterval" id="interval-input" required>
                   <option value="0">never</option> 
                   <option value="1">every 2nd break (alternating)</option> 
@@ -174,16 +168,15 @@
                   <option value="8">every 9th break</option> 
                   <option value="9">every 10th break</option>
                 </select>
-              </label>
               </div>
               <div class="duration ">
                 <label for="long-break-duration-input">Duration: <input type="number" id="long-break-duration-input" name="longBreakDuration" min="1" value="15" max="180" required> minutes</label>
               </div>
               <div class="settings-checkbox-container">
-                <label class="notification" for="long-break-desktop-notification">
+                <label class="notification label-indicator" for="long-break-desktop-notification">
+                  Notifications
                   <input type='hidden' value='off' name='longBreakDesktopNotification'>
                   <input type="checkbox" class="notification-checkbox" checked name="longBreakDesktopNotification" id="long-break-desktop-notification"> 
-                  Notifications
                 </label>
                 <label class="notification" for="long-break-timer-sound">
                     <select name="longBreakTimerSound" id="long-break-timer-sound" class="sound-select" required>
@@ -216,6 +209,21 @@
                   <input type='hidden' value='off' name='longBreakDesktopAutoStart'>
                   <input type="checkbox" class="auto-start-checkbox" checked name="longBreakDesktopAutoStart" id="long-break-desktop-auto-start"> 
                   Auto Start
+                </label>
+              </div>
+            </div>
+            <div class="music-player-container">
+              <h2>Music Player</h2>
+              <div class="flex-row">
+                <label class="music-player" for="music-player">
+                  <input type='hidden' value='off' name='music-player'>
+                  <input type="checkbox" class="music-player-checkbox" checked name="musicPlayer" id="music-player"> 
+                  Enable
+                </label>
+                <label class="auto-start" for="music-auto-start">
+                  <input type='hidden' value='off' name='musicPlayerAutoStart'>
+                  <input type="checkbox" class="auto-start-checkbox" checked name="musicPlayerAutoStart" id="music-auto-start"> 
+                  Auto Start with timer
                 </label>
               </div>
             </div>

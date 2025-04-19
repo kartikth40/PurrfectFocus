@@ -42,6 +42,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     container.classList.remove('light')
   }
   setFormValues(store)
+
+  autoStartCheckbox.disabled = !musicPlayerCheckbox.checked;
+  
+  notificationCheckboxes.forEach((notificationCheckbox, index) => {
+    if(notificationCheckbox.checked) {
+      soundSelects[index].disabled = false
+    }else{
+      soundSelects[index].disabled = true
+    }
+    notificationCheckbox.addEventListener('change', function() {
+      if(this.checked) {
+        soundSelects[index].disabled = false
+      }else{
+        soundSelects[index].disabled = true
+      }
+  })
+})
 })
 
 lightCardRadio.addEventListener('click', () => {
@@ -54,15 +71,7 @@ darkCardRadio.addEventListener('click', () => {
 })
 
 
-notificationCheckboxes.forEach((notificationCheckbox, index) => {
-  notificationCheckbox.addEventListener('change', function() {
-    if(this.checked) {
-      soundSelects[index].disabled = false
-    }else{
-      soundSelects[index].disabled = true
-    }
-  })
-})
+
 
 soundSelects.forEach(soundSelect => {
   let notificationTone = null
@@ -96,7 +105,7 @@ settingsForm.addEventListener('submit', async (e) => {
   if(!settingsChanged) return
   const formData = new FormData(e.target)
   const formValues = Object.fromEntries(formData)
-  const settingsObj = setNewSettings(formValues)
+  const settingsObj = await setNewSettings(formValues)
   const settings = settingsObj.settings
   if(settings?.theme === LIGHTTHEME) {
     container.classList.add('light')

@@ -1,6 +1,6 @@
 import { CONFIG } from "../config.js"
 import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE, TASKS, TASKSALIASKEY, CURRENTTASKKEY, showSurvey } from "../constants.js"
-import { changeTextTo, createNewTabForHistory, createNewTabForSettings, createNewTabForStreak, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setSessionStorage, timerDuration, getValidTask, setSyncStorage } from "../utils.js"
+import { changeTextTo, createNewTabForHistory, createNewTabForSettings, createNewTabForStreak, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setSessionStorage, timerDuration, getValidTask, setSyncStorage, showCustomAlert, showCustomPrompt } from "../utils.js"
 
 const container = document.querySelector('.container')
 const focusTitle = document.querySelector('.focus-title')
@@ -244,14 +244,18 @@ function addEventListeners() {
     else if(request.saveSettings){
       const store = await getSyncStorage(SETTINGSKEY)
       settings = store.settings
+      const timerObj = await getSessionStorage(TIMERKEY)
+      const timer = timerObj[TIMERKEY]
       loadSettings(settings)
-      await setFocusOptionForTasks()
+      timer.type === FOCUS ? await setFocusOptionForTasks() : await setRestOptionForTasks()
     }
     else if(request.taskChange) {
       taskSelect.value = request.taskChange
     }
     else if(request.taskAliasUpdated) {
-      await setFocusOptionForTasks()
+      const timerObj = await getSessionStorage(TIMERKEY)
+      const timer = timerObj[TIMERKEY]
+      timer.type === FOCUS ? await setFocusOptionForTasks() : await setRestOptionForTasks()
     }
   })
 
@@ -329,7 +333,7 @@ function addEventListeners() {
             tasksAlias[oldSelectedTask] = response
             await chrome.runtime.sendMessage({taskAliasUpdated: true})
             await setLocalStorage({[TASKSALIASKEY]: tasksAlias})
-            setFocusOptionForTasks()
+            oldSelectedTask === TASKS.REST ? setRestOptionForTasks() : setFocusOptionForTasks()
           } else if (response !== null && response.length > 10) {
             showCustomAlert("Oops! 😋", "Task name should be less than 10 characters.", () => {})
           }
@@ -353,39 +357,43 @@ function addEventListeners() {
 
     showCustomPrompt(
       "⏱ Adjust Timer Duration",
-      "Modify the current timer duration.\n\nPlease enter the new time in minutes:", 
+      `Please enter a new time in minutes (between ${min} and ${max})`,
       time,
       async (response) => {
-        if (response !== null && !isNaN(response) && Number.isInteger(Number(response)) && Number(response) >= min && Number(response) <= max) {
-          chrome.action.setBadgeText({text: ''})
-          chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]})
-          try{
-            if (!timer || timer.type === FOCUS) {
-                settingsObj.settings.focus.time = parseInt(response)
-            } else if (timer.type === SHORTBREAK) {
-                settingsObj.settings.shortBreak.time = parseInt(response)
-            } else {
-                settingsObj.settings.longBreak.time = parseInt(response)
-            }
-            await setSyncStorage(settingsObj)
-            await chrome.runtime.sendMessage({
-              newSettings: settingsObj, 
-              saveSettings: true, 
-              reload: true,
-              resetCurrentTimer: true
-            })
-          }catch (e) {
-          console.warn(e);
+      const parsedTime = parseInt(response, 10);
+      if (response !== null && !isNaN(parsedTime) && parsedTime >= min && parsedTime <= max) {
+        chrome.action.setBadgeText({ text: '' });
+        chrome.action.setBadgeBackgroundColor({ color: [190, 190, 190, 230] });
+        try {
+          if (!timer || timer.type === FOCUS) {
+            settingsObj.settings.focus.time = parseInt(response)
+          } else if (timer.type === SHORTBREAK) {
+              settingsObj.settings.shortBreak.time = parseInt(response)
+          } else {
+              settingsObj.settings.longBreak.time = parseInt(response)
           }
-        } else if(response !== null && !isNaN(response) && Number.isInteger(Number(response)) && Number(response) < min) {
-          showCustomAlert("⚠️ Invalid Time", `The time must be at least ${min} minute(s). Please try again.`, () => {})
-        } else if(response !== null && !isNaN(response) && Number.isInteger(Number(response)) && Number(response) > max) {
-          showCustomAlert("⚠️ Invalid Time", `The time must not exceed ${max} minute(s). Please try again.`, () => {})
-        } else if (response !== null && (isNaN(response) || response.length > 10)) {
-          showCustomAlert("⚠️ Invalid Input", "Please enter a valid numeric value for the time.", () => {})
+          await setSyncStorage(settingsObj)
+          await chrome.runtime.sendMessage({
+            newSettings: settingsObj,
+            saveSettings: true,
+            reload: true,
+            resetCurrentTimer: true
+          })  
+        } catch (e) {
+        console.warn(e);
         }
+      } else if (response !== null) {
+        let errorMessage = "Please enter a valid numeric value for the time.";
+        if (parsedTime < min) {
+        errorMessage = `The time must be at least ${min} minute(s). Please try again.`;
+        } else if (parsedTime > max) {
+        errorMessage = `The time must not exceed ${max} minute(s). Please try again.`;
+        }
+        showCustomAlert("⚠️ Invalid Input", errorMessage, () => {});
+      }
       },
-      "number"
+      "number",
+      "*It will reset the current timer.\nIf any."
     );
   })
 }
@@ -561,79 +569,4 @@ async function setFocusOptionForTasks(timer) {
                           .join('')
   taskSelect.value = getValidTask(timer?.task)
   taskSelect.disabled = false
-}
-
-function showCustomPrompt(title, message, value, callback, inputType = "text") {
-  const modal = document.getElementById("customPrompt");
-  const promptMessage = document.getElementById("promptMessage");
-  const promptTitle = document.getElementById("promptTitle");
-  const promptInput = document.getElementById("promptInput");
-  const promptOk = document.getElementById("promptOk");
-  const promptCancel = document.getElementById("promptCancel");
-
-  if (!title) promptTitle.style.display = "none";
-  else promptTitle.innerHTML = title;
-
-  promptMessage.innerHTML = message.replace(/\n/g, "<br>");
-  promptInput.value = value;
-  promptInput.type = inputType;
-  promptInput.focus();
-  promptInput.select();
-  modal.style.display = "flex";
-
-  setTimeout(() => promptInput.focus(), 0);
-
-  function handleKeyDown(event) {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      promptOk.click();
-    } else if (event.key === "Escape") {
-      event.preventDefault();
-      promptCancel.click();
-    }
-  }
-
-  promptInput.addEventListener("keydown", handleKeyDown);
-
-  function closeModal() {
-    modal.style.display = "none";
-    promptInput.removeEventListener("keydown", handleKeyDown);
-  }
-
-  promptOk.onclick = function () {
-    closeModal();
-    callback(promptInput.value);
-  };
-
-  promptCancel.onclick = function () {
-    closeModal();
-    callback(null);
-  };
-}
-
-function showCustomAlert(title, message, callback) {
-  const modal = document.getElementById("customAlert");
-  const alertMessage = document.getElementById("alertMessage");
-  const alertTitle = document.getElementById("alertTitle");
-  const alertOk = document.getElementById("alertOk");
-
-  if (!title) alertTitle.style.display = "none";
-  else alertTitle.innerHTML = title;
-
-  alertMessage.innerHTML = message.replace(/\n/g, "<br>");
-  modal.style.display = "flex";
-
-  function handleKeyDown(event) {
-    if (event.key === "Enter" || event.key === "Escape") {
-      event.preventDefault();
-      alertOk.click();
-    }
-  }
-
-  alertOk.onclick = function () {
-    modal.style.display = "none";
-    document.removeEventListener("keydown", handleKeyDown);
-    callback(true);
-  };
-  setTimeout(() => document.addEventListener("keydown", handleKeyDown), 100);
 }

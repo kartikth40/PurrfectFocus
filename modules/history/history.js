@@ -11,9 +11,11 @@ import {
   setSampleHistory,
   setSessionStorage,
   getValidTask,
-  updateOldHistoryDataToAccomodateLatestChanges
+  updateOldHistoryDataToAccomodateLatestChanges,
+  showCustomPrompt,
+  getFocusOptionsForTasks
 } from '../utils.js'
-import { SETTINGSKEY, LIGHTTHEME, TASKS, chartColors, chartBorderColors, FOCUS, DARKTHEME, TASKSALIASKEY } from '../constants.js'
+import { SETTINGSKEY, LIGHTTHEME, TASKS, chartColors, chartBorderColors, FOCUS, DARKTHEME, TASKSALIASKEY, TIMERKEY } from '../constants.js'
 
 const container = document.querySelector('.container')
 const todayCount = document.querySelector('.today-count')
@@ -664,7 +666,7 @@ async function generateSessionsToDelete() {
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
 
-  const headers = ["Start Time", "End Time", "Duration", "Task", "Type", "Select"];
+  const headers = ["Start Time", "End Time", "Duration", "Task", "Type","Select"];
   headers.forEach((headerText, index) => {
     const th = document.createElement("th");
     if (headerText === "Select") {
@@ -712,12 +714,26 @@ async function generateSessionsToDelete() {
     row.appendChild(durationCell);
 
     const taskCell = document.createElement("td");
+    taskCell.classList.add("task-cell")
     const taskSpan = document.createElement("span");
     let task = getValidTask(session.task, session.type);
     taskSpan.textContent = tasksAlias[task];
     taskSpan.classList.add("task-span");
     taskSpan.style.backgroundColor = chartColors[Object.values(TASKS).indexOf(task)];
+
+    if(task !== TASKS.REST) {
+      const editIcon = document.createElement("img");
+      editIcon.src = "../../assets/icons/pencil.png"; // Path to the PNG image
+      editIcon.classList.add("edit-icon");
+      editIcon.style.cursor = "pointer";
+      editIcon.style.marginLeft = "8px";
+      taskSpan.appendChild(editIcon);
+      taskSpan.classList.add('editable')
+      taskCell.addEventListener("click", async (e) => editTask(e, id, task, session));
+    }
+
     taskCell.appendChild(taskSpan);
+
     row.appendChild(taskCell);
 
     const typeCell = document.createElement("td");
@@ -749,4 +765,45 @@ async function generateSessionsToDelete() {
 
   table.appendChild(tbody);
   container.appendChild(table);
+}
+
+async function editTask(e, id, task, session) {
+  e.stopPropagation();
+  const tasksAliasObj = await getLocalStorage(TASKSALIASKEY)
+  const tasksAlias = tasksAliasObj[TASKSALIASKEY] || {}
+
+  showCustomPrompt(
+    "🪻 Edit Task! 🪻",
+    `${formatTimeWithLabel(session.startTime)} ▶ ${formatTimeWithLabel(session.endTime)}\n\nSelect the new task name:`, 
+    task,
+    async (response) => {
+      if (response !== null) {
+        const dateSelected = deleteDateInput.value
+        if(dateSelected) {
+          let currentYear = dateSelected.substring(0,4)
+          let currentDateStr = dateSelected.split('-')[2][0] === '0' ? dateSelected.split('-')[2][1] : dateSelected.split('-')[2]
+          let currentMonthStr = dateSelected.split('-')[1][0] === '0' ? dateSelected.split('-')[1][1] : dateSelected.split('-')[1]
+          const currentDateInHistory = currentDateStr+'-'+currentMonthStr
+          const oldHistoryObj = await getLocalStorage(currentYear)
+          const oldHistory = oldHistoryObj[currentYear]
+
+          let todaysPomodoros = oldHistory[currentDateInHistory]?.map((pom,index) => {
+            if(index === id) {
+              return {...pom, task: response}
+            } else return pom
+          })
+          
+        
+          if(todaysPomodoros !== undefined) {
+            oldHistory[currentDateInHistory] = [...todaysPomodoros]
+            await setLocalStorage({[currentYear]: {
+              ...oldHistory
+              } 
+            })
+          
+            await generateSessionsToDelete()
+          }
+        }
+      }
+  }, "select", "", getFocusOptionsForTasks(tasksAlias));
 }

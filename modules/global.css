@@ -671,6 +671,16 @@ body.light .poll-btn button {
     }
   }
 }
+
+#customPrompt{
+  & #promptwarning {
+    display: none;
+    color: red;
+    font-size: .7em;
+    margin-bottom: 0;
+  }
+}
+
 #promptMessage {
   display: flex;
   flex-direction: column;
@@ -696,6 +706,9 @@ body.light .poll-btn button {
   border: 2px solid #c00d00;
   width: 100%;
   color: black;
+}
+#promptSelect {
+  margin-bottom: 10px;
 }
 
 .coming-soon{

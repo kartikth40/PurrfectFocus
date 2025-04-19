@@ -173,16 +173,11 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
   }
   else if(request.nextTimer) {
     await setNextTimer()
-    try{
-      await chrome.runtime.sendMessage({timerNext: true})
-    }catch (e) {
-      console.warn(e);
-  }
   }
   if(request.saveSettings) {
     await setSyncStorage(request.newSettings)
     try{
-      await chrome.runtime.sendMessage({settingsSaved: true})
+      await chrome.runtime.sendMessage({settingsSaved: true, reload: request.reload})
     }catch (e) {
       console.warn(e);
   }
@@ -206,65 +201,39 @@ const startTimer = async (chrome, timer) => {
       const settingsObj = await getSyncStorage(SETTINGSKEY)
       const currentDateWithMonth = currentDate.getDate()+'-'+(currentDate.getMonth()+1)
       const task = getValidTask(timerObj?.timer?.task, timerObj?.timer?.type)
-      if(timerObj?.timer?.type === FOCUS) await setLocalStorage({[CURRENTTASKKEY]: task})
-      if(!oldHistory) {
-        let startTime = timerObj?.timer?.startTime
-        let endTime = getCurrentTimeString()
-        let duration = timerObj?.timer?.type === SHORTBREAK 
+      let startTime = timerObj?.timer?.startTime
+      let endTime = getCurrentTimeString()
+      const shouldSaveSession = startTime && endTime && (DEVELOPING || startTime !== endTime)
+      let duration = timerObj?.timer?.type === SHORTBREAK 
                         ? settingsObj?.settings?.shortBreak?.time
                         : timerObj?.timer?.type === LONGBREAK
                         ? settingsObj?.settings?.longBreak?.time
                         : settingsObj?.settings?.focus?.time
-        if(startTime && endTime && startTime !== endTime) await setLocalStorage({[currentDate.getFullYear().toString()]: {
-          [currentDateWithMonth]: [{
-            startTime: startTime,
-            endTime: endTime,
-            duration: duration,
-            type: timerObj?.timer?.type === FOCUS ? FOCUS : BREAK,
-            task: task
-            }]
+      if(timerObj?.timer?.type === FOCUS) await setLocalStorage({[CURRENTTASKKEY]: task})
+      const sessionObj = {
+        startTime: startTime,
+        endTime: endTime,
+        duration: duration,
+        type: timerObj?.timer?.type === FOCUS ? FOCUS : BREAK,
+        task: task
+        }
+      if(!oldHistory) {
+        if(shouldSaveSession) await setLocalStorage({[currentDate.getFullYear().toString()]: {
+          [currentDateWithMonth]: [sessionObj]
           } 
         })
       } else if(oldHistory[currentDateWithMonth]){
-        let startTime = timerObj?.timer?.startTime
-        let endTime = getCurrentTimeString()
-        let duration = timerObj?.timer?.type === SHORTBREAK 
-                        ? settingsObj?.settings?.shortBreak?.time
-                        : timerObj?.timer?.type === LONGBREAK
-                        ? settingsObj?.settings?.longBreak?.time
-                        : settingsObj?.settings?.focus?.time
         let todaysPomodoros = oldHistory[currentDateWithMonth]
-        todaysPomodoros.push({
-          startTime: startTime,
-          endTime: endTime,
-          duration: duration,
-          type: timerObj?.timer?.type === FOCUS ? FOCUS : BREAK,
-          task: task
-          })
-        if(startTime && endTime && startTime !== endTime) await setLocalStorage({[currentDate.getFullYear().toString()]: {
+        todaysPomodoros.push(sessionObj)
+        if(shouldSaveSession) await setLocalStorage({[currentDate.getFullYear().toString()]: {
           [currentDateWithMonth]: todaysPomodoros,
             ...oldHistory
           } 
         })
       }
-      else {
-        let startTime = timerObj?.timer?.startTime
-        let endTime = getCurrentTimeString()
-        let duration = timerObj?.timer?.type === SHORTBREAK 
-                        ? settingsObj?.settings?.shortBreak?.time
-                        : timerObj?.timer?.type === LONGBREAK
-                        ? settingsObj?.settings?.longBreak?.time
-                        : settingsObj?.settings?.focus?.time
-        if(startTime && endTime && startTime !== endTime) await setLocalStorage({[currentDate.getFullYear().toString()]: {
-          [currentDateWithMonth]: [{
-            startTime: startTime,
-            endTime: endTime,
-            duration: duration,
-            type: timerObj?.timer?.type === FOCUS ? FOCUS : BREAK,
-            task: task
-            }],
-            ...oldHistory
-          } 
+      else if (shouldSaveSession) {
+        await setLocalStorage({[currentDate.getFullYear().toString()]: {
+          [currentDateWithMonth]: [sessionObj],...oldHistory} 
         })
       }
       await setNextTimer(true)
@@ -348,7 +317,7 @@ const setNextTimer = async (timerEnds=false) => {
       print.log('session -> focus -> long')
     }
     try{
-      settingsObj?.settings?.openNewTab && await chrome.runtime.sendMessage({updateNextTimer: true})
+      await chrome.runtime.sendMessage({updateNextTimer: true})
     }catch (e) {
       console.warn(e);
     }
@@ -368,7 +337,7 @@ const setNextTimer = async (timerEnds=false) => {
     await setSessionStorage(timerToStore)
     print.log('session -> short -> focus')
     try{
-      settingsObj?.settings?.openNewTab && await chrome.runtime.sendMessage({updateNextTimer: true})
+      await chrome.runtime.sendMessage({updateNextTimer: true})
     }catch (e) {
     console.warn(e);
   }
@@ -388,7 +357,7 @@ const setNextTimer = async (timerEnds=false) => {
     await setSessionStorage(timerToStore)
     print.log('session -> long -> focus')
     try{
-      settingsObj?.settings?.openNewTab && await chrome.runtime.sendMessage({updateNextTimer: true})
+      await chrome.runtime.sendMessage({updateNextTimer: true})
     }catch (e) {
     console.warn(e);
   }

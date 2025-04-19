@@ -600,7 +600,7 @@ footer {
 .sessions-table th {
   border: 1px solid var(--primary-color-2);
   text-align: left;
-  padding-left: 10px;
+  padding-inline: 10px;
   background-color: var(--primary-color-1); /* Optional: Makes the header row stand out */
   font-weight: bold;
 }
@@ -830,10 +830,32 @@ footer {
   color: black;
 }
 #date-range {
+  border: none;
   border-radius: 10px;
   font-weight: bolder;
   font-size: 2em;
   padding: 0 10px;
   font-family: "Share Tech Mono", monospace;
   height: 2.3em;
+  box-shadow: 2px -2px 5px 0 var(--primary-color), inset 2px -2px 5px 0 var(--primary-color);
+}
+
+.light #date-range {
+  border: 1px solid var(--secondary-color-2);
+  box-shadow: 2px -2px 5px 0 rgba(255, 255, 255, 0.2), inset 2px -2px 5px 0 rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.555); 
+}
+
+.sessions-table .task-cell span.editable:hover {
+  opacity: .7;
+}
+.sessions-table .task-cell span.editable {
+  box-shadow: inset -20px 0 10px var(--secondary-color-2)  ;
+}
+.light .sessions-table .task-cell span.editable {
+  box-shadow: inset -20px 0 10px var(--secondary-color-2);
+}
+.sessions-table .edit-icon {
+  width: 12px;
+  height: 12px;
 }
