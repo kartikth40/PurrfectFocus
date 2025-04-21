@@ -91,6 +91,15 @@ export const DAYS = {
   7: "Sunday"
 }
 
+export const TOASTIFY = {
+  colors: {
+    green: 'green',
+    red: 'red',
+    orange: 'orange',
+    purple: 'purple',
+  }
+}
+
 export const chartColors = [
   '#FF8C69', // Soft Red
   '#85E085', // Light Green

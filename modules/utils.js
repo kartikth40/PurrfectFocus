@@ -26,7 +26,8 @@ import {
   NEWTABSTREAKIDKEY,
   LASTUPDATEKEY,
   TIMERKEY,
-  modes} from "./constants.js"
+  modes,
+  TOASTIFY} from "./constants.js"
 
 const print = printer()
 
@@ -448,32 +449,35 @@ export function getCurrentTimeString() {
 
 export const setNewSettings = async (formValues) => {
   const store = await getSyncStorage(SETTINGSKEY)
+  const isPomodoro = (formValues.timerModeSelect === modes.POMODORO) && (store.settings.mode === modes.POMODORO)
+  console.log('isPomodoro',isPomodoro)
+  console.log(store.settings.focus.notifications)
   return {
     settings: {
       focus: {
-        time: parseInt(formValues.focusDuration),
-        notifications: formValues.focusDesktopNotification === 'on',
-        autoStart: formValues.focusDesktopAutoStart === 'on',
+        time: parseInt(formValues.focusDuration ?? store.settings.focus.time),
+        notifications: isPomodoro ? formValues.focusDesktopNotification === 'on' : store.settings.focus.notifications,
+        autoStart: isPomodoro ? formValues.focusDesktopAutoStart === 'on' : store.settings.focus.autoStart,
         sound: formValues.focusTimerSound ?? store.settings.focus.sound
       },
       shortBreak: {
-        time: parseInt(formValues.shortBreakDuration),
-        notifications: formValues.shortBreakDesktopNotification === 'on',
-        autoStart: formValues.shortBreakDesktopAutoStart === 'on',
+        time: parseInt(formValues.shortBreakDuration ?? store.settings.shortBreak.time),
+        notifications: isPomodoro ? formValues.shortBreakDesktopNotification === 'on' : store.settings.shortBreak.notifications,
+        autoStart: isPomodoro ? formValues.shortBreakDesktopAutoStart === 'on' : store.settings.shortBreak.autoStart,
         sound: formValues.shortBreakTimerSound ?? store.settings.shortBreak.sound
       },
       longBreak: {
-        time: parseInt(formValues.longBreakDuration),
-        interval: formValues.longBreakInterval,
-        notifications: formValues.longBreakDesktopNotification === 'on',
-        autoStart: formValues.longBreakDesktopAutoStart === 'on',
+        time: parseInt(formValues.longBreakDuration ?? store.settings.longBreak.time),
+        interval: parseInt(formValues.longBreakInterval ?? store.settings.longBreak.interval),
+        notifications: isPomodoro ? formValues.longBreakDesktopNotification === 'on' : store.settings.longBreak.notifications,
+        autoStart: isPomodoro ? formValues.longBreakDesktopAutoStart === 'on' : store.settings.longBreak.autoStart,
         sound: formValues.longBreakTimerSound ?? store.settings.longBreak.sound
       },
       timerStyle: formValues.timerStyle,
       theme: formValues.theme === 'light' ? LIGHTTHEME : DARKTHEME,
-      musicPlayer: formValues.musicPlayer === 'on',
-      musicPlayerAutoStart: formValues.musicPlayerAutoStart === 'on',
-      openNewTab: formValues.openNewTabOnCompletion === 'on',
+      musicPlayer:formValues.musicPlayer === 'on',
+      musicPlayerAutoStart:formValues.musicPlayerAutoStart === 'on',
+      openNewTab:formValues.openNewTabOnCompletion === 'on',
       mode: formValues.timerModeSelect ?? modes.POMODORO
     }
   }
@@ -977,4 +981,40 @@ export function getFocusOptionsForTasks(tasksAlias) {
       return `<option value="${task}">${alias}</option>`
   })
   .join('')
+}
+
+export function showToast(title, message, color = TOASTIFY.colors.purple) {
+  const toastTitle = document.createElement("h3");
+  toastTitle.className = "toast-title";
+  toastTitle.textContent = title
+
+  const toastMessage = document.createElement("p");
+  toastMessage.className = "toast-message";
+  toastMessage.textContent = message;
+  
+  const toast = document.getElementById("toast-container");
+  toast.className = "";
+  toast.innerHTML = "";
+
+  toast.classList.add(color)
+  toast.appendChild(toastTitle);
+  toast.appendChild(toastMessage);
+  toast.classList.add("show-toast");
+
+  let hideTimeout, fadeOutTimeout
+
+  const scheduleHide = () => {
+    hideTimeout = setTimeout(() => {
+      toast.classList.remove("show-toast");
+      toast.classList.add("hide-toast");
+    }, 3000);}
+    fadeOutTimeout = setTimeout(() => {
+      toast.classList.remove('hide-toast')
+    }, 3500);
+    scheduleHide()
+    toast.addEventListener("mouseenter", () => {
+      clearTimeout(hideTimeout)
+      clearTimeout(fadeOutTimeout)
+    });
+    toast.addEventListener("mouseleave", scheduleHide);
 }

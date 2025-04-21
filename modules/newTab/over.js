@@ -1,6 +1,6 @@
 import { CONFIG } from "../config.js"
-import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE, TASKS, TASKSALIASKEY, CURRENTTASKKEY, showSurvey } from "../constants.js"
-import { changeTextTo, createNewTabForHistory, createNewTabForSettings, createNewTabForStreak, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setSessionStorage, timerDuration, getValidTask, setSyncStorage, showCustomAlert, showCustomPrompt } from "../utils.js"
+import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE, TASKS, TASKSALIASKEY, CURRENTTASKKEY, showSurvey, modes, TOASTIFY } from "../constants.js"
+import { changeTextTo, createNewTabForHistory, createNewTabForSettings, createNewTabForStreak, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setSessionStorage, timerDuration, getValidTask, setSyncStorage, showCustomAlert, showCustomPrompt, showToast } from "../utils.js"
 
 const container = document.querySelector('.container')
 const focusTitle = document.querySelector('.focus-title')
@@ -21,7 +21,8 @@ const taskSelect = document.getElementById('tasks-select')
 const taskEdit = document.querySelector('.task-edit')
 const timerEdit = document.querySelector('.timer-edit')
 const pollBtn = document?.querySelector(".poll-btn")
-
+const loadingScreen = document.querySelector('.loading-screen')
+const mode = document.querySelector('.mode')
 
 let audio = null
 let settings
@@ -33,6 +34,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   // await handleNotificationTone(true)
   addEventListeners()
   await init()
+  setTimeout(() => {
+    loadingScreen.classList.add('fade-out');
+    setTimeout(() => {
+      loadingScreen.remove()
+    }, 500)
+  }, 200)
 })
 async function init() {
   const timer = await getSessionStorage(TIMERKEY)
@@ -60,12 +67,21 @@ async function init() {
     await setRestOptionForTasks()
   }
   const store = await getSyncStorage(SETTINGSKEY)
-  settings = store.settings
+  settings = store[SETTINGSKEY]
   loadSettings(settings)
+  const isPomodoro = settings.mode === modes.POMODORO
   const interval = parseInt(settings.longBreak.interval)
   const timerCounts = timer.timer ? timer.timer.counts : 0
   untilLongBreakCount.innerText = interval - timerCounts + 1
   await handleUntilLongBreakCount(settings, timer.timer)
+  if (!isPomodoro) {
+    nextBtn.querySelector('img').src = '../../assets/icons/end.png';
+    timerEdit.style.display = 'none'
+    mode.innerText = 'Stopwatch Mode'
+  }else {
+    nextBtn.querySelector('img').src = '../../assets/icons/next.png';
+    mode.innerText = 'Pomodoro Mode'
+  }
   if(timer?.timer?.type === LONGBREAK) changeTextTo( untilLongBreak, '')
   if(timer?.timer && (timer?.timer?.status === PLAY || timer?.timer?.status === PAUSE)) {
     changeTextTo(timerEle, getTimeString(timer.timer.time, false))
@@ -214,7 +230,9 @@ function addEventListeners() {
       stopBtn.classList.remove('active')
       nextBtn.classList.remove('active')
       const store = await getSyncStorage(SETTINGSKEY)
-      changeTextTo(timerEle, getTimeString(store.settings.focus.time * 60, false))
+      const isPomodoro = store.settings.mode === modes.POMODORO
+      if(isPomodoro) changeTextTo(timerEle, getTimeString(store.settings.focus.time * 60, false))
+      else changeTextTo(timerEle, getTimeString(0, false))
       await handleUntilLongBreakCount(store.settings, null)
       await pauseMusic()
     }
@@ -222,6 +240,7 @@ function addEventListeners() {
       const store = await getSyncStorage(SETTINGSKEY)
       const timerObj = await getSessionStorage(TIMERKEY)
       const timer = timerObj[TIMERKEY]
+      const isPomodoro = store.settings.mode === modes.POMODORO
       await pauseMusic()
       if (!timer || timer.type === FOCUS) {
         changeTextTo(focusBtnText, 'Start Focusing')
@@ -236,6 +255,7 @@ function addEventListeners() {
         changeTextTo(focusTitle, 'Take a Long Break')
         changeTextTo(timerEle, getTimeString(store.settings.longBreak.time * 60, false))
       }
+      if(!isPomodoro) changeTextTo(timerEle, getTimeString(0, false))
       if(!timer) {
         stopBtn.classList.remove('active')
         nextBtn.classList.remove('active')
@@ -247,7 +267,7 @@ function addEventListeners() {
       const timerObj = await getSessionStorage(TIMERKEY)
       const timer = timerObj[TIMERKEY]
       loadSettings(settings)
-      timer.type === FOCUS ? await setFocusOptionForTasks() : await setRestOptionForTasks()
+      !timer || timer?.type === FOCUS ? await setFocusOptionForTasks() : await setRestOptionForTasks()
     }
     else if(request.taskChange) {
       taskSelect.value = request.taskChange
@@ -255,7 +275,18 @@ function addEventListeners() {
     else if(request.taskAliasUpdated) {
       const timerObj = await getSessionStorage(TIMERKEY)
       const timer = timerObj[TIMERKEY]
-      timer.type === FOCUS ? await setFocusOptionForTasks() : await setRestOptionForTasks()
+      !timer || timer?.type === FOCUS ? await setFocusOptionForTasks() : await setRestOptionForTasks()
+    }
+    if(request.switchToStopwatch) {
+      nextBtn.querySelector('img').src = '../../assets/icons/end.png';
+      mode.innerText = 'Stopwatch Mode'
+    }else if(request.switchToPomodoro) {
+      nextBtn.querySelector('img').src = '../../assets/icons/next.png';
+      mode.innerText = 'Pomodoro Mode'
+    }
+    if(request.invalidSession) {
+      console.log('invalid session')
+      showToast('Invalid session.', 'Session duration must be at least one minute.', TOASTIFY.colors.orange)
     }
   })
 
@@ -409,22 +440,28 @@ function loadSettings(settings) {
   if(settings?.timerStyle === SIMPLETIMERSTYLE) {
     timerTag.classList.remove('cat-walk')
     timerTag.classList.add('simple')
+    mode.classList.remove('cat-walk')
   }else {
     timerTag.classList.remove('simple')
     timerTag.classList.add('cat-walk')
+    mode.classList.add('cat-walk')
   }
-  changeTextTo(timerEle, getTimeString(timerDuration(timer?.timer?.type, settings)*60, false))
+  const isPomodoro = settings.mode === modes.POMODORO
+  if(isPomodoro) changeTextTo(timerEle, getTimeString(timerDuration(timer?.timer?.type, settings)*60, false))
+  else changeTextTo(timerEle, getTimeString(0, false))
   if(settings.musicPlayer && !musicPlayerInitialized) setupMusicPlayer()
   else removeMusicPlayer()
 }
 const initiateTimer = async () => {
   const store = await getSyncStorage(SETTINGSKEY)
-  let settings = store.settings
+  let settings = store[SETTINGSKEY]
+  const isPomodoro = settings.mode === modes.POMODORO
+  const time = isPomodoro ? timerDuration(FOCUS, settings)*60 : 0
 
   const selectedTask = taskSelect.value
   chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {
     const timerObj = {
-      time: timerDuration(FOCUS, settings)*60,
+      time: time,
       status: PLAY,
       type: FOCUS,
       counts: 0,
@@ -442,7 +479,11 @@ const initiateTimer = async () => {
 
 async function nextTimer() {
   try{
-    await chrome.runtime.sendMessage({nextTimer: true})
+    const settingsObj = await getSyncStorage(SETTINGSKEY)
+    const settings = settingsObj[SETTINGSKEY]
+    if(settings?.mode === modes.STOPWATCH) {
+      await chrome.runtime.sendMessage({stopwatchNextTimer: true})
+    }else await chrome.runtime.sendMessage({nextTimer: true})
   }catch{e=>console.warn(e)}
 }
 
@@ -453,7 +494,10 @@ const stopTimer = async (settings) => {
   changeTextTo(focusTitle, 'Start Focusing')
   stopBtn.classList.remove('active')
   nextBtn.classList.remove('active')
-  changeTextTo(timerEle, getTimeString(settings.focus.time * 60, false))
+  breakActivitiesSuggestions.classList.remove('show')
+  const isPomodoro = settings.mode === modes.POMODORO
+  if(isPomodoro) changeTextTo(timerEle, getTimeString(settings.focus.time * 60, false))
+  else changeTextTo(timerEle, getTimeString(0, false))
   chrome.action.setBadgeText({text: ''})
   chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]})
   await handleUntilLongBreakCount(settings, null)
@@ -469,7 +513,9 @@ const updateNextTimer = async () => {
   const result = await getSessionStorage(TIMERKEY)
   const settingsObj = await getSyncStorage(SETTINGSKEY)
   await handleUntilLongBreakCount(settingsObj.settings, result.timer)
-  changeTextTo(timerEle, getTimeString(timerDuration(result.timer.type, settingsObj?.settings)*60, false))
+  const isPomodoro = settingsObj.settings.mode === modes.POMODORO
+  if(isPomodoro) changeTextTo(timerEle, getTimeString(timerDuration(result.timer.type, settingsObj?.settings)*60, false))
+  else changeTextTo(timerEle, getTimeString(0, false))
   if(!result?.timer || result?.timer?.type === FOCUS) {
     updateFocusQuote()
     await setFocusOptionForTasks(result?.timer)

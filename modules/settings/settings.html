@@ -10,6 +10,31 @@
   <script type="module" defer src="./settings.js"></script>
 </head>
 <body>
+  <div class="loading-screen">
+    <div class="spinner"></div>
+  </div>
+  <div class="tab-btns floating-btns">
+    <a target="_blank" href="https://chromewebstore.google.com/detail/purrfect-focus/aobapnhgpjlldncjopmbbfeoomombhel/reviews" class="tab-btn rate-tab-btn">
+      <span class="tooltip">rate us</span>
+      <img src="/assets/icons/rate.png" alt="rate icon">
+    </a>
+    <a target="_blank" href="https://chromewebstore.google.com/detail/purrfect-focus/aobapnhgpjlldncjopmbbfeoomombhel/support" class="tab-btn support-tab-btn">
+      <span class="tooltip">help</span>
+      <img src="/assets/icons/help.png" alt="help icon">
+    </a>
+    <!-- <button class="tab-btn streak-tab-btn">
+      <span class="tooltip">streak</span>
+      <img src="/assets/icons/fire.png" alt="streak icon">
+    </button> -->
+    <button class="tab-btn history-tab-btn">
+      <span class="tooltip">history</span>
+      <img src="/assets/icons/history.png" alt="history icon">
+    </button>
+    <button class="tab-btn timer-tab-btn">
+      <span class="tooltip">timer</span>
+      <img src="/assets/icons/clock.png" alt="clock icon">
+    </button>
+  </div>
   <div class="container">
     <div class="settings-tab">
       <form id="settings-form">
@@ -71,11 +96,11 @@
               </div>
               <div class="settings-checkbox-container  timer-mode-container">
                 <label class="label-indicator" for="timer-mode-select">Mode</label>
-                <select name="timerModeSelect" disabled id="timer-mode-select" required>
+                <select name="timerModeSelect" id="timer-mode-select" required>
                   <option value="Pomodoro" selected>Pomodoro mode</option>
                   <option value="Stopwatch">Stopwatch mode</option>
                 </select>
-                <p class="coming-soon-p-tag">*coming soon...</p>
+                <!-- <p class="coming-soon-p-tag">*coming soon...</p> -->
               </div>
             </div>
           </div>

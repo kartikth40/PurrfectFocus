@@ -27,7 +27,8 @@ import {
   BREAK,
   TASKSALIASKEY,
   TASKS_ALIAS,
-  CURRENTTASKKEY
+  CURRENTTASKKEY,
+  modes
  } from "./constants.js"
 
 let intervalId = createState(0)
@@ -172,7 +173,9 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
     }
   }
   else if(request.nextTimer) {
-    await setNextTimer()
+    await setNextTimer();
+  } else if(request.stopwatchNextTimer) {
+    await setNextTimer(false, true);
   }
   if(request.saveSettings) {
     await setSyncStorage(request.newSettings)
@@ -187,56 +190,14 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
 const startTimer = async (chrome, timer) => {
   if(DEVELOPING) timer = 10
   print.log('start timer started 🌠')
+  const settingsObj = await getSyncStorage(SETTINGSKEY)
+  const settings = settingsObj[SETTINGSKEY]
+  const isPomodoro = settings.mode === modes.POMODORO
+  const incrementFactor = isPomodoro ? -1 : 1
   let intId = setInterval(async function() {
-    timer--
-    if (timer < 0) {
-      print.log('start timer 🔚')
-      clearInterval(intervalId.getState())
-      chrome.action.setBadgeText({text: getTimeString(0)})
-      chrome.action.setBadgeBackgroundColor({color: 'rgb(255, 202, 118)'})
-      const currentDate = new Date()
-      const oldHistoryObj = await getLocalStorage(currentDate.getFullYear().toString())
-      const oldHistory = oldHistoryObj[currentDate.getFullYear().toString()]
-      const timerObj = await getSessionStorage(TIMERKEY)
-      const settingsObj = await getSyncStorage(SETTINGSKEY)
-      const currentDateWithMonth = currentDate.getDate()+'-'+(currentDate.getMonth()+1)
-      const task = getValidTask(timerObj?.timer?.task, timerObj?.timer?.type)
-      let startTime = timerObj?.timer?.startTime
-      let endTime = getCurrentTimeString()
-      const shouldSaveSession = startTime && endTime && (DEVELOPING || startTime !== endTime)
-      let duration = timerObj?.timer?.type === SHORTBREAK 
-                        ? settingsObj?.settings?.shortBreak?.time
-                        : timerObj?.timer?.type === LONGBREAK
-                        ? settingsObj?.settings?.longBreak?.time
-                        : settingsObj?.settings?.focus?.time
-      if(timerObj?.timer?.type === FOCUS) await setLocalStorage({[CURRENTTASKKEY]: task})
-      const sessionObj = {
-        startTime: startTime,
-        endTime: endTime,
-        duration: duration,
-        type: timerObj?.timer?.type === FOCUS ? FOCUS : BREAK,
-        task: task
-        }
-      if(!oldHistory) {
-        if(shouldSaveSession) await setLocalStorage({[currentDate.getFullYear().toString()]: {
-          [currentDateWithMonth]: [sessionObj]
-          } 
-        })
-      } else if(oldHistory[currentDateWithMonth]){
-        let todaysPomodoros = oldHistory[currentDateWithMonth]
-        todaysPomodoros.push(sessionObj)
-        if(shouldSaveSession) await setLocalStorage({[currentDate.getFullYear().toString()]: {
-          [currentDateWithMonth]: todaysPomodoros,
-            ...oldHistory
-          } 
-        })
-      }
-      else if (shouldSaveSession) {
-        await setLocalStorage({[currentDate.getFullYear().toString()]: {
-          [currentDateWithMonth]: [sessionObj],...oldHistory} 
-        })
-      }
-      await setNextTimer(true)
+    timer += incrementFactor
+    if (isPomodoro && timer < 0) {
+      await finishCurrentTimer(isPomodoro, settings)
     }else {
       print.log('⏲ -> ' + timer +' '+ getTimeString(timer))
       const result = await getSessionStorage(TIMERKEY)
@@ -268,10 +229,73 @@ const startTimer = async (chrome, timer) => {
   intervalId.setState(intId)
 }
   
+async function finishCurrentTimer(isPomodoro=true, settings={}) {
+  print.log('start timer 🔚')
+  clearInterval(intervalId.getState())
+  chrome.action.setBadgeText({text: getTimeString(0)})
+  chrome.action.setBadgeBackgroundColor({color: 'rgb(255, 202, 118)'})
+  const currentDate = new Date()
+  const oldHistoryObj = await getLocalStorage(currentDate.getFullYear().toString())
+  const oldHistory = oldHistoryObj[currentDate.getFullYear().toString()]
+  const timerObj = await getSessionStorage(TIMERKEY)
+  const currentDateWithMonth = currentDate.getDate()+'-'+(currentDate.getMonth()+1)
+  const task = getValidTask(timerObj?.timer?.task, timerObj?.timer?.type)
+  let startTime = timerObj?.timer?.startTime
+  let endTime = getCurrentTimeString()
+  const shouldSaveSession = startTime && endTime && (DEVELOPING || startTime !== endTime)
+  let duration = timerObj?.timer?.type === SHORTBREAK 
+                    ? settings?.shortBreak?.time
+                    : timerObj?.timer?.type === LONGBREAK
+                    ? settings?.longBreak?.time
+                    : settings?.focus?.time
 
+  if (!isPomodoro && startTime && endTime) {
+    const [startHours, startMinutes] = startTime.split(':').map(Number);
+    const [endHours, endMinutes] = endTime.split(':').map(Number);
+    let startTotalMinutes = startHours * 60 + startMinutes;
+    let endTotalMinutes = endHours * 60 + endMinutes;
+    if (endTotalMinutes < startTotalMinutes) {
+      endTotalMinutes += 24 * 60; // Add 24 hours in minutes if end time is on the next day
+    }
+    duration = endTotalMinutes - startTotalMinutes;
+  }
+  if(!isPomodoro && duration < 1) {
+    await chrome.runtime.sendMessage({invalidSession: true})
+  }
+  if(timerObj?.timer?.type === FOCUS) await setLocalStorage({[CURRENTTASKKEY]: task})
+  const sessionObj = {
+    startTime: startTime,
+    endTime: endTime,
+    duration: duration,
+    type: timerObj?.timer?.type === FOCUS ? FOCUS : BREAK,
+    task: task,
+    mode: isPomodoro ? modes.POMODORO : modes.STOPWATCH,
+    }
+  if(!oldHistory) {
+    if(shouldSaveSession) await setLocalStorage({[currentDate.getFullYear().toString()]: {
+      [currentDateWithMonth]: [sessionObj]
+      } 
+    })
+  } else if(oldHistory[currentDateWithMonth]){
+    let todaysPomodoros = oldHistory[currentDateWithMonth]
+    todaysPomodoros.push(sessionObj)
+    if(shouldSaveSession) await setLocalStorage({[currentDate.getFullYear().toString()]: {
+      [currentDateWithMonth]: todaysPomodoros,
+        ...oldHistory
+      } 
+    })
+  }
+  else if (shouldSaveSession) {
+    await setLocalStorage({[currentDate.getFullYear().toString()]: {
+      [currentDateWithMonth]: [sessionObj],...oldHistory} 
+    })
+  }
+  await setNextTimer(true)
+}
 
-const setNextTimer = async (timerEnds=false) => {
+const setNextTimer = async (timerEnds=false, shouldStopWatchEnd=false) => {
   const settingsObj = await getSyncStorage(SETTINGSKEY)
+  const isPomodoro = settingsObj[SETTINGSKEY]?.mode === modes.POMODORO
   const status = await getSessionStorage(TIMERKEY)
   let nextTimer = FOCUS
   let prevTimer = FOCUS
@@ -283,15 +307,19 @@ const setNextTimer = async (timerEnds=false) => {
   clearInterval(intervalId.getState())
   chrome.action.setBadgeBackgroundColor({color: 'rgb(255, 202, 118)'})
   let timerToStore = {}
+
+  if(!isPomodoro && shouldStopWatchEnd) await finishCurrentTimer(isPomodoro, settingsObj?.settings)
+
   if(status?.timer?.type === FOCUS) {
     const interval = parseInt(settingsObj?.settings?.longBreak?.interval)
     if(!interval || (interval && status.timer.counts < interval)) {
       nextTimer = SHORTBREAK
       print.log('next is short break')
-      chrome.action.setBadgeText({text: getTimeString(settingsObj.settings.shortBreak.time * 60)})
+      const time = isPomodoro ? settingsObj.settings.shortBreak.time * 60 : 0
+      chrome.action.setBadgeText({text: getTimeString(time)})
       timerToStore = {
         [TIMERKEY]: {
-          time: settingsObj.settings.shortBreak.time * 60,
+          time: time,
           status: PAUSE,
           type: SHORTBREAK,
           counts: interval > 0 ? status.timer.counts : 0,
@@ -303,10 +331,11 @@ const setNextTimer = async (timerEnds=false) => {
     } else if(interval && interval > 0) {
       nextTimer = LONGBREAK
       print.log('next is long break')
-      chrome.action.setBadgeText({text: getTimeString(settingsObj.settings.longBreak.time * 60)})
+      const time = isPomodoro ? settingsObj.settings.longBreak.time * 60 : 0
+      chrome.action.setBadgeText({text: getTimeString(time)})
       timerToStore = {
         [TIMERKEY]: {
-          time: settingsObj.settings.longBreak.time * 60,
+          time: time,
           status: PAUSE,
           type: LONGBREAK,
           counts: 0,
@@ -324,10 +353,11 @@ const setNextTimer = async (timerEnds=false) => {
   } else if(status?.timer?.type === SHORTBREAK) {
     prevTimer = SHORTBREAK
     print.log('next is focus after short one')
-    chrome.action.setBadgeText({text: getTimeString(settingsObj.settings.focus.time * 60)})
+    const time = isPomodoro ? settingsObj.settings.focus.time * 60 : 0
+    chrome.action.setBadgeText({text: getTimeString(time)})
     timerToStore = {
       [TIMERKEY]: {
-        time: settingsObj.settings.focus.time * 60,
+        time: time,
         status: PAUSE,
         type: FOCUS,
         counts: status.timer.counts + 1,
@@ -344,10 +374,11 @@ const setNextTimer = async (timerEnds=false) => {
   } else if(status?.timer?.type === LONGBREAK) {
     prevTimer = LONGBREAK
     print.log('next is focus after long one')
-    chrome.action.setBadgeText({text: getTimeString(settingsObj.settings.focus.time * 60)})
+    const time = isPomodoro ? settingsObj.settings.focus.time * 60 : 0
+    chrome.action.setBadgeText({text: getTimeString(time)})
     timerToStore = {
       [TIMERKEY]: {
-        time: settingsObj.settings.focus.time * 60,
+        time: time,
         status: PAUSE,
         type: FOCUS,
         counts: 0,
@@ -362,7 +393,7 @@ const setNextTimer = async (timerEnds=false) => {
     console.warn(e);
   }
   }
-  if(timerEnds) {
+  if(isPomodoro && timerEnds) {
     await createNotification(prevTimer, nextTimer)
   }
   if(settingsObj?.settings?.shortBreak?.autoStart 

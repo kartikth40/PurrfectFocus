@@ -13,7 +13,7 @@
   background-size: 20px 20px;
   background-position: 0 0,30px 30px;
 }
-.container.light {
+.light .container {
   background-image:  radial-gradient(#000 .5px, transparent .5px), radial-gradient(#000 .5px, var(--secondary-color-1) .5px);
   color: #000;
 }
@@ -38,7 +38,7 @@
   backdrop-filter: blur(2px);
   background-color: #0000001a;
 }
-.container.light .metrics-container {
+.light .container .metrics-container {
   backdrop-filter: blur(3px);
   background-color: #ffffff85;
 }
@@ -80,7 +80,7 @@
 .sample-history-btn-remove{
   display: none;
 }
-.container.light .sample-history-btn-remove {
+.light .container .sample-history-btn-remove {
   color: var(--secondary-color-1);
 }
 .sample-history-btn.active, 
@@ -108,7 +108,7 @@ p{
   justify-content: center;
   align-items: center;
 }
-.container.light .count{
+.light .count{
   color: var(--primary-color);
 }
 .simple-metrics > .count{
@@ -165,7 +165,7 @@ p{
   box-shadow: inset 5px 10px 60px var(--secondary-color-1), inset -5px 5px 70px var(--primary-color);
   letter-spacing: 1px;
 }
-.container.light .is-sample{
+.light .is-sample{
   color: #000;
   box-shadow: inset 5px 10px 60px var(--secondary-color-1), inset -5px 5px 70px var(--primary-color-4), 0 0 10px var(--primary-color-2);
 }
@@ -220,7 +220,7 @@ p{
 .no-data:hover::after {
   bottom: -30px;
 }
-.container.light .no-data {
+.light .no-data {
   border-radius: 10px;
   border-bottom: none;
   background-color: var(--secondary-color-2);
@@ -276,7 +276,7 @@ p{
   font-weight: 500;
   font-size: 12px;
 }
-.container.light .bar {
+.light .bar {
   background: linear-gradient(45deg, var(--primary-color-4), var(--primary-color-3));
   box-shadow: inset 20px 20px 50px var(--primary-color-2), 0 0 0 var(--primary-color-4);
   border: none;
@@ -311,7 +311,7 @@ p{
   opacity: 0;
   transition: .25s all;
 }
-.container.light .bar::before{
+.light .bar::before{
   background-color: var(--secondary-color-2);
   box-shadow: 0 0 10px var(--primary-color-2);
   color: black;
@@ -324,7 +324,7 @@ p{
   border: 2px solid var(--secondary-color-2);
 }
 
-.container.light .bar:hover {
+.light .bar:hover {
   box-shadow: inset 20px 20px 20px var(--primary-color-2), 0 -1px 0 1px #000;
 }
 
@@ -401,7 +401,7 @@ p{
   font-weight: 500;
 }
 
-.container.light .calendar-box {
+.light .calendar-box {
   background-color: #00000009;
 }
 
@@ -423,14 +423,14 @@ p{
   z-index: 10;
   border-radius: 5px;
 }
-.container.light .calendar-box::after {
+.light .calendar-box::after {
   background-color: var(--primary-color);
   color: var(--secondary-color-1);
 }
 .calendar-box:hover {
   border: 1px solid var(--secondary-color-1);
 }
-.container.light .calendar-box:hover {
+.light .calendar-box:hover {
   border: 1px solid black;
 }
 .calendar-box:hover::after{
@@ -439,7 +439,7 @@ p{
   top: 15px;
   left: 15px;
 }
-.container.light .calendar-box:hover::after{
+.light .calendar-box:hover::after{
   background-color: var(--primary-color-4);
   color: var(--primary-color);
 }
@@ -481,7 +481,7 @@ footer {
 .footer-btns button {
   font-size: 14px;
 }
-.container.light .footer-btns button:hover {
+.light .footer-btns button:hover {
   background-color: transparent;
   color: var(--primary-color);
 }
@@ -504,7 +504,7 @@ footer {
   font-weight: 500;
   color: var(--primary-color-3);
 }
-.container.light .feedback-line a {
+.light .feedback-line a {
   color: black;
 }
 .feedback-line a:hover {
@@ -571,7 +571,8 @@ footer {
 }
 .delete-some-container::after {
   position: absolute;
-  content: '🎈 -> break | ⏳ -> focus';
+  content: '🍅 -> Pomodoro | ⏲️ -> Stopwatch';
+  white-space: nowrap;
   bottom: 5px;
   left:50%;
   transform: translateX(-50%);
@@ -580,7 +581,7 @@ footer {
   font-size: .7em;
   font-weight: 500;
 }
-.container.light .delete-some-container::after {
+.light .delete-some-container::after {
   background-color: var(--primary-color-1);
 }
 .delete-some-container.disable {
@@ -607,7 +608,7 @@ footer {
 .sessions-table td {
   border: 1px solid var(--primary-color);
   padding: 4px;
-  padding-left: 10px;
+  padding-inline: 10px;
   text-align: left;
   font-weight: 500;
 }

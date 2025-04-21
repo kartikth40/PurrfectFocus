@@ -10,6 +10,10 @@
   <script type="module" defer src="over.js"></script>
 </head>
 <body>
+  <div class="loading-screen">
+    <div class="spinner"></div>
+  </div>
+  <div id="toast-container"></div>
   <div class="poll-btn">
     <button id="votePoll">+ Vote for New Features +</button>
   </div>
@@ -51,6 +55,7 @@
     </div>
     <div class="time-container bigTimer">
       <div class="timer-tag simple">
+        <p class="mode"></p>
         <div class="timer" id="timer">00:00</div>
         <button class="timer-edit">
           <img src="../../assets/icons/pencil.png" alt="pencil">

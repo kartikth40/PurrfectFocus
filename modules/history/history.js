@@ -13,9 +13,11 @@ import {
   getValidTask,
   updateOldHistoryDataToAccomodateLatestChanges,
   showCustomPrompt,
-  getFocusOptionsForTasks
+  getFocusOptionsForTasks,
+  createNewTabForSettings,
+  createNewTabForTimers
 } from '../utils.js'
-import { SETTINGSKEY, LIGHTTHEME, TASKS, chartColors, chartBorderColors, FOCUS, DARKTHEME, TASKSALIASKEY, TIMERKEY } from '../constants.js'
+import { SETTINGSKEY, LIGHTTHEME, TASKS, chartColors, chartBorderColors, FOCUS, DARKTHEME, TASKSALIASKEY, TIMERKEY, modes } from '../constants.js'
 
 const container = document.querySelector('.container')
 const todayCount = document.querySelector('.today-count')
@@ -42,6 +44,9 @@ const calendarMonthBoxesContainers = document.querySelectorAll('.calendar-month-
 const totalFocusCountEle = document.querySelector('.total-focus-count')
 const dateInput = document.getElementById('date-range');
 const resetButton = dateInput.parentElement.querySelector('button');
+const loadingScreen = document.querySelector('.loading-screen')
+const settingsBtn = document.querySelector('.settings-tab-btn')
+const timerBtn = document.querySelector('.timer-tab-btn')
 
 
 const today = new Date();
@@ -160,10 +165,10 @@ importDataBtn.addEventListener('click', async () => {
 document.addEventListener('DOMContentLoaded', async () => {
   const store = await getSyncStorage(SETTINGSKEY)
   if (store.settings?.theme === LIGHTTHEME) {
-    container.classList.add('light')
+    document.body.classList.add('light')
     theme = LIGHTTHEME
   } else {
-    container.classList.remove('light')
+    document.body.classList.remove('light')
     theme = DARKTHEME
   }
 
@@ -177,6 +182,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     })
 
   await init()
+  setTimeout(() => {
+    loadingScreen.classList.add('fade-out');
+    setTimeout(() => {
+      loadingScreen.remove()
+    }, 500)
+  }, 200)
 })
 
 async function init() {
@@ -360,6 +371,13 @@ async function init() {
   deleteDateInput.value = formattedDate;
   await generateSessionsToDelete()
   if(!sessions?.length) deleteSomeHistoryBtn.disabled = true
+
+  settingsBtn.addEventListener('click',async () => {
+      await createNewTabForSettings()
+    })
+  timerBtn.addEventListener('click', async () => {
+      await createNewTabForTimers(false, true)
+    })
 }
 
 function setBars(data, maxValueOfGraph, range=WEEK, totalDays=7) {
@@ -533,10 +551,10 @@ function getTimeFormatted(floatHours, onlyHrs = false) {
 
 function loadSettings(settings) {
   if(settings?.theme === LIGHTTHEME) {
-    container.classList.add('light')
+    document.body.classList.add('light')
     theme = LIGHTTHEME
   }else {
-    container.classList.remove('light')
+    document.body.classList.remove('light')
     theme = DARKTHEME
   }
 }
@@ -592,7 +610,6 @@ async function makecalendarGraph(currentYear, currentDate, currentMonth, current
         totalFocusCount++
         breaks = parseFloat((breaks).toFixed(2))
         maxPomos = Math.max(maxPomos, focus)
-
         if(focus !== 0) {
           calendarBox.setAttribute('data-value', `${focusCount} pomodoro${focusCount > 1 ? 's': ''} of total ${focus > 60 ? Math.floor(focus/60) + ' hrs and ' + focus%60 + ' mins': focus +  ' mins'} on ${formatDateWithOrdinal(currentDate)}`)
           boxes.push({"ele": calendarBox, "focus": focus})
@@ -600,6 +617,9 @@ async function makecalendarGraph(currentYear, currentDate, currentMonth, current
           calendarBox.setAttribute('data-value', `0 pomodoros on ${formatDateWithOrdinal(currentDate)}`)
           boxes.push({"ele": calendarBox, "focus": 0})
         }
+      } else {
+        calendarBox.setAttribute('data-value', `0 pomodoros on ${formatDateWithOrdinal(currentDate)}`)
+        boxes.push({"ele": calendarBox, "focus": 0})
       }
       calendarCol.appendChild(calendarBox)
       if(i%7 == 0 || i === noOfDaysThisMonth) {
@@ -666,12 +686,14 @@ async function generateSessionsToDelete() {
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
 
-  const headers = ["Start Time", "End Time", "Duration", "Task", "Type","Select"];
+  const headers = ["Start Time", "End Time", "Duration", "Task", "Mode","Select"];
   headers.forEach((headerText, index) => {
     const th = document.createElement("th");
     if (headerText === "Select") {
       const selectAllCheckbox = document.createElement("input");
       selectAllCheckbox.type = "checkbox";
+      selectAllCheckbox.style.margin = "0";
+      selectAllCheckbox.style.width = "100%";
       selectAllCheckbox.addEventListener("change", (e) => {
         const checkboxes = container.querySelectorAll(".session-checkbox");
         checkboxes.forEach((checkbox) => {
@@ -736,12 +758,17 @@ async function generateSessionsToDelete() {
 
     row.appendChild(taskCell);
 
-    const typeCell = document.createElement("td");
-    const typeSpan = document.createElement("span");
-    typeSpan.textContent = session.type.toLowerCase() === FOCUS.toLowerCase() ? '⏳ Focus' : '🎈 Break';
-    typeSpan.classList.add("type-span");
-    typeCell.appendChild(typeSpan);
-    row.appendChild(typeCell);
+    const modeCell = document.createElement("td");
+    const modeSpan = document.createElement("span");
+    console.log(session)
+    modeSpan.textContent = session?.mode === modes.STOPWATCH ? '⏲️' : '🍅';
+    modeSpan.style.textAlign = "center";
+    modeSpan.style.width = "100%";
+    modeSpan.style.display = "inline-block";
+    modeSpan.style.fontSize = "1.3em";
+    modeSpan.classList.add("mode-span");
+    modeCell.appendChild(modeSpan);
+    row.appendChild(modeCell);
 
     const checkboxCell = document.createElement("td");
     const checkbox = document.createElement("input");
@@ -750,6 +777,8 @@ async function generateSessionsToDelete() {
     checkbox.checked = false;
     checkbox.name = id;
     checkbox.id = id;
+    checkbox.style.margin = "0";
+    checkbox.style.width = "100%";
     checkboxCell.appendChild(checkbox);
     row.appendChild(checkboxCell);
     row.addEventListener("click", () => {

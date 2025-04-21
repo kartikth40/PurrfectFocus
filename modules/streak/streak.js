@@ -19,8 +19,8 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
     const store = await getSyncStorage(SETTINGSKEY)
     await init()
     if(store?.settings?.theme === LIGHTTHEME) {
-      container.classList.add('light')
-    }else container.classList.remove('light')
+          document.body.classList.add('light')
+    }else document.body.classList.remove('light')
     location.reload()
   }
 })
@@ -29,9 +29,9 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
 async function init() {
   // const store = await getSyncStorage(SETTINGSKEY)
   // if(store.settings?.theme === LIGHTTHEME) {
-  //   container.classList.add('light')
+  //       document.body.classList.add('light')
   // }else {
-  //   container.classList.remove('light')
+  // document.body.classList.remove('light')
   // }
 
   // const currentFullDate = new Date()

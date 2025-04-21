@@ -15,7 +15,7 @@
   filter: blur(2px);
 }
 
-.container.light {
+ .light .container{
   background-image:  radial-gradient(#000 .5px, transparent .5px), radial-gradient(#000 .5px, var(--secondary-color-1) .5px);
   color: #000;
 }
