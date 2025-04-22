@@ -242,7 +242,7 @@ async function finishCurrentTimer(isPomodoro=true, settings={}) {
   const task = getValidTask(timerObj?.timer?.task, timerObj?.timer?.type)
   let startTime = timerObj?.timer?.startTime
   let endTime = getCurrentTimeString()
-  const shouldSaveSession = startTime && endTime && (DEVELOPING || startTime !== endTime)
+  const shouldSaveSession = startTime && endTime && (DEVELOPING || (isPomodoro && startTime !== endTime) || (!isPomodoro && timerObj?.timer?.time > 60))
   let duration = timerObj?.timer?.type === SHORTBREAK 
                     ? settings?.shortBreak?.time
                     : timerObj?.timer?.type === LONGBREAK
@@ -259,7 +259,7 @@ async function finishCurrentTimer(isPomodoro=true, settings={}) {
     }
     duration = endTotalMinutes - startTotalMinutes;
   }
-  if(!isPomodoro && duration < 1) {
+  if(!isPomodoro && (duration < 1 || timerObj?.timer?.time < 60)) {
     await chrome.runtime.sendMessage({invalidSession: true})
   }
   if(timerObj?.timer?.type === FOCUS) await setLocalStorage({[CURRENTTASKKEY]: task})

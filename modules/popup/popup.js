@@ -17,7 +17,8 @@ import {
   setLocalStorage,
   setSyncStorage,
   showCustomPrompt,
-  showCustomAlert} from "../utils.js"
+  showCustomAlert,
+  showToast} from "../utils.js"
 import {
   PLAY,
   PAUSE,
@@ -32,7 +33,8 @@ import {
   CURRENTTASKKEY,
   showSurvey,
   SHORTBREAK,
-  modes
+  modes,
+  TOASTIFY
  } from "../constants.js"
 import { CONFIG } from "../config.js"
 
@@ -119,6 +121,9 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
     const timer = timerObj[TIMERKEY]
     timer.type === FOCUS ? await setFocusOptionForTasks() : await setRestOptionForTasks()
   }
+  if(request.invalidSession) {
+    showToast('Session Not Saved!', 'Session duration must be at least one minute.', TOASTIFY.colors.orange, true)
+  }
 })
 
 const updateNextTimer = async () => {
@@ -198,7 +203,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.action.setBadgeBackgroundColor({color: 'rgb(255, 202, 118)'})
   }
   focusBtn.addEventListener('click', async () => {
+    const store = await getSyncStorage(SETTINGSKEY)
+    const isPomodoro = store?.settings?.mode === modes.POMODORO
     const timer = await getSessionStorage(TIMERKEY)
+    if(!isPomodoro && timer?.timer?.status === PLAY){
+      showToast('Reminder!', "Pause is not allowed in Stopwatch mode.", TOASTIFY.colors.orange, true)
+      return
+    } 
     // if started already
     if(timer?.timer) {
       print.log('Start -> ' + timer)
@@ -208,6 +219,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }else {
           // resume
           await resume(timer.timer)
+          if(isPomodoro) {
+            changeTextTo(focusBtnText, 'Pause')
+          }else {
+            changeTextTo(focusBtnText, 'Running...')
+          }
         }
     }else {
       // initiate
@@ -215,7 +231,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   })
   stopBtn.addEventListener('click',async () => {
-    const store = await getSyncStorage(SETTINGSKEY)
     stopTimer(store.settings)
   })
   
@@ -395,7 +410,6 @@ const resume = async (timer) => {
   print.log('resume timer')
   const selectedTask = taskSelect.value
   timer.task = getValidTask(selectedTask, timer.type)
-  changeTextTo(focusBtnText, 'Pause')
   changeTextTo(focusTitle, timer?.type)
   await resumeTimer(timer)
 }
@@ -422,7 +436,11 @@ const initiateTimer = async () => {
       console.warn(e);
     }
   })
-  changeTextTo(focusBtnText, 'Pause')
+  if(isPomodoro) {
+    changeTextTo(focusBtnText, 'Pause')
+  }else {
+    changeTextTo(focusBtnText, 'Running...')
+  }
   changeTextTo(focusTitle, timerEle?.type ?? FOCUS)
   stopBtn.classList.add('active')
   nextBtn.classList.add('active')

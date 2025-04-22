@@ -22,6 +22,7 @@ const autoStartCheckbox = document.getElementById("music-auto-start");
 const loadingScreen = document.querySelector('.loading-screen')
 const historyBtn = document.querySelector('.history-tab-btn')
 const timerBtn = document.querySelector('.timer-tab-btn')
+const versionTag = document.querySelector('#version')
 
 
 let settingsChanged = false
@@ -45,7 +46,6 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
 
 document.addEventListener('DOMContentLoaded', async () => {
   const store = await getSyncStorage(SETTINGSKEY)
-  console.log(store)
   if(store.settings?.theme === LIGHTTHEME) {
     lightCard.classList.add('checked')
     darkCard.classList.remove('checked')
@@ -143,6 +143,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   timerBtn.addEventListener('click', async () => {
       await createNewTabForTimers(false, true)
     })
+
+  const manifestData = chrome.runtime.getManifest();
+  versionTag.textContent = `~ v${manifestData.version}`;
 })
 
 

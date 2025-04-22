@@ -910,6 +910,7 @@ body.light .poll-btn button {
   right: 20px;
   z-index: 9999;
   opacity: 0;
+  visibility: hidden;
   padding: 5px 10px;
   border-radius: 10px;
   &.show-toast {
@@ -917,6 +918,7 @@ body.light .poll-btn button {
   }
   &.hide-toast {
     opacity: 1;
+    visibility: visible;
     animation: fadeout 0.3s forwards;
   }
   & .toast-title, & .toast-message {
@@ -929,6 +931,22 @@ body.light .poll-btn button {
   }
   & .toast-message {
     font-size: .7.5rem;
+    max-width: 250px;
+  }
+  &.mini-toast {
+    padding: 2px 5px;
+    right: 0;
+    bottom: unset;
+    top: 0;
+    width: 100%;
+    border-radius: 5px;
+    & .toast-title, & .toast-message {
+      font-size: .7rem;
+      text-align: center;
+    }
+    & .toast-message {
+      font-size: .6rem;
+    }
   }
   &.green{
     background-color: #c5f3c5;
@@ -972,10 +990,10 @@ body.light .poll-btn button {
 }
 
 @keyframes fadein {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; visibility: hidden; transform: translateY(10px); }
+  to { opacity: 1; visibility: visible; transform: translateY(0); }
 }
 
 @keyframes fadeout {
-  to { opacity: 0; transform: translateY(10px); }
+  to { opacity: 0; visibility: hidden; transform: translateY(10px); }
 }

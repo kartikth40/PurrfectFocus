@@ -205,13 +205,20 @@ async function changeCategory(event) {
 function addEventListeners() {
   chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
     const timer = await getSessionStorage(TIMERKEY)
+    const isPomodoro = settings.mode === modes.POMODORO
     // tick with timer
     if (request.time) {
       changeTextTo(timerEle, request.time)
       if(settings.musicPlayer && settings.musicPlayerAutoStart && !audio) await loadTrack()
     }
     if(request.timerStarted){
-      changeTextTo(focusBtnText, 'Pause')
+      if(isPomodoro) {
+        changeTextTo(focusBtnText, 'Pause')
+      }else {
+        changeTextTo(focusBtnText, 'Running...')
+      }
+      stopBtn.classList.add('active')
+      nextBtn.classList.add('active')
       if(timer?.timer) changeTextTo(focusTitle, timer?.timer?.type)
       if(settings.musicPlayer && settings.musicPlayerAutoStart) await loadTrack()
     }
@@ -285,14 +292,18 @@ function addEventListeners() {
       mode.innerText = 'Pomodoro Mode'
     }
     if(request.invalidSession) {
-      console.log('invalid session')
-      showToast('Invalid session.', 'Session duration must be at least one minute.', TOASTIFY.colors.orange)
+      showToast('Session Not Saved!', 'Session duration must be at least one minute.', TOASTIFY.colors.orange)
     }
   })
 
   focusBtn.addEventListener('click', async (event) => {
     event.stopPropagation()
+    const isPomodoro = settings.mode === modes.POMODORO
     const timer = await getSessionStorage(TIMERKEY)
+    if(!isPomodoro && timer?.timer?.status === PLAY){
+      showToast('Reminder!', "Pause is not allowed in Stopwatch mode.", TOASTIFY.colors.orange)
+      return
+    } 
     // if started already
     if(timer?.timer) {
       print.log('Start -> ' + timer.timer.status)
@@ -366,7 +377,7 @@ function addEventListeners() {
             await setLocalStorage({[TASKSALIASKEY]: tasksAlias})
             oldSelectedTask === TASKS.REST ? setRestOptionForTasks() : setFocusOptionForTasks()
           } else if (response !== null && response.length > 10) {
-            showCustomAlert("Oops! 😋", "Task name should be less than 10 characters.", () => {})
+            showToast("Oops! 😋", "Task name should be less than 10 characters.", TOASTIFY.colors.red)
           }
       });
   })
@@ -471,7 +482,11 @@ const initiateTimer = async () => {
       await chrome.runtime.sendMessage({startTimer: true, timer: timerObj})
     }catch{e=>console.warn(e)}
   })
-  changeTextTo(focusBtnText, 'Pause')
+  if(isPomodoro) {
+    changeTextTo(focusBtnText, 'Pause')
+  }else {
+    changeTextTo(focusBtnText, 'Running...')
+  }
   changeTextTo(focusTitle, timer?.type ?? FOCUS)
   stopBtn.classList.add('active')
   nextBtn.classList.add('active')
@@ -556,6 +571,7 @@ const resume = async (timer) => {
   const selectedTask = taskSelect.value
   timer.task = getValidTask(selectedTask, timer.type)
   changeTextTo(focusBtnText, 'Pause')
+
   changeTextTo(focusTitle, timer?.type)
   await resumeTimer(timer)
 }

@@ -760,7 +760,6 @@ async function generateSessionsToDelete() {
 
     const modeCell = document.createElement("td");
     const modeSpan = document.createElement("span");
-    console.log(session)
     modeSpan.textContent = session?.mode === modes.STOPWATCH ? '⏲️' : '🍅';
     modeSpan.style.textAlign = "center";
     modeSpan.style.width = "100%";

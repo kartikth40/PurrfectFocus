@@ -450,8 +450,6 @@ export function getCurrentTimeString() {
 export const setNewSettings = async (formValues) => {
   const store = await getSyncStorage(SETTINGSKEY)
   const isPomodoro = (formValues.timerModeSelect === modes.POMODORO) && (store.settings.mode === modes.POMODORO)
-  console.log('isPomodoro',isPomodoro)
-  console.log(store.settings.focus.notifications)
   return {
     settings: {
       focus: {
@@ -531,10 +529,13 @@ export function changeTextTo(element, text) {
 }
 
 export const getFocusText = (timer, settings) => {
+  const isPomodoro = settings.mode === modes.POMODORO
   if(timer.status === STOP) {
     return 'Start Focusing'
-  }else if(timer.status === PLAY) {
+  }else if(timer.status === PLAY && isPomodoro) {
     return 'Pause'
+  }else if(timer.status === PLAY && !isPomodoro) {
+    return 'Running...'
   }else if(timer.status === PAUSE) {
     if(timer.type === FOCUS && timer.time === settings.focus.time*60) return 'Start Focusing'
     else if(timer.type === SHORTBREAK && timer.time === settings.shortBreak.time*60) return 'Start Short Break'
@@ -983,38 +984,51 @@ export function getFocusOptionsForTasks(tasksAlias) {
   .join('')
 }
 
-export function showToast(title, message, color = TOASTIFY.colors.purple) {
+export function showToast(title, message, color = TOASTIFY.colors.purple, mini=false) {
+  const toastContainer = document.getElementById("toast-container");
+
+  // Clear any existing toast before showing a new one
+  if (toastContainer.classList.contains("show-toast")) {
+    toastContainer.classList.remove("show-toast");
+    clearTimeout(toastContainer.hideTimeout);
+    clearTimeout(toastContainer.fadeOutTimeout);
+    toastContainer.removeEventListener("mouseenter", toastContainer.clearTimeouts);
+    toastContainer.removeEventListener("mouseleave", toastContainer.scheduleHide);
+
+  }
+
   const toastTitle = document.createElement("h3");
   toastTitle.className = "toast-title";
-  toastTitle.textContent = title
+  toastTitle.textContent = title;
 
   const toastMessage = document.createElement("p");
   toastMessage.className = "toast-message";
   toastMessage.textContent = message;
-  
-  const toast = document.getElementById("toast-container");
-  toast.className = "";
-  toast.innerHTML = "";
 
-  toast.classList.add(color)
-  toast.appendChild(toastTitle);
-  toast.appendChild(toastMessage);
-  toast.classList.add("show-toast");
+  toastContainer.className = "";
+  toastContainer.innerHTML = "";
 
-  let hideTimeout, fadeOutTimeout
+  toastContainer.classList.add(color);
+  toastContainer.appendChild(toastTitle);
+  toastContainer.appendChild(toastMessage);
+  toastContainer.classList.add("show-toast");
+  if(mini) toastContainer.classList.add("mini-toast")
+  toastContainer.scheduleHide = () => {
+    toastContainer.hideTimeout = setTimeout(() => {
+      toastContainer.classList.remove("show-toast");
+      toastContainer.classList.add("hide-toast");
+    }, 2700);
+    toastContainer.fadeOutTimeout = setTimeout(() => {
+      toastContainer.classList.remove("hide-toast");
+    }, 3000);
+  };
 
-  const scheduleHide = () => {
-    hideTimeout = setTimeout(() => {
-      toast.classList.remove("show-toast");
-      toast.classList.add("hide-toast");
-    }, 3000);}
-    fadeOutTimeout = setTimeout(() => {
-      toast.classList.remove('hide-toast')
-    }, 3500);
-    scheduleHide()
-    toast.addEventListener("mouseenter", () => {
-      clearTimeout(hideTimeout)
-      clearTimeout(fadeOutTimeout)
-    });
-    toast.addEventListener("mouseleave", scheduleHide);
+  toastContainer.clearTimeouts = () => {
+    clearTimeout(toastContainer.hideTimeout);
+    clearTimeout(toastContainer.fadeOutTimeout);
+  };
+
+  toastContainer.scheduleHide();
+  toastContainer.addEventListener("mouseenter", toastContainer.clearTimeouts);
+  toastContainer.addEventListener("mouseleave", toastContainer.scheduleHide);
 }

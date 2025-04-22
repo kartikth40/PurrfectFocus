@@ -74,6 +74,9 @@ p.until-long {
 .timer-tag.simple:hover, .timer-tag.simple:focus-visible {
   box-shadow:inset -7px 7px 5px var(--secondary-color-2),inset 5px -5px 10px var(--primary-color), 0 0 10px var(--primary-color);
 }
+.timer-tag:active {
+  transform: scale(.9);
+}
 
 .middle {
   margin-top: -5px;
