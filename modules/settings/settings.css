@@ -87,31 +87,25 @@
   height: 16px;
   box-shadow: 1px 1px 5px 0 var(--primary-color);
   border: 2px solid var(--secondary-color-1);
-  background-color: var(--secondary-color-2);
+  background-color: rgb(249, 106, 106);
   cursor: pointer;
   transition: all .3s ease-in-out;
   border-radius: 50%;
   position: relative;
   margin-block: 0;  
 
-  &::before, &::after {
+  &::before {
     content: '';
     position: absolute;
-    border-radius: 0;
+    width: 70%;
+    height: 2px;
     background-color: var(--secondary-color-1);
     left: 50%;
     top: 50%;
-    transform: translate(-50%, -50%) rotate(45deg);
+    transform: translate(-50%, -50%) rotate(0);
     transition: .2s all;
-  }
-
-  &::before {
-    width: 70%;
-    height: 2px;
-  }
-  &::after {
-    width: 2px;
-    height: 70%;
+    border-radius: 2px;
+    box-shadow:  0 0 2px 0 var(--secondary-color-1);
   }
 }
 #settings-form input[type="checkbox"] {
@@ -119,29 +113,17 @@
 }
 
 #settings-form input[type="radio"]:checked, #settings-form input[type="checkbox"]:checked {
-  background-color: var(--secondary-color-1);
+  background-color: rgb(63, 149, 63);
   box-shadow: 0 0 2px 0 var(--primary-color);
   border: 2px solid var(--secondary-color-2);
   &::before {
-    width: 2px;
-    height: 15px;
-    background-color: black;
-    left: 9px;
-    top: -3px;
-    transform: rotate(45deg);
-  }
-  &::after {
-    width: 5px;
-    height: 2px;
-    background-color: black;
-    left: 2px;
-    top: 7px;
-    transform: rotate(45deg);
+    transform: translate(-50%, -50%) rotate(90deg);
   }
 }
 #settings-form input[type="radio"]:disabled, #settings-form input[type="checkbox"]:disabled {
   background-color: rgba(68, 68, 68, 0.062);
   border-color: rgba(68, 68, 68, 0.637);
+  cursor: not-allowed;
   box-shadow: none;
   &::after, &::before {
     background-color: rgba(128, 128, 128, 0.221);

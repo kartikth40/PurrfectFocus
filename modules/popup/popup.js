@@ -171,6 +171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }else {
     nextBtn.querySelector('img').src = '../../assets/icons/next.png';
     mode.innerText = 'Pomodoro Mode'
+    timerEdit.style.display = 'block'
   }
   if(settings?.theme === LIGHTTHEME) {
     document.body.classList.add('light')
@@ -299,7 +300,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             await setLocalStorage({[TASKSALIASKEY]: tasksAlias})
             oldSelectedTask === TASKS.REST ? setRestOptionForTasks() : setFocusOptionForTasks()
           } else if (response !== null && response.length > 10) {
-            showCustomAlert("Oops! 😋", "Task name should be less than 10 characters.", () => {})
+            showToast("Oops! 😋", "Task name should be less than 10 characters.", TOASTIFY.colors.red)
           }
       });
     })
@@ -353,7 +354,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else if (parsedTime > max) {
                 errorMessage = `The time must not exceed ${max} minute(s). Please try again.`;
                 }
-                showCustomAlert("⚠️ Invalid Input", errorMessage, () => {});
+                showToast("Invalid Input!", errorMessage, TOASTIFY.colors.red, true)
               }
               },
               "number",

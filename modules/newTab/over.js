@@ -81,6 +81,7 @@ async function init() {
   }else {
     nextBtn.querySelector('img').src = '../../assets/icons/next.png';
     mode.innerText = 'Pomodoro Mode'
+    timerEdit.style.display = 'block'
   }
   if(timer?.timer?.type === LONGBREAK) changeTextTo( untilLongBreak, '')
   if(timer?.timer && (timer?.timer?.status === PLAY || timer?.timer?.status === PAUSE)) {
@@ -205,7 +206,9 @@ async function changeCategory(event) {
 function addEventListeners() {
   chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
     const timer = await getSessionStorage(TIMERKEY)
-    const isPomodoro = settings.mode === modes.POMODORO
+    const store = await getSyncStorage(SETTINGSKEY)
+    settings = store.settings
+    const isPomodoro = settings?.mode === modes.POMODORO
     // tick with timer
     if (request.time) {
       changeTextTo(timerEle, request.time)
@@ -236,18 +239,14 @@ function addEventListeners() {
       changeTextTo(focusTitle, 'Start Focusing')
       stopBtn.classList.remove('active')
       nextBtn.classList.remove('active')
-      const store = await getSyncStorage(SETTINGSKEY)
-      const isPomodoro = store.settings.mode === modes.POMODORO
       if(isPomodoro) changeTextTo(timerEle, getTimeString(store.settings.focus.time * 60, false))
       else changeTextTo(timerEle, getTimeString(0, false))
       await handleUntilLongBreakCount(store.settings, null)
       await pauseMusic()
     }
     else if(request.timerReset){
-      const store = await getSyncStorage(SETTINGSKEY)
       const timerObj = await getSessionStorage(TIMERKEY)
       const timer = timerObj[TIMERKEY]
-      const isPomodoro = store.settings.mode === modes.POMODORO
       await pauseMusic()
       if (!timer || timer.type === FOCUS) {
         changeTextTo(focusBtnText, 'Start Focusing')
@@ -269,8 +268,6 @@ function addEventListeners() {
       }
     }
     else if(request.saveSettings){
-      const store = await getSyncStorage(SETTINGSKEY)
-      settings = store.settings
       const timerObj = await getSessionStorage(TIMERKEY)
       const timer = timerObj[TIMERKEY]
       loadSettings(settings)
@@ -286,10 +283,12 @@ function addEventListeners() {
     }
     if(request.switchToStopwatch) {
       nextBtn.querySelector('img').src = '../../assets/icons/end.png';
+      timerEdit.style.display = 'none'
       mode.innerText = 'Stopwatch Mode'
     }else if(request.switchToPomodoro) {
       nextBtn.querySelector('img').src = '../../assets/icons/next.png';
       mode.innerText = 'Pomodoro Mode'
+      timerEdit.style.display = 'block'
     }
     if(request.invalidSession) {
       showToast('Session Not Saved!', 'Session duration must be at least one minute.', TOASTIFY.colors.orange)
@@ -385,6 +384,8 @@ function addEventListeners() {
   timerEdit.addEventListener('click', async (event) => {
     const settingsObj = await getSyncStorage(SETTINGSKEY)
     const settings = settingsObj[SETTINGSKEY] || {}
+    const isPomodoro = settings.mode === modes.POMODORO
+    if(!isPomodoro) return
     const timerObj = await getSessionStorage(TIMERKEY)
     const timer = timerObj[TIMERKEY]
     let time;
@@ -431,7 +432,7 @@ function addEventListeners() {
         } else if (parsedTime > max) {
         errorMessage = `The time must not exceed ${max} minute(s). Please try again.`;
         }
-        showCustomAlert("⚠️ Invalid Input", errorMessage, () => {});
+        showToast("Invalid Input!", errorMessage, TOASTIFY.colors.red)
       }
       },
       "number",

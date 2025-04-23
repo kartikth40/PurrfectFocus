@@ -906,13 +906,14 @@ body.light .poll-btn button {
 
 #toast-container {
   position: fixed;
-  bottom: 20px;
+  bottom: 0;
   right: 20px;
   z-index: 9999;
   opacity: 0;
   visibility: hidden;
   padding: 5px 10px;
   border-radius: 10px;
+  transform: translateY(100px);
   &.show-toast {
     animation: fadein 0.3s forwards;
   }
@@ -937,7 +938,7 @@ body.light .poll-btn button {
     padding: 2px 5px;
     right: 0;
     bottom: unset;
-    top: 0;
+    top: 30px;
     width: 100%;
     border-radius: 5px;
     & .toast-title, & .toast-message {
@@ -990,10 +991,11 @@ body.light .poll-btn button {
 }
 
 @keyframes fadein {
-  from { opacity: 0; visibility: hidden; transform: translateY(10px); }
-  to { opacity: 1; visibility: visible; transform: translateY(0); }
+  from { opacity: 0; visibility: hidden; transform: translateY(100px) skew(20deg) rotate(30deg); }
+  to { opacity: 1; visibility: visible; transform: translateY(-30px) skew(0) rotate(0); }
 }
 
 @keyframes fadeout {
-  to { opacity: 0; visibility: hidden; transform: translateY(10px); }
+  from { opacity: 1; visibility: visible; transform: translateY(-30px) skew(0) rotate(0); }
+  to { opacity: 0; visibility: hidden; transform: translateY(100px) skew(20deg) rotate(30deg); }
 }

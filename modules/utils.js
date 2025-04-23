@@ -1017,10 +1017,10 @@ export function showToast(title, message, color = TOASTIFY.colors.purple, mini=f
     toastContainer.hideTimeout = setTimeout(() => {
       toastContainer.classList.remove("show-toast");
       toastContainer.classList.add("hide-toast");
-    }, 2700);
+    }, 4700);
     toastContainer.fadeOutTimeout = setTimeout(() => {
       toastContainer.classList.remove("hide-toast");
-    }, 3000);
+    }, 5000);
   };
 
   toastContainer.clearTimeouts = () => {
@@ -1029,6 +1029,4 @@ export function showToast(title, message, color = TOASTIFY.colors.purple, mini=f
   };
 
   toastContainer.scheduleHide();
-  toastContainer.addEventListener("mouseenter", toastContainer.clearTimeouts);
-  toastContainer.addEventListener("mouseleave", toastContainer.scheduleHide);
 }
