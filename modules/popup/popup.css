@@ -113,3 +113,19 @@ p.until-long {
     color: black;
   }
 }
+
+.poll-btn {
+  border-radius: 5px;
+  padding-top: 0;
+  &::after, &::before {
+    inset: -1px;
+    top: 1px;
+    border-radius: 5px;
+  }
+  &:hover::after, &:hover::before {
+    inset: -1px;
+    top: 1px;
+    bottom: -4px;
+    border-radius: 5px;
+  }
+}

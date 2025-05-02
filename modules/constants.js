@@ -42,9 +42,9 @@ export const NEWTABSETTINGSIDKEY = 'newTabSettingsId'
 export const NEWTABHISTORYIDKEY = 'newTabHistoryId'
 export const NEWTABSTREAKIDKEY = 'newTabStreakId'
 export const TASKSALIASKEY = 'tasks_alias'
+export const TODOLISTKEY = 'todolist'
 
 // others
-export const tabNames = ['focus', 'settings']
 export const showSurvey = true
 export const modes = {
   POMODORO: 'Pomodoro',
@@ -77,7 +77,8 @@ export const defaultSettings = {
     musicPlayer: true,
     musicPlayerAutoStart: true,
     openNewTab: true,
-    mode: modes.POMODORO
+    mode: modes.POMODORO,
+    todoList: true
   }
 }
 

@@ -1,5 +1,5 @@
 import { CONFIG } from "../config.js"
-import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE, TASKS, TASKSALIASKEY, CURRENTTASKKEY, showSurvey, modes, TOASTIFY } from "../constants.js"
+import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE, TASKS, TASKSALIASKEY, CURRENTTASKKEY, showSurvey, modes, TOASTIFY, TODOLISTKEY } from "../constants.js"
 import { changeTextTo, createNewTabForHistory, createNewTabForSettings, createNewTabForStreak, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setSessionStorage, timerDuration, getValidTask, setSyncStorage, showCustomAlert, showCustomPrompt, showToast } from "../utils.js"
 
 const container = document.querySelector('.container')
@@ -23,6 +23,9 @@ const timerEdit = document.querySelector('.timer-edit')
 const pollBtn = document?.querySelector(".poll-btn")
 const loadingScreen = document.querySelector('.loading-screen')
 const mode = document.querySelector('.mode')
+const todoListCotainer = document.querySelector('#to-do-list-container')
+const todoListSubContainer = document.querySelector('.to-do-list');
+const todoAddBtn = document.querySelector('.add-btn')
 
 let audio = null
 let settings
@@ -68,7 +71,7 @@ async function init() {
   }
   const store = await getSyncStorage(SETTINGSKEY)
   settings = store[SETTINGSKEY]
-  loadSettings(settings)
+  await loadSettings(settings)
   const isPomodoro = settings.mode === modes.POMODORO
   const interval = parseInt(settings.longBreak.interval)
   const timerCounts = timer.timer ? timer.timer.counts : 0
@@ -101,6 +104,36 @@ async function init() {
   await setLocalStorage({ lastActive: Date.now() })
   if(settings.musicPlayer && !musicPlayerInitialized) setupMusicPlayer()
   else removeMusicPlayer()
+
+  if(settings.todoList) await initTodoList()
+  
+}
+
+async function initTodoList() {
+  todoListCotainer.classList.add('show')
+  const todoListObj = await getLocalStorage(TODOLISTKEY);
+  const todoList = todoListObj[TODOLISTKEY] || [];
+
+  todoListSubContainer.innerHTML = todoList
+    .map((todo, index) => `
+      <li>
+        <input type="checkbox" id="todo-${index}" data-index="${index}" ${todo.completed ? 'checked' : ''}>
+        <label for="todo-${index}">${todo.item}</label>
+        <button class='dlt-btn' data-index="${index}"></button>
+      </li>
+    `)
+    .join('');
+
+  todoListSubContainer.querySelectorAll('.dlt-btn').forEach(button => {
+    button.addEventListener('click', async (event) => {
+      const index = event.target.dataset.index;
+      const todoListObj = await getLocalStorage(TODOLISTKEY);
+      const todoList = todoListObj[TODOLISTKEY] || [];
+      const updatedTodoList = todoList.filter((_, i) => i !== parseInt(index, 10));
+      await setLocalStorage({ [TODOLISTKEY]: updatedTodoList });
+      await initTodoList();
+    });
+  });
 }
 
 function setupMusicPlayer() {
@@ -270,7 +303,7 @@ function addEventListeners() {
     else if(request.saveSettings){
       const timerObj = await getSessionStorage(TIMERKEY)
       const timer = timerObj[TIMERKEY]
-      loadSettings(settings)
+      await loadSettings(settings)
       !timer || timer?.type === FOCUS ? await setFocusOptionForTasks() : await setRestOptionForTasks()
     }
     else if(request.taskChange) {
@@ -439,9 +472,40 @@ function addEventListeners() {
       "*It will reset the current timer.\nIf any."
     );
   })
+
+  todoAddBtn.addEventListener('click', async ()=> {
+    showCustomPrompt(
+      "Add a todo item!",
+      `Please enter your new todo item below 👇`,
+      'todo',
+      async (response) => {
+        if (response !== null && response.trim() !== "") {
+          const todoListObj = await getLocalStorage(TODOLISTKEY);
+          const todoList = todoListObj[TODOLISTKEY] || [];
+          todoList.push({ item: response.trim(), completed: false });
+          await setLocalStorage({ [TODOLISTKEY]: todoList });
+          await initTodoList()
+        }
+      }
+    );
+  })
+
+  todoListSubContainer.addEventListener('change', async (event) => {
+    if (event.target.tagName === 'INPUT' && event.target.type === 'checkbox') {
+      const todoListObj = await getLocalStorage(TODOLISTKEY);
+      const todoList = todoListObj[TODOLISTKEY] || [];
+      const index = event.target.dataset.index;
+      const updatedTodoList = [...todoList];
+      updatedTodoList[index] = {
+        ...updatedTodoList[index],
+        completed: event.target.checked,
+      };
+      await setLocalStorage({ [TODOLISTKEY]: updatedTodoList });
+    }
+  });
 }
 
-function loadSettings(settings) {
+async function loadSettings(settings) {
   if(settings?.theme === LIGHTTHEME) {
     document.body.classList.add('light')
     container.classList.add('light')
@@ -463,6 +527,12 @@ function loadSettings(settings) {
   else changeTextTo(timerEle, getTimeString(0, false))
   if(settings.musicPlayer && !musicPlayerInitialized) setupMusicPlayer()
   else removeMusicPlayer()
+  if(settings.todoList) {
+  todoListCotainer.classList.add('show')
+    await initTodoList()
+  } else {
+    todoListCotainer.classList.remove('show')
+  }
 }
 const initiateTimer = async () => {
   const store = await getSyncStorage(SETTINGSKEY)

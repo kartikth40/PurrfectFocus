@@ -395,9 +395,10 @@ label {
   align-items: center;
 }
 
-.open-new-tab {
+.open-new-tab, .todo-list {
   display: flex;
   align-items: center;
+  margin-bottom: 5px;
 }
 
 .coming-soon-p-tag {

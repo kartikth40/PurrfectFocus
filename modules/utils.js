@@ -476,7 +476,8 @@ export const setNewSettings = async (formValues) => {
       musicPlayer:formValues.musicPlayer === 'on',
       musicPlayerAutoStart:formValues.musicPlayerAutoStart === 'on',
       openNewTab:formValues.openNewTabOnCompletion === 'on',
-      mode: formValues.timerModeSelect ?? modes.POMODORO
+      mode: formValues.timerModeSelect ?? modes.POMODORO,
+      todoList: formValues.todoListCheckbox === 'on'
     }
   }
 }
@@ -504,6 +505,7 @@ export const setFormValues = (data) => {
   document.querySelector('#music-auto-start').checked = settings.musicPlayerAutoStart
   document.querySelector('#open-new-tab').checked = settings.openNewTab
   document.querySelector('#timer-mode-select').value = settings.mode
+  document.querySelector('#todo-list').checked = settings.todoList
 }
 
 export function changeTextTo(element, text) {

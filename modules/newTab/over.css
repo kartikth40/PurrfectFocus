@@ -181,13 +181,16 @@ body.light .timer-tag.simple {
   align-items: center;
   justify-content: center;
   flex-direction: column;
+  box-shadow: 2px 2px 0 2px var(--secondary-color-2);
+  border: 2px solid var(--secondary-color-2);
+  background-color: var(--secondary-color-2);
 }
 #music-player.show {
   display: flex;
 }
 .light #music-player {
-  background: var(--secondary-color-2);
-  box-shadow: inset 0 0 0 1px var(--primary-color);
+  box-shadow: 2px 2px 0 2px #000;
+  border: 2px solid #000;
 }
 
 #music-player:before {
@@ -198,12 +201,8 @@ body.light .timer-tag.simple {
   top:5px;
   left:50%;
   transform: translateX(-50%);
-  color: var(--secondary-color-2);
-}
-.light #music-player:before {
   color: var(--primary-color);
 }
-
 #music-player .bottom {
   display: flex;
   width: 100%;
@@ -229,6 +228,13 @@ body.light .timer-tag.simple {
   outline: none;
   padding: 2px 7px;
   font-family: "Poppins", sans-serif;
+  transition: .25s all;
+  border: 1px solid #000;
+  box-shadow: 2px 2px 0 1px #000;
+  &:active {
+    box-shadow: 0 0 0 1px #000;
+    transform: translate(2px, 2px);
+  }
 }
 .light #music-player button {
   background: none;
@@ -272,29 +278,19 @@ body.light .timer-tag.simple {
   cursor: pointer;
   padding: 2px 3px;
   font-family: "Poppins", sans-serif;
-}
-.light #music-player select {
   background: black;
   color: var(--secondary-color-1);
 }
-
 #music-player label {
   color: var(--primary-color);
   font-size: .8em;
 }
-.light #music-player label {
-  color: var(--primary-color);
-}
-
 #music-player p {
   font-size: 10px;
   margin-bottom: 0;
   text-align: center;
-}
-.light #music-player p {
   color: black;
 }
-
 .timer-edit {
   top:0;
   right:0;
@@ -335,5 +331,195 @@ body.light .timer-tag.simple {
     backdrop-filter: blur(15px);
     font-weight: 700;
     color: black;
+  }
+}
+
+#to-do-list-container {
+  width: 230px;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: linear-gradient(45deg, var(--secondary-color-1), var(--secondary-color-2));
+  box-shadow: inset 0 0 10px 0 var(--secondary-color-2);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10px 20px;
+  z-index: 10;
+  border-radius: 5px;
+  border: 1px solid #000;
+  overflow: hidden;
+
+  display: none;
+  &.show {
+    display: inline-block;
+  }
+
+  & h2 {
+    color: #000;
+    border-bottom: none;
+    padding-bottom: 0px;
+    box-shadow: inset 0 0 5px 0 var(--secondary-color-2), 0 0 5px 0 var(--secondary-color-1); 
+    padding: 10px;
+    border-radius: 5px;
+  }
+
+  & ul {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    margin:0;
+    padding: 0;
+    max-height: 300px;
+    overflow-y: scroll;
+
+    &::-webkit-scrollbar {
+      width: 5px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: var(--secondary-color-2);
+    }
+    &::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-color);
+    }
+    &::-webkit-scrollbar-track {
+      background: var(--secondary-color-1);
+    }
+
+    & li {
+      position: relative;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      padding-right: 20px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 5px;
+      word-break: break-word;
+      & label {
+        width: 100%;
+        display: inline-block;
+      }
+      & input[type="checkbox"] {
+        width: 15px;
+        height: 15px;
+      }
+      & input[type="checkbox"]:checked + label {
+        text-decoration: line-through;
+        color: #000;
+      }
+
+      &:hover{
+        background-color: var(--secondary-color-1);
+        & .dlt-btn {
+          pointer-events: all;
+          opacity: 1;
+        }
+      }
+      & .dlt-btn {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 20px;
+        height: 20px;
+        border: none;
+        background-color: unset;
+        cursor: pointer;
+        pointer-events: none;
+        opacity: 0;
+      }
+
+
+      & .dlt-btn::after, & .dlt-btn::before {
+        content: '';
+        position: absolute;
+        width: 80%;
+        height: 3px;
+        left:50%;
+        top:50%;
+        transform: translate(-50%, -50%) rotate(45deg);
+        z-index: 10;
+        background-color: var(--primary-color);
+        border-radius: 3px;
+      }
+      & .dlt-btn::after{
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
+    }
+  }
+  & .punches {
+    position: absolute;
+    top:-8px;
+    left: 50%;
+    width: 100%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+
+    & .punch {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background-color: #000;
+      margin-left: 5px;
+      border-radius: 30%;
+    }
+  }
+}
+
+.light #to-do-list-container .punch {
+  /* background-color: var(--secondary-color-2); */
+  border: 1px solid #000;
+}
+
+#to-do-list-container .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+}
+
+#to-do-list-container .add-btn {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--primary-color);
+  background-color: var(--secondary-color-2);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: .25s all;
+  box-shadow:inset 0 0 20px  var(--primary-color), 0 0 40px  var(--primary-color);
+
+  &:hover {
+    border-color: none;
+    border-radius: 30%;
+    &::before, &::after {
+      width: 80%;
+    }
+  }
+  &:active {
+    box-shadow:inset 0 0 20px  var(--primary-color), 0 0 20px  var(--primary-color);
+    transform: scale(.9);
+  }
+
+  &::before, &::after {
+    content: '';
+    position: absolute;
+    left:50%;
+    top:50%;
+    width: 70%;
+    height: 7px;
+    background-color: var(--secondary-color-1);
+    transform: translate(-50%, -50%);
+    border-radius: 2px;
+    transition: .25s all;
+    border: 1px solid var(--secondary-color-2);
+  }
+  &::after {
+    transform: translate(-48%, -50%) rotate(90deg);
   }
 }

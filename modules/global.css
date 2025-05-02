@@ -520,44 +520,79 @@ input:hover, select:hover {
   }
 }
 
+@property --gradient-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
 .poll-btn {
   display: none;
+  --gradient-angle: 0deg;
+  position: relative;
+  color: var(--secondary-color-1);
+  border-radius: 15px;
+  &:hover::after, &:hover::before {
+    inset: -5px;
+    border-radius: 15px;
+  }
+}
+.poll-btn:after, .poll-btn:before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: conic-gradient(from var(--gradient-angle), #865DFF, #E384FF,#fff,#865DFF);
+  border-radius: 10px;
+  animation: rotateGradient 2s linear infinite;
+  transition: .25s all;
+}
+.poll-btn:before{
+  z-index:-1;
+  filter: blur(15px);
+}
+.light .poll-btn {
+  &::after, &::before {
+    border: 1px solid var(--primary-color);
+  }
+}
+
+.poll-btn:after{
+  z-index:-1;
 }
 .poll-btn.active {
   display: block;
   position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 10px;
+  right: 10px;
   z-index: 100;
 }
 .poll-btn.popup {
   top: 25px;
 }
 .poll-btn button {
-  background: var(--primary-color-4);
+  background: #000;
   backdrop-filter: blur(10px);
   outline: none;
-  border: 2px solid var(--secondary-color-1);
+  border: none;
   border-top: none;
-  color: black;
+  border-radius: 10px;
+  color: var(--secondary-color-1);
   font-weight: 500;
   font-size: 1.3em;
-  border-radius: 15px;
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
   padding: 5px 10px;
   font-family: "Share Tech Mono", monospace;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 0 10px var(--primary-color), 0 0 20px var(--primary-color);
   margin: 0;
   cursor: pointer;
   transition: .25s all;
   text-decoration-color: var(--primary-color);
+}
 
-  &:hover {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5), 0 0 10px var(--primary-color-4), 0 0 20px var(--primary-color-4);
-    text-decoration: underline;
-    text-decoration-color: var(--primary-color);
+@keyframes rotateGradient{
+  0%{
+    --gradient-angle: 0deg;
+  }
+  100%{
+    --gradient-angle: 360deg;
   }
 }
 
