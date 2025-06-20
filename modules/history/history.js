@@ -18,6 +18,7 @@ import {
   createNewTabForTimers
 } from '../utils.js'
 import { SETTINGSKEY, LIGHTTHEME, TASKS, chartColors, chartBorderColors, FOCUS, DARKTHEME, TASKSALIASKEY, TIMERKEY, modes } from '../constants.js'
+import { CONFIG } from '../config.js'
 
 const container = document.querySelector('.container')
 const todayCount = document.querySelector('.today-count')
@@ -47,7 +48,12 @@ const resetButton = dateInput.parentElement.querySelector('button');
 const loadingScreen = document.querySelector('.loading-screen')
 const settingsBtn = document.querySelector('.settings-tab-btn')
 const timerBtn = document.querySelector('.timer-tab-btn')
+const supportBtn = document.querySelector('.support-tab-btn')
+const supportLink = document.querySelector('.support-link')
 
+
+supportBtn.href = CONFIG.SUPPORT_URL
+supportLink.href = CONFIG.SUPPORT_URL
 
 const today = new Date();
 const threeYearsAgo = new Date();

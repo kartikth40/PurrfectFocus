@@ -10,14 +10,13 @@ import {
   createNewTabForTimers,
   createNewTabForSettings,
   createNewTabForHistory,
-  setSessionStorage,
+  setTimerInStore,
   getValidTask,
   createNewTabForStreak,
   getLocalStorage,
   setLocalStorage,
   setSyncStorage,
   showCustomPrompt,
-  showCustomAlert,
   showToast} from "../utils.js"
 import {
   PLAY,
@@ -266,7 +265,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const timer = await getSessionStorage(TIMERKEY)
     if(timer.timer) {
       timer.timer.task = getValidTask(selectedTask, timer?.timer?.type)
-      await setSessionStorage({timer: timer.timer})
+      await setTimerInStore({[TIMERKEY]: timer.timer})
       await chrome.runtime.sendMessage({taskChange: timer.timer.task})
       await setLocalStorage({[CURRENTTASKKEY]: timer.timer.task})
     }
@@ -278,7 +277,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         counts: 0,
         task: getValidTask(selectedTask)
       };
-      await setSessionStorage({ timer: timerObj });
+      await setTimerInStore({ [TIMERKEY]: timerObj });
       await chrome.runtime.sendMessage({ taskChange: timerObj.task });
       await setLocalStorage({ [CURRENTTASKKEY]: timerObj.task });
     }

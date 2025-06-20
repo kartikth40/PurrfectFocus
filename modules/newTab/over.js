@@ -1,6 +1,6 @@
 import { CONFIG } from "../config.js"
 import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE, TASKS, TASKSALIASKEY, CURRENTTASKKEY, showSurvey, modes, TOASTIFY, TODOLISTKEY } from "../constants.js"
-import { changeTextTo, createNewTabForHistory, createNewTabForSettings, createNewTabForStreak, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setSessionStorage, timerDuration, getValidTask, setSyncStorage, showCustomAlert, showCustomPrompt, showToast } from "../utils.js"
+import { changeTextTo, createNewTabForHistory, createNewTabForSettings, createNewTabForStreak, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setTimerInStore, timerDuration, getValidTask, setSyncStorage, showCustomAlert, showCustomPrompt, showToast } from "../utils.js"
 
 const container = document.querySelector('.container')
 const focusTitle = document.querySelector('.focus-title')
@@ -26,6 +26,9 @@ const mode = document.querySelector('.mode')
 const todoListCotainer = document.querySelector('#to-do-list-container')
 const todoListSubContainer = document.querySelector('.to-do-list');
 const todoAddBtn = document.querySelector('.add-btn')
+const supportBtn = document.querySelector('.support-tab-btn')
+
+supportBtn.href = CONFIG.SUPPORT_URL
 
 let audio = null
 let settings
@@ -376,7 +379,7 @@ function addEventListeners() {
     const timer = await getSessionStorage(TIMERKEY)
     if(timer.timer) {
       timer.timer.task = getValidTask(selectedTask, timer?.timer?.type)
-      await setSessionStorage({timer: timer.timer})
+      await setTimerInStore({[TIMERKEY]: timer.timer})
       await chrome.runtime.sendMessage({taskChange: timer.timer.task})
       await setLocalStorage({[CURRENTTASKKEY]: timer.timer.task})
     }else {
@@ -387,7 +390,7 @@ function addEventListeners() {
         counts: 0,
         task: getValidTask(selectedTask)
       };
-      await setSessionStorage({ timer: timerObj });
+      await setTimerInStore({ [TIMERKEY]: timerObj });
       await chrome.runtime.sendMessage({ taskChange: timerObj.task });
       await setLocalStorage({ [CURRENTTASKKEY]: timerObj.task });
     }

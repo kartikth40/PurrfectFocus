@@ -106,7 +106,6 @@
     </div>
   </div>
   <div id="music-player">
-    
     <p id="track-title">No track playing</p>
     <div class="bottom">
       <select id="category-select">
@@ -124,7 +123,10 @@
         </button>
       </div>
     </div>
-
+    <div class="volume-slider">
+      <label for="volume"><img src="../../assets/icons/volume.png" alt="volume icon"></label>
+      <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="0.5" />
+    </div>
   </div>
   <div id="customPrompt" class="modal">
     <div class="modal-content">

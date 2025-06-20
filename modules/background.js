@@ -5,7 +5,7 @@ import {
   getSyncStorage,
   initBackgroundJs,
   printer,
-  setSessionStorage,
+  setTimerInStore,
   setSyncStorage,
   storageChangesLogger,
   getTimeString, 
@@ -13,7 +13,8 @@ import {
   getLocalStorage,
   getCurrentTimeString,
   checkUserActivity,
-  getValidTask} from "./utils.js"
+  getValidTask,
+  setSessionStorage} from "./utils.js"
 import {
   PLAY,
   PAUSE,
@@ -30,6 +31,7 @@ import {
   CURRENTTASKKEY,
   modes
  } from "./constants.js"
+import { CONFIG } from "./config.js";
 
 let intervalId = createState(0)
 const print = printer()
@@ -53,7 +55,17 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   if (!alarms.some(alarm => alarm.name === "checkActivity")) {
     chrome.alarms.create("checkActivity", { periodInMinutes: 180 });
   }
+  chrome.runtime.setUninstallURL(CONFIG.UNINSTALL_SURVEY_FORM_URL);
+});
 
+chrome.runtime.onStartup.addListener(async () => {
+  const sessionTimerObj = await getSessionStorage(TIMERKEY);
+  if (!sessionTimerObj[TIMERKEY]) {
+    const localTimerObj = await getLocalStorage(TIMERKEY);
+    if (localTimerObj[TIMERKEY]) {
+      await setSessionStorage(localTimerObj);
+    }
+  }
 });
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
@@ -61,8 +73,6 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     await checkUserActivity();
   }
 });
-
-chrome.runtime.setUninstallURL("https://chromewebstore.google.com/detail/purrfect-pomodoro-timer-p/aobapnhgpjlldncjopmbbfeoomombhel/support?hl=en-GB")
 
 async function startActualTimer(timer) {
   print.log('message received - start timer')
@@ -77,7 +87,7 @@ async function startActualTimer(timer) {
       task: getValidTask(timer?.task)
     }
   }
-  await setSessionStorage(timerObj)
+  await setTimerInStore(timerObj)
   startTimer(chrome, timer?.time ?? 0)
   try{
     await chrome.runtime.sendMessage({timerStarted: true})
@@ -101,7 +111,7 @@ async function pauseActualTimer(timer) {
       task: getValidTask(timer?.task)
     }
   }
-  await setSessionStorage(timerObj)
+  await setTimerInStore(timerObj)
   print.it('session -> paused')
 
 }
@@ -109,7 +119,7 @@ async function pauseActualTimer(timer) {
 async function stopActualTimer() {
   print.log('message received - stop timer')
   clearInterval(intervalId.getState())
-  await setSessionStorage({[TIMERKEY]: null})
+  await setTimerInStore({[TIMERKEY]: null})
 }
 
 async function resetCurrentTimer() {
@@ -117,7 +127,7 @@ async function resetCurrentTimer() {
   const timerObj = await getSessionStorage(TIMERKEY)
   const timer = timerObj[TIMERKEY]
   if(!timer || (timer?.counts === 0 && timer?.type === FOCUS)) {
-    await setSessionStorage({[TIMERKEY]: null})
+    await setTimerInStore({[TIMERKEY]: null})
     return
   } 
   const settingsObj = await getSyncStorage(SETTINGSKEY)
@@ -141,7 +151,7 @@ async function resetCurrentTimer() {
       task: getValidTask(timer?.task)
     }
   }
-  await setSessionStorage(newTimerObj)
+  await setTimerInStore(newTimerObj)
 }
   
 chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
@@ -222,7 +232,7 @@ const startTimer = async (chrome, timer) => {
           task: getValidTask(result?.timer?.task)
         }
       }
-      await setSessionStorage(timerToStore)
+      await setTimerInStore(timerToStore, timer)
     }
   }, 1000)
   print.helper('INTERVAL-ID -> ' + intId)
@@ -326,7 +336,7 @@ const setNextTimer = async (timerEnds=false, shouldStopWatchEnd=false) => {
           task: TASKS.REST
         }
       }
-      await setSessionStorage(timerToStore)
+      await setTimerInStore(timerToStore)
       print.log('session -> focus -> short')
     } else if(interval && interval > 0) {
       nextTimer = LONGBREAK
@@ -342,7 +352,7 @@ const setNextTimer = async (timerEnds=false, shouldStopWatchEnd=false) => {
           task: TASKS.REST
         }
       }
-      await setSessionStorage(timerToStore)
+      await setTimerInStore(timerToStore)
       print.log('session -> focus -> long')
     }
     try{
@@ -364,7 +374,7 @@ const setNextTimer = async (timerEnds=false, shouldStopWatchEnd=false) => {
         task: currentTask
       }
     }
-    await setSessionStorage(timerToStore)
+    await setTimerInStore(timerToStore)
     print.log('session -> short -> focus')
     try{
       await chrome.runtime.sendMessage({updateNextTimer: true})
@@ -385,7 +395,7 @@ const setNextTimer = async (timerEnds=false, shouldStopWatchEnd=false) => {
         task: currentTask
       }
     }
-    await setSessionStorage(timerToStore)
+    await setTimerInStore(timerToStore)
     print.log('session -> long -> focus')
     try{
       await chrome.runtime.sendMessage({updateNextTimer: true})

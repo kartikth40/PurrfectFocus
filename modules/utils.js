@@ -734,12 +734,20 @@ async function getMusicData() {
 }
 
 export async function playMusic(category, index=null) {
+  const oldSlider = document.getElementById('volume-slider');
+  const newSlider = oldSlider.cloneNode(true); // clone without listeners
+  oldSlider.parentNode.replaceChild(newSlider, oldSlider);
+
   let base_path = 'https://kartikth40.github.io/music_collection/' + category + '/';
   const musicData = await getMusicData();
   const audioFiles = musicData[category];
   if(index !== null) {
     const validIndex = (index + audioFiles.length) % audioFiles.length
     const audio = new Audio(base_path + audioFiles[validIndex]);
+    newSlider.addEventListener('input', () => {
+      audio.volume = newSlider.value;
+    });
+    audio.volume = newSlider.value;
     audio.play();
     return {audio , index: validIndex, title: audioFiles[validIndex].split('.')[0]};
   }
@@ -747,6 +755,10 @@ export async function playMusic(category, index=null) {
     const randomIndex = Math.floor(Math.random() * audioFiles.length);
     const randomFile = audioFiles[randomIndex];
     const audio = new Audio(base_path + randomFile);
+    newSlider.addEventListener('input', () => {
+      audio.volume = newSlider.value;
+    });
+    audio.volume = newSlider.value;
     audio.play();
     return {audio, index: randomIndex, title: randomFile.split('.')[0]};
   } else {
@@ -1031,4 +1043,11 @@ export function showToast(title, message, color = TOASTIFY.colors.purple, mini=f
   };
 
   toastContainer.scheduleHide();
+}
+
+export async function setTimerInStore(timerToStore, timer=null) {
+  await setSessionStorage(timerToStore)
+  if( !timer || (timer && timer % 10 === 0)) {
+    await setLocalStorage(timerToStore)
+  }
 }

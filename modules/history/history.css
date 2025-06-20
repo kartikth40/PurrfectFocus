@@ -497,6 +497,9 @@ footer {
 }
 .feedback-line p{
   margin:0;
+  & span {
+    font-size: .5em;
+  }
 }
 
 .feedback-line a{

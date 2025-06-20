@@ -431,3 +431,17 @@ label {
   background-color: var(--secondary-color-2);
   color: var(--primary-color);
 }
+
+.note {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  padding: 0 10px;
+  border-radius: 10px;
+  backdrop-filter: blur(2px);
+  color: var(--secondary-color-1);
+  border: 2px dashed var(--primary-color);
+  font-size: .7em;
+}

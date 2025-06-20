@@ -1,3 +1,4 @@
+import { CONFIG } from "../config.js"
 import { LIGHTTHEME, modes, SETTINGSKEY } from "../constants.js"
 import { changeTextTo, createNewTabForHistory, createNewTabForTimers, getSyncStorage, setFormValues, setNewSettings } from "../utils.js"
 
@@ -23,6 +24,9 @@ const loadingScreen = document.querySelector('.loading-screen')
 const historyBtn = document.querySelector('.history-tab-btn')
 const timerBtn = document.querySelector('.timer-tab-btn')
 const versionTag = document.querySelector('#version')
+const supportBtn = document.querySelector('.support-tab-btn')
+
+supportBtn.href = CONFIG.SUPPORT_URL
 
 
 let settingsChanged = false
