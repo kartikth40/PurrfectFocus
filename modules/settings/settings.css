@@ -194,6 +194,9 @@ label {
 .long-break-interval.disabled {
   pointer-events: none;
   opacity: 0.5;
+  text-decoration: line-through;
+  text-decoration-color: rgb(34, 34, 34);
+  text-decoration-thickness: 1px;
 }
 
 #focus-duration-input,

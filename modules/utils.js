@@ -675,7 +675,7 @@ function mergeHistory(existingData, newData) {
   for (const key in newData) {
     if (!existingData[key]) {
       existingData[key] = newData[key]
-    } else if(isObject(existingData[key])) {
+        } else if(isObject(existingData[key]) && !isNaN(Number(key))) {
         for (const date in newData[key]) {
           if (!existingData[key][date]) {
             existingData[key][date] = newData[key][date]

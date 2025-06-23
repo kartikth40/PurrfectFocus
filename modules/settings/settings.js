@@ -8,6 +8,7 @@ const notificationCheckboxes = document.querySelectorAll('.notification-checkbox
 const soundSelects = document.querySelectorAll('.sound-select')
 const intervalSelect = document.querySelector('#interval-input')
 const intervalSelectDiv = document.querySelector('.long-break-interval')
+const autoStartCheckbox = document.querySelectorAll('.auto-start-checkbox')
 
 const lightCard = document.querySelector('.theme-card-light')
 const lightCardRadio = document.querySelector('#app-theme-light')
@@ -18,7 +19,7 @@ const settingsForm = document.querySelector('#settings-form')
 const saveBtn = document.querySelector('.submit-btn')
 
 const musicPlayerCheckbox = document.getElementById("music-player");
-const autoStartCheckbox = document.getElementById("music-auto-start");
+const autoStartMusicCheckbox = document.getElementById("music-auto-start");
 
 const loadingScreen = document.querySelector('.loading-screen')
 const historyBtn = document.querySelector('.history-tab-btn')
@@ -63,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const isPomodoro = store.settings.mode === modes.POMODORO
 
-  autoStartCheckbox.disabled = !musicPlayerCheckbox.checked;
+  autoStartMusicCheckbox.disabled = !musicPlayerCheckbox.checked;
   
   evaluateSettingsAppearance(isPomodoro)
   
@@ -132,7 +133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   })
 
   musicPlayerCheckbox.addEventListener("change", () => {
-    autoStartCheckbox.disabled = !musicPlayerCheckbox.checked;
+    autoStartMusicCheckbox.disabled = !musicPlayerCheckbox.checked;
   });
   setTimeout(() => {
     loadingScreen.classList.add('fade-out');
@@ -158,17 +159,27 @@ function evaluateSettingsAppearance(isPomodoro) {
     soundSelects.forEach(soundSelect => {
       soundSelect.disabled = true
     })
+    intervalSelect.disabled = true
+    intervalSelectDiv.classList.add('disabled')
     durationDivs.forEach(durationDiv => {
       durationDiv.querySelector('input').disabled = true
       durationDiv.classList.add('disabled')
+    })
+    autoStartCheckbox.forEach(checkbox => {
+      checkbox.disabled = true
     })
   }else {
     soundSelects.forEach(soundSelect => {
       soundSelect.disabled = false
     })
+    intervalSelect.disabled = false
+    intervalSelectDiv.classList.remove('disabled')
     durationDivs.forEach(durationDiv => {
       durationDiv.querySelector('input').disabled = false
       durationDiv.classList.remove('disabled')
+    })
+    autoStartCheckbox.forEach(checkbox => {
+      checkbox.disabled = false
     })
   }
   notificationCheckboxes.forEach((notificationCheckbox, index) => {
