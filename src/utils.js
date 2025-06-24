@@ -185,7 +185,7 @@ export async function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
       await chrome.notifications.create(
         notificationId,
         {
-          iconUrl:"../assets/cat.png",
+          iconUrl:"/cat.png",
           message:"Take a " + nextTimer,
           title:"Break Time!",
           type:"basic",
@@ -213,7 +213,7 @@ export async function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
       await chrome.notifications.create(
         notificationId,
         {
-          iconUrl:"../assets/cat.png",
+          iconUrl:"/cat.png",
           message:"Start Focusing Again",
           title:"FOCUS!",
           type:"basic",
@@ -241,7 +241,7 @@ export async function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
       await chrome.notifications.create(
         notificationId,
         {
-          iconUrl:"../assets/cat.png",
+          iconUrl:"/cat.png",
           message:"Good work you completed a set.",
           title:"Well Done!",
           type:"basic",
@@ -293,7 +293,7 @@ export async function createNewTabForTimers(notify=true, openNewTab=true) {
   const res = await getSessionStorage(NEWTABTIMERIDKEY)
   async function callback() {
     if (chrome.runtime.lastError) {
-      await chrome.tabs.create({url:"modules/newTab/over.html", active: true}, async function(tab){
+      await chrome.tabs.create({url:"src/newTab/over.html", active: true}, async function(tab){
         await setSessionStorage({[NEWTABTIMERIDKEY]: tab.id})
         if(notify) {
           await chrome.storage.session.set({notificationTriggered:true})
@@ -320,7 +320,7 @@ export async function createNewTabForTimers(notify=true, openNewTab=true) {
     if(res[NEWTABTIMERIDKEY]) {
       await chrome.tabs.get(res[NEWTABTIMERIDKEY],callback);
     }else {
-      await chrome.tabs.create({url:"modules/newTab/over.html", active: true}, async function(tab){
+      await chrome.tabs.create({url:"src/newTab/over.html", active: true}, async function(tab){
         await setSessionStorage({[NEWTABTIMERIDKEY]: tab.id})
         if(notify) {
           await chrome.storage.session.set({notificationTriggered:true})
@@ -339,13 +339,13 @@ export async function createNewTabForSettings() {
   if(res[NEWTABSETTINGSIDKEY]) {
     await chrome.tabs.get(res[NEWTABSETTINGSIDKEY],callback);
   }else {
-    await chrome.tabs.create({url:"modules/settings/settings.html", active: true}, async function(tab){
+    await chrome.tabs.create({url:"src/settings/settings.html", active: true}, async function(tab){
       await setSessionStorage({[NEWTABSETTINGSIDKEY]: tab.id})
     })
   }
   async function callback() {
     if (chrome.runtime.lastError) {
-      await chrome.tabs.create({url:"modules/settings/settings.html", active: true}, async function(tab){
+      await chrome.tabs.create({url:"src/settings/settings.html", active: true}, async function(tab){
         await setSessionStorage({[NEWTABSETTINGSIDKEY]: tab.id})
       })
     } else {
@@ -360,13 +360,13 @@ export async function createNewTabForHistory() {
   if(res[NEWTABHISTORYIDKEY]) {
     await chrome.tabs.get(res[NEWTABHISTORYIDKEY],callback);
   }else {
-    await chrome.tabs.create({url:"modules/history/history.html", active: true}, async function(tab){
+    await chrome.tabs.create({url:"src/history/history.html", active: true}, async function(tab){
       await setSessionStorage({[NEWTABHISTORYIDKEY]: tab.id})
     })
   }
   async function callback() {
     if (chrome.runtime.lastError) {
-      await chrome.tabs.create({url:"modules/history/history.html", active: true}, async function(tab){
+      await chrome.tabs.create({url:"src/history/history.html", active: true}, async function(tab){
         await setSessionStorage({[NEWTABHISTORYIDKEY]: tab.id})
       })
     } else {
@@ -381,13 +381,13 @@ export async function createNewTabForStreak() {
   if(res[NEWTABSTREAKIDKEY]) {
     await chrome.tabs.get(res[NEWTABSTREAKIDKEY],callback);
   }else {
-    await chrome.tabs.create({url:"modules/streak/streak.html", active: true}, async function(tab){
+    await chrome.tabs.create({url:"src/streak/streak.html", active: true}, async function(tab){
       await setSessionStorage({[NEWTABSTREAKIDKEY]: tab.id})
     })
   }
   async function callback() {
     if (chrome.runtime.lastError) {
-      await chrome.tabs.create({url:"modules/streak/streak.html", active: true}, async function(tab){
+      await chrome.tabs.create({url:"src/streak/streak.html", active: true}, async function(tab){
         await setSessionStorage({[NEWTABSTREAKIDKEY]: tab.id})
       })
     } else {
@@ -724,7 +724,7 @@ export function formatTimeWithLabel(time24) {
 
 async function getMusicData() {
   let musicData = null;
-  await fetch(chrome.runtime.getURL('assets/music.json'))
+  await fetch(chrome.runtime.getURL('/music.json'))
     .then(response => response.json())
     .then(data => {
       musicData = data;
@@ -780,7 +780,7 @@ export async function checkUserActivity() {
 function showReminderNotification() {
   chrome.notifications.create("userReminder", {
     type: "basic",
-    iconUrl: "../assets/cat.png",
+    iconUrl: "/cat.png",
     title: "Purrfect Timing Awaits! 🐾",
     message: "Meow! It's been a while since we helped you manage your time. Let's paw-sitively get back on track!",
     priority: 2,
@@ -794,11 +794,11 @@ function showReminderNotification() {
 chrome?.notifications?.onButtonClicked?.addListener(async (notificationId, buttonIndex) => {
   if (notificationId === "userReminder") {
     if (buttonIndex === 0) {
-      await chrome.tabs.create({url:"modules/newTab/over.html", active: true}, async function(tab){
+      await chrome.tabs.create({url:"src/newTab/over.html", active: true}, async function(tab){
         await setSessionStorage({[NEWTABHISTORYIDKEY]: tab.id})
       })
     } else if (buttonIndex === 1) {
-      await chrome.tabs.create({url:"modules/history/history.html", active: true}, async function(tab){
+      await chrome.tabs.create({url:"src/history/history.html", active: true}, async function(tab){
         await setSessionStorage({[NEWTABHISTORYIDKEY]: tab.id})
       })
     }
@@ -807,7 +807,7 @@ chrome?.notifications?.onButtonClicked?.addListener(async (notificationId, butto
 
 chrome?.notifications?.onClicked?.addListener(async (notificationId) => {
   if (notificationId === "userReminder") {
-    await chrome.tabs.create({url:"modules/newTab/over.html", active: true}, async function(tab){
+    await chrome.tabs.create({url:"src/newTab/over.html", active: true}, async function(tab){
       await setSessionStorage({[NEWTABHISTORYIDKEY]: tab.id})
     })
   }
@@ -860,7 +860,7 @@ export async function handleNotificationTone(fromSession=false, sound='Alarm Clo
   
   
   if(stopHere || sound === 'None') return
-  const notificationTone = new Audio(`/assets/audio/${sound}.mp3`)
+  const notificationTone = new Audio(`/audio/${sound}.mp3`)
   notificationTone.play()
   function handleFocusEvent() {
     notificationTone.pause();
@@ -877,7 +877,7 @@ async function ensureOffscreen() {
   if (await chrome.offscreen.hasDocument()) return;
   try {
     await chrome.offscreen.createDocument({
-      url: 'modules/offScreen/offScreen.html',
+      url: 'src/offScreen/offScreen.html',
       reasons: ['AUDIO_PLAYBACK'],
       justification: 'Play audio alert when timer ends',
     });
@@ -1050,4 +1050,17 @@ export async function setTimerInStore(timerToStore, timer=null) {
   if( !timer || (timer && timer % 10 === 0)) {
     await setLocalStorage(timerToStore)
   }
+}
+
+export function getOrCreateAnonymousId() {
+  return new Promise(async (resolve) => {
+    const result = await getLocalStorage(['anonymousId'])
+    if (result.anonymousId) {
+      resolve(result.anonymousId);
+    } else {
+      const newId = crypto.randomUUID();
+      await setLocalStorage({ anonymousId: newId });
+      resolve(newId);
+    }
+  });
 }

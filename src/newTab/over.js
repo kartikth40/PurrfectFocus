@@ -81,11 +81,11 @@ async function init() {
   untilLongBreakCount.innerText = interval - timerCounts + 1
   await handleUntilLongBreakCount(settings, timer.timer)
   if (!isPomodoro) {
-    nextBtn.querySelector('img').src = '../../assets/icons/end.png';
+    nextBtn.querySelector('img').src = '/icons/end.png';
     timerEdit.style.display = 'none'
     mode.innerText = 'Stopwatch Mode'
   }else {
-    nextBtn.querySelector('img').src = '../../assets/icons/next.png';
+    nextBtn.querySelector('img').src = '/icons/next.png';
     mode.innerText = 'Pomodoro Mode'
     timerEdit.style.display = 'block'
   }
@@ -109,7 +109,7 @@ async function init() {
   else removeMusicPlayer()
 
   if(settings.todoList) await initTodoList()
-  
+  chrome.runtime.sendMessage({ type: 'START_SESSION' });
 }
 
 async function initTodoList() {
@@ -318,11 +318,11 @@ function addEventListeners() {
       !timer || timer?.type === FOCUS ? await setFocusOptionForTasks() : await setRestOptionForTasks()
     }
     if(request.switchToStopwatch) {
-      nextBtn.querySelector('img').src = '../../assets/icons/end.png';
+      nextBtn.querySelector('img').src = '/icons/end.png';
       timerEdit.style.display = 'none'
       mode.innerText = 'Stopwatch Mode'
     }else if(request.switchToPomodoro) {
-      nextBtn.querySelector('img').src = '../../assets/icons/next.png';
+      nextBtn.querySelector('img').src = '/icons/next.png';
       mode.innerText = 'Pomodoro Mode'
       timerEdit.style.display = 'block'
     }

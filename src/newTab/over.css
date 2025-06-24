@@ -252,13 +252,13 @@ body.light .timer-tag.simple {
   height: 100%;
 }
 #music-player button#play-pause.play {
-  background: url('../../assets/icons/play.png'), #c8a0ff;
+  background: url('../../public/icons/play.png'), #c8a0ff;
   background-size: cover;
   width: 36px;
   height: 36px;
 }
 #music-player button#play-pause.pause {
-  background: url('../../assets/icons/pause.png'), #b27fff;
+  background: url('../../public/icons/pause.png'), #b27fff;
   background-size: cover;
   width: 36px;
   height: 36px;

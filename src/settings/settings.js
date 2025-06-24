@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         notificationTone.currentTime = 0
       }
       if(e.target.value === 'None') return
-      notificationTone = new Audio(`/assets/audio/${e.target.value}.mp3`)
+      notificationTone = new Audio(`/audio/${e.target.value}.mp3`)
       notificationTone.play()
     })
     soundSelect.addEventListener('blur', async function(e) {

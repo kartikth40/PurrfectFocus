@@ -116,7 +116,7 @@ deleteHistoryBtn.addEventListener('click', async () => {
   }
 })
 userGuideBtn.addEventListener('click', async () => {
-  await chrome.tabs.create({url:"modules/userGuide/userGuide.html", active: true})
+  await chrome.tabs.create({url:"src/userGuide/userGuide.html", active: true})
 })
 deleteDateInput.addEventListener('change', async () => {
   await generateSessionsToDelete()
@@ -751,7 +751,7 @@ async function generateSessionsToDelete() {
 
     if(task !== TASKS.REST) {
       const editIcon = document.createElement("img");
-      editIcon.src = "../../assets/icons/pencil.png"; // Path to the PNG image
+      editIcon.src = "/icons/pencil.png"; // Path to the PNG image
       editIcon.classList.add("edit-icon");
       editIcon.style.cursor = "pointer";
       editIcon.style.marginLeft = "8px";

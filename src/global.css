@@ -353,7 +353,7 @@ input:hover, select:hover {
   border-radius: 150px;
   color: var(--secondary-color-2);
   overflow: hidden;
-  background-image: url('../../assets/cat_sq.png');
+  background-image: url('../../public/cat_sq.png');
   background-size: 15% 15%;
   background-position: center center;
   border: 5px solid var(--secondary-color-2);

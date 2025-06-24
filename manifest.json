@@ -4,26 +4,26 @@
     "description": "Purrfect Pomodoro Timer",
     "permissions": ["storage", "notifications", "alarms", "offscreen"],
     "background": {
-      "service_worker": "modules/background.js",
+      "service_worker": "public/background.js",
       "type": "module"
     },
     "action": {
       "default_icon": {
-        "16": "assets/cat.png",
-        "24": "assets/cat.png",
-        "32": "assets/cat.png",
-        "48": "assets/cat.png",
-        "128": "assets/cat.png"
+        "16": "/cat.png",
+        "24": "/cat.png",
+        "32": "/cat.png",
+        "48": "/cat.png",
+        "128": "/cat.png"
       },
       "default_title": "Purrfect Pomodoro Timer",
-      "default_popup": "modules/popup/popup.html"
+      "default_popup": "src/popup/popup.html"
     },
     "icons": {
-        "16": "assets/cat.png",
-        "24": "assets/cat.png",
-        "32": "assets/cat.png",
-        "48": "assets/cat.png",
-        "128": "assets/cat.png"
+        "16": "/cat.png",
+        "24": "/cat.png",
+        "32": "/cat.png",
+        "48": "/cat.png",
+        "128": "/cat.png"
     },
     "manifest_version": 3
 }

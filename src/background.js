@@ -14,7 +14,8 @@ import {
   getCurrentTimeString,
   checkUserActivity,
   getValidTask,
-  setSessionStorage} from "./utils.js"
+  setSessionStorage,
+  getOrCreateAnonymousId} from "./utils.js"
 import {
   PLAY,
   PAUSE,
@@ -33,14 +34,30 @@ import {
  } from "./constants.js"
 import { CONFIG } from "./config.js";
 
+import posthog from 'posthog-js';
+
+let sessionActive = false;
+let sessionTimeout = null;
+
+const initPostHog = getOrCreateAnonymousId().then((anonymousId) => {
+  posthog.init(CONFIG.POSTHOG_API_KEY, {
+    api_host: 'https://us.i.posthog.com'
+  });
+  posthog.identify(anonymousId);
+  return posthog;
+});
+
 let intervalId = createState(0)
 const print = printer()
 
 
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === "install") {
-    await chrome.tabs.create({url:"modules/userGuide/userGuide.html", active: true})
+    await chrome.tabs.create({url:"src/userGuide/userGuide.html", active: true})
     await setLocalStorage({[TASKSALIASKEY]: TASKS_ALIAS})
+    initPostHog.then((ph) => {
+      ph.capture('extension_installed');
+    });
   }
   else if(details.reason === "update") {
     const tasksAliasObj = await getLocalStorage(TASKSALIASKEY)
@@ -48,6 +65,12 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     if(Object.keys(tasksAlias).length === 0) {
       await setLocalStorage({[TASKSALIASKEY]: TASKS_ALIAS})
     }
+    
+    initPostHog.then((ph) => {
+      ph.capture('extension_updated', {
+      previousVersion: details.previousVersion
+    });
+    });
   }
   await initBackgroundJs();
   storageChangesLogger();
@@ -157,6 +180,9 @@ async function resetCurrentTimer() {
 chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
   if (request.startTimer) {
     await startActualTimer(request?.timer)
+    initPostHog.then((ph) => {
+      ph.capture('timer_started');
+    });
   }
   else if(request.pauseTimer) {
     await pauseActualTimer(request?.timer)
@@ -173,6 +199,9 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
     }catch (e) {
       console.warn(e);
     }
+    initPostHog.then((ph) => {
+      ph.capture('timer_stopped');
+    });
   }
   else if(request.resetCurrentTimer) {
     await resetCurrentTimer()
@@ -194,6 +223,9 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
     }catch (e) {
       console.warn(e);
   }
+  }
+  if (request.type === 'START_SESSION') {
+    startSession();
   }
 })
 
@@ -406,9 +438,31 @@ const setNextTimer = async (timerEnds=false, shouldStopWatchEnd=false) => {
   if(isPomodoro && timerEnds) {
     await createNotification(prevTimer, nextTimer)
   }
-  if(settingsObj?.settings?.shortBreak?.autoStart 
-    || settingsObj?.settings?.longBreak?.autoStart 
-    || settingsObj?.settings?.focus?.autoStart) {
-    await startActualTimer(timerToStore.timer)
+  const nextType = timerToStore?.[TIMERKEY]?.type;
+  if (settingsObj?.settings?.mode === modes.POMODORO && (
+    (nextType === FOCUS && settingsObj?.settings?.focus?.autoStart) ||
+    (nextType === SHORTBREAK && settingsObj?.settings?.shortBreak?.autoStart) ||
+    (nextType === LONGBREAK && settingsObj?.settings?.longBreak?.autoStart))
+  ) {
+    await startActualTimer(timerToStore[TIMERKEY]);
   }
+}
+
+
+function startSession() {
+  if (!sessionActive) {
+    initPostHog.then((ph) => {
+      ph.capture('session_started');
+    });
+    sessionActive = true;
+  }
+
+  // Reset timeout: if user is inactive for 10 mins, end session
+  clearTimeout(sessionTimeout);
+  sessionTimeout = setTimeout(() => {
+    initPostHog.then((ph) => {
+      ph.capture('session_ended');
+    });
+    sessionActive = false;
+  }, 10 * 60 * 1000); // 10 mins of inactivity
 }

@@ -164,11 +164,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   let settings = store.settings
   const isPomodoro = settings.mode === modes.POMODORO
   if (!isPomodoro) {
-    nextBtn.querySelector('img').src = '../../assets/icons/end.png';
+    nextBtn.querySelector('img').src = '/icons/end.png';
     timerEdit.style.display = 'none'
     mode.innerText = 'Stopwatch Mode'
   }else {
-    nextBtn.querySelector('img').src = '../../assets/icons/next.png';
+    nextBtn.querySelector('img').src = '/icons/next.png';
     mode.innerText = 'Pomodoro Mode'
     timerEdit.style.display = 'block'
   }
@@ -360,6 +360,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               "*It will reset the current timer.\nIf any."
             );
       })
+      chrome.runtime.sendMessage({ type: 'START_SESSION' });
 })
 
 async function nextTimer() {
@@ -447,7 +448,7 @@ const initiateTimer = async () => {
 }
 
 if(showSurvey) {
-  pollBtn.classList.add('active')
+  pollBtn?.classList?.add('active')
   const votePoll = document?.getElementById("votePoll")
   if(votePoll) {
       votePoll.innerText = CONFIG.POLL_TITLE
@@ -456,7 +457,7 @@ if(showSurvey) {
     });
   }
 }else {
-  pollBtn.classList.remove('active')
+  pollBtn?.classList?.remove('active')
 }
 
 async function setRestOptionForTasks() {

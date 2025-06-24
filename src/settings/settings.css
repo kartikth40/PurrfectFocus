@@ -445,6 +445,12 @@ label {
   border-radius: 10px;
   backdrop-filter: blur(2px);
   color: var(--secondary-color-1);
-  border: 2px dashed var(--primary-color);
+  border: 1px dashed var(--secondary-color-2);
+  background-color: rgba(255, 255, 255, 0.1);
   font-size: .7em;
+}
+.light .note {
+  background-color: var(--secondary-color-2);
+  color: black;
+  border: 1px dashed black;
 }

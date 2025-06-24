@@ -1,0 +1,25 @@
+{
+  "name": "purrfect-focus",
+  "version": "1.0.0",
+  "description": "Purrfect Pomodoro Timer: Productivity & Time Management",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "watch": "nodemon --watch src --watch public --ext js,ts,html,css --exec \"npm run build\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "posthog-js": "^1.255.1"
+  },
+  "devDependencies": {
+    "cpx": "^1.5.0",
+    "nodemon": "^3.1.10",
+    "vite": "^6.3.5",
+    "vite-plugin-static-copy": "^3.0.2"
+  }
+}
