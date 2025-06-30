@@ -398,7 +398,7 @@ label {
   align-items: center;
 }
 
-.open-new-tab, .todo-list {
+.open-new-tab, .daily-journal-list {
   display: flex;
   align-items: center;
   margin-bottom: 5px;

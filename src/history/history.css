@@ -405,7 +405,7 @@ p{
   background-color: #00000009;
 }
 
-.calendar-box::after {
+.calendar-box::after, .calendar-box::before {
   pointer-events: none;
   opacity: 0;
   transform: scale(0);
@@ -436,12 +436,36 @@ p{
 .calendar-box:hover::after{
   opacity: 1;
   transform: scale(1);
+  top: unset;
+  left: 15px;
+  bottom: 10px;
+}
+.calendar-box.has-journal:hover::before{
+  opacity: 1;
+  transform: scale(1);
   top: 15px;
   left: 15px;
+  content: "Click to open this day's Journal";
+  border-radius: 10px;
+  background-color: var(--primary-color-2);
+  border: 1px solid var(--secondary-color-2);
+  color: var(--secondary-color-4);
+  font-weight: bold;
 }
-.light .calendar-box:hover::after{
+.light .calendar-box:hover::after, .light .calendar-box:hover::before{
   background-color: var(--primary-color-4);
   color: var(--primary-color);
+}
+
+.calendar-box.has-journal {
+  cursor: pointer;
+  box-shadow: inset 0 -2px 0 var(--secondary-color-2);
+  border: 1px solid var(--secondary-color-2);
+}
+
+.light .calendar-box.has-journal {
+  box-shadow: inset 0 -2px 0 #00000045;
+  border: 1px solid #00000045;
 }
 
 .calendar-legend {
@@ -862,4 +886,65 @@ footer {
 .sessions-table .edit-icon {
   width: 12px;
   height: 12px;
+}
+
+.journal-list-bg {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  backdrop-filter: blur(5px);
+  background-color: rgba(0, 0, 0, 0.5);
+
+  &.show {
+    display: block;
+  }
+  & #daily-journal-list-container {
+    width: max-content;
+    max-width: 50vw;
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    & .add-btn:disabled, & .dlt-btn:disabled, & .journal-checkbox:disabled{
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    & .cross-btn {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 20px;
+        height: 20px;
+        border: none;
+        background-color: unset;
+        cursor: pointer;
+        background-color: var(--secondary-color-2);
+        border-radius: 3px;
+        cursor: pointer;
+      }
+
+
+      & .cross-btn::after, & .cross-btn::before {
+        content: '';
+        position: absolute;
+        width: 80%;
+        height: 3px;
+        left:50%;
+        top:50%;
+        transform: translate(-50%, -50%) rotate(45deg);
+        background-color: black;
+        border-radius: 3px;
+      }
+      & .cross-btn::after{
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
+    
+  }
 }

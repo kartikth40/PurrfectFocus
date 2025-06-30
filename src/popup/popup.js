@@ -361,6 +361,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             );
       })
       chrome.runtime.sendMessage({ type: 'START_SESSION' });
+      chrome.runtime.sendMessage({ type: 'PAGE_VIEW', properties: {
+        currentUrl: window.location.href,
+        pathName: 'popup',
+        screenWidth: window?.screen?.width,
+        screenHeight: window?.screen?.height
+      } });
 })
 
 async function nextTimer() {

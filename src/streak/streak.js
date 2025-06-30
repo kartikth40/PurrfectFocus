@@ -10,6 +10,12 @@ const streakWeekCheckboxes = document.querySelectorAll('.streak-check')
 
 document.addEventListener('DOMContentLoaded', async () => {
   await init()
+  chrome.runtime.sendMessage({ type: 'PAGE_VIEW', properties: {
+    currentUrl: window.location.href,
+    pathName: 'streak',
+    screenWidth: window?.screen?.width,
+    screenHeight: window?.screen?.height
+  } });
 })
 
 

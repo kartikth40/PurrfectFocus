@@ -59,18 +59,28 @@ chrome.runtime.onInstalled.addListener(async (details) => {
       ph.capture('extension_installed');
     });
   }
-  else if(details.reason === "update") {
-    const tasksAliasObj = await getLocalStorage(TASKSALIASKEY)
-    const tasksAlias = tasksAliasObj[TASKSALIASKEY] || {}
-    if(Object.keys(tasksAlias).length === 0) {
-      await setLocalStorage({[TASKSALIASKEY]: TASKS_ALIAS})
+  else if (details.reason === "update") {
+    const thisVersion = chrome.runtime.getManifest().version;
+    const prevVersion = details.previousVersion;
+
+    // ✅ Only run update logic if the version actually changed
+    if (prevVersion && prevVersion !== thisVersion) {
+      // Initialize TASKSALIAS if empty
+      const tasksAliasObj = await getLocalStorage(TASKSALIASKEY);
+      const tasksAlias = tasksAliasObj[TASKSALIASKEY] || {};
+
+      if (Object.keys(tasksAlias).length === 0) {
+        await setLocalStorage({ [TASKSALIASKEY]: TASKS_ALIAS });
+      }
+
+      // Fire the update event to PostHog with both versions for clarity
+      initPostHog.then((ph) => {
+        ph.capture('extension_updated', {
+          previousVersion: prevVersion,
+          currentVersion: thisVersion
+        });
+      });
     }
-    
-    initPostHog.then((ph) => {
-      ph.capture('extension_updated', {
-      previousVersion: details.previousVersion
-    });
-    });
   }
   await initBackgroundJs();
   storageChangesLogger();
@@ -227,6 +237,46 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
   if (request.type === 'START_SESSION') {
     startSession();
   }
+  if (request.type === 'DAILY_JOURNAL_ADDED') {
+    initPostHog.then((ph) => {
+        ph.capture('daily_journal_added', {
+          item: request.response.trim()
+        });
+      });
+  }
+  if (request.type === 'MUSIC_PLAYING') {
+    initPostHog.then((ph) => {
+        ph.capture('playing_music', {
+          music_track: request.track
+        });
+      });
+  }
+  if (request.type === 'EXPORT_DATA') {
+    initPostHog.then((ph) => {
+        ph.capture('data_exported');
+      });
+  }
+  if (request.type === 'IMPORT_DATA') {
+    initPostHog.then((ph) => {
+        ph.capture('data_imported');
+      });
+  }
+  if (request.type === 'DELETE_ALL_DATA') {
+    initPostHog.then((ph) => {
+        ph.capture('all_data_deleted');
+      });
+  }
+  if (request.type === 'PAGE_VIEW') {
+    initPostHog.then((ph) => {
+      ph.capture('$pageview', {
+        $current_url: request?.properties?.currentUrl,
+        $pathname: request?.properties?.pathName,
+        $screen_width: request?.properties?.screenWidth,
+        $screen_height: request?.properties?.screenHeight,
+        extension_version: chrome.runtime.getManifest().version
+      });
+    })
+  }
 })
 
 const startTimer = async (chrome, timer) => {
@@ -265,6 +315,9 @@ const startTimer = async (chrome, timer) => {
         }
       }
       await setTimerInStore(timerToStore, timer)
+      if (timer % (5 * 60) === 0 && timer !== 0) {
+        startSession();
+      }
     }
   }, 1000)
   print.helper('INTERVAL-ID -> ' + intId)

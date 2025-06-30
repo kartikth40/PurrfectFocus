@@ -477,7 +477,7 @@ export const setNewSettings = async (formValues) => {
       musicPlayerAutoStart:formValues.musicPlayerAutoStart === 'on',
       openNewTab:formValues.openNewTabOnCompletion === 'on',
       mode: formValues.timerModeSelect ?? modes.POMODORO,
-      todoList: formValues.todoListCheckbox === 'on'
+      dailyJournal: formValues.dailyJournalListCheckbox === 'on'
     }
   }
 }
@@ -505,7 +505,7 @@ export const setFormValues = (data) => {
   document.querySelector('#music-auto-start').checked = settings.musicPlayerAutoStart
   document.querySelector('#open-new-tab').checked = settings.openNewTab
   document.querySelector('#timer-mode-select').value = settings.mode
-  document.querySelector('#todo-list').checked = settings.todoList
+  document.querySelector('#daily-journal-list').checked = settings.dailyJournal
 }
 
 export function changeTextTo(element, text) {
@@ -749,6 +749,7 @@ export async function playMusic(category, index=null) {
     });
     audio.volume = newSlider.value;
     audio.play();
+    chrome.runtime.sendMessage({ type: 'MUSIC_PLAYING', track: base_path + audioFiles[validIndex]});
     return {audio , index: validIndex, title: audioFiles[validIndex].split('.')[0]};
   }
   else if (audioFiles && audioFiles.length > 0) {
@@ -964,6 +965,7 @@ export function showCustomAlert(title, message, callback) {
   const alertMessage = document.getElementById("alertMessage");
   const alertTitle = document.getElementById("alertTitle");
   const alertOk = document.getElementById("alertOk");
+  const alertNo = document.getElementById("alertNo");
 
   if (!title) alertTitle.style.display = "none";
   else alertTitle.innerHTML = title;
@@ -972,9 +974,13 @@ export function showCustomAlert(title, message, callback) {
   modal.style.display = "flex";
 
   function handleKeyDown(event) {
-    if (event.key === "Enter" || event.key === "Escape") {
+    if (event.key === "Enter") {
       event.preventDefault();
       alertOk.click();
+    }
+    else if (event.key === "Escape") {
+      event.preventDefault();
+      alertNo.click();
     }
   }
 
@@ -982,6 +988,11 @@ export function showCustomAlert(title, message, callback) {
     modal.style.display = "none";
     document.removeEventListener("keydown", handleKeyDown);
     callback(true);
+  };
+  alertNo.onclick = function () {
+    modal.style.display = "none";
+    document.removeEventListener("keydown", handleKeyDown);
+    callback(false);
   };
   setTimeout(() => document.addEventListener("keydown", handleKeyDown), 100);
 }

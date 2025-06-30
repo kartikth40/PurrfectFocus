@@ -151,6 +151,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const manifestData = chrome.runtime.getManifest();
   versionTag.textContent = `~ v${manifestData.version}`;
+  chrome.runtime.sendMessage({ type: 'START_SESSION' });
+  chrome.runtime.sendMessage({ type: 'PAGE_VIEW', properties: {
+    currentUrl: window.location.href,
+    pathName: 'settings',
+    screenWidth: window?.screen?.width,
+    screenHeight: window?.screen?.height
+  } });
 })
 
 

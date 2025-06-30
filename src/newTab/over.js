@@ -1,5 +1,5 @@
 import { CONFIG } from "../config.js"
-import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE, TASKS, TASKSALIASKEY, CURRENTTASKKEY, showSurvey, modes, TOASTIFY, TODOLISTKEY } from "../constants.js"
+import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE, TASKS, TASKSALIASKEY, CURRENTTASKKEY, showSurvey, modes, TOASTIFY, DAILYJOURNALLISTKEY } from "../constants.js"
 import { changeTextTo, createNewTabForHistory, createNewTabForSettings, createNewTabForStreak, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setTimerInStore, timerDuration, getValidTask, setSyncStorage, showCustomAlert, showCustomPrompt, showToast } from "../utils.js"
 
 const container = document.querySelector('.container')
@@ -23,9 +23,9 @@ const timerEdit = document.querySelector('.timer-edit')
 const pollBtn = document?.querySelector(".poll-btn")
 const loadingScreen = document.querySelector('.loading-screen')
 const mode = document.querySelector('.mode')
-const todoListCotainer = document.querySelector('#to-do-list-container')
-const todoListSubContainer = document.querySelector('.to-do-list');
-const todoAddBtn = document.querySelector('.add-btn')
+const dailyJournalListCotainer = document.querySelector('#daily-journal-list-container')
+const dailyJournalListSubContainer = document.querySelector('.daily-journal-list');
+const dailyJournalAddBtn = document.querySelector('.add-btn')
 const supportBtn = document.querySelector('.support-tab-btn')
 
 supportBtn.href = CONFIG.SUPPORT_URL
@@ -107,37 +107,81 @@ async function init() {
   await setLocalStorage({ lastActive: Date.now() })
   if(settings.musicPlayer && !musicPlayerInitialized) setupMusicPlayer()
   else removeMusicPlayer()
-
-  if(settings.todoList) await initTodoList()
   chrome.runtime.sendMessage({ type: 'START_SESSION' });
+  chrome.runtime.sendMessage({ type: 'PAGE_VIEW', properties: {
+    currentUrl: window.location.href,
+    pathName: 'over',
+    screenWidth: window?.screen?.width,
+    screenHeight: window?.screen?.height
+  } });
 }
 
-async function initTodoList() {
-  todoListCotainer.classList.add('show')
-  const todoListObj = await getLocalStorage(TODOLISTKEY);
-  const todoList = todoListObj[TODOLISTKEY] || [];
+async function initDailyJournal() {
+  dailyJournalListCotainer.classList.add('show')
+  const currentDate = new Date();
+  const year = currentDate.getFullYear().toString();
+  const monthDay = `${currentDate.getDate()}-${currentDate.getMonth() + 1}`;
+  const history = await getLocalStorage(year);
+  let yearObj = history[year] || {};
+  let dayObj = yearObj[monthDay] || [{}];
+  let journalList = dayObj[0][DAILYJOURNALLISTKEY] || [];
 
-  todoListSubContainer.innerHTML = todoList
-    .map((todo, index) => `
+  dailyJournalListSubContainer.innerHTML = journalList
+    .map((dailyJournal, index) => `
       <li>
-        <input type="checkbox" id="todo-${index}" data-index="${index}" ${todo.completed ? 'checked' : ''}>
-        <label for="todo-${index}">${todo.item}</label>
+        <input type="checkbox" id="dailyJournal-${index}" data-index="${index}" ${dailyJournal.completed ? 'checked' : ''}>
+        <label for="dailyJournal-${index}">${dailyJournal.item}</label>
         <button class='dlt-btn' data-index="${index}"></button>
       </li>
     `)
     .join('');
 
-  todoListSubContainer.querySelectorAll('.dlt-btn').forEach(button => {
+  dailyJournalListSubContainer.querySelectorAll('.dlt-btn').forEach(button => {
     button.addEventListener('click', async (event) => {
-      const index = event.target.dataset.index;
-      const todoListObj = await getLocalStorage(TODOLISTKEY);
-      const todoList = todoListObj[TODOLISTKEY] || [];
-      const updatedTodoList = todoList.filter((_, i) => i !== parseInt(index, 10));
-      await setLocalStorage({ [TODOLISTKEY]: updatedTodoList });
-      await initTodoList();
+      showCustomAlert('Are you sure you want to delete this item?', 'This action cannot be undone.', async (response) => {
+        if(response) {
+          const idx = event.target.dataset.index;
+          const currentDate = new Date();
+          const year = currentDate.getFullYear().toString();
+          const monthDay = `${currentDate.getDate()}-${currentDate.getMonth() + 1}`;
+          const history = await getLocalStorage(year);
+          let yearObj = history[year] || {};
+          let dayObj = yearObj[monthDay] || [{}];
+          let journalList = dayObj[0][DAILYJOURNALLISTKEY] || [];
+          const updatedDailyJournalList = journalList.filter((_, i) => i !== parseInt(idx, 10));
+          dayObj[0][DAILYJOURNALLISTKEY] = updatedDailyJournalList;
+          yearObj[monthDay] = dayObj;
+          history[year] = yearObj;
+          await setLocalStorage({[year]: history[year]});
+          await initDailyJournal();
+        }
+      })
     });
   });
 }
+
+dailyJournalListSubContainer.addEventListener('change', async (event) => {
+  if (event.target.tagName === 'INPUT' && event.target.type === 'checkbox') {
+    const idx = event.target.dataset.index;
+    // --- fetch and update using correct path ---
+    const currentDate = new Date();
+    const year = currentDate.getFullYear().toString();
+    const monthDay = `${currentDate.getDate()}-${currentDate.getMonth() + 1}`;
+    const history = await getLocalStorage(year);
+    let yearObj = history[year] || {};
+    let dayObj = yearObj[monthDay] || [{}];
+  let journalList = dayObj[0][DAILYJOURNALLISTKEY] || [];
+    const updatedTodoList = [...journalList];
+    updatedTodoList[idx] = {
+      ...updatedTodoList[idx],
+      completed: event.target.checked,
+    };
+    dayObj[0][DAILYJOURNALLISTKEY] = updatedTodoList;
+    yearObj[monthDay] = dayObj;
+    history[year] = yearObj;
+    await setLocalStorage({[year]: history[year]});
+  }
+});
 
 function setupMusicPlayer() {
   document.getElementById("music-player").classList.add('show')
@@ -476,36 +520,32 @@ function addEventListeners() {
     );
   })
 
-  todoAddBtn.addEventListener('click', async ()=> {
+  dailyJournalAddBtn.addEventListener('click', async ()=> {
     showCustomPrompt(
-      "Add a todo item!",
-      `Please enter your new todo item below 👇`,
-      'todo',
+      "Add a daily journal item!",
+      `What would you like to add to your daily journal?`,
+      '',
       async (response) => {
         if (response !== null && response.trim() !== "") {
-          const todoListObj = await getLocalStorage(TODOLISTKEY);
-          const todoList = todoListObj[TODOLISTKEY] || [];
-          todoList.push({ item: response.trim(), completed: false });
-          await setLocalStorage({ [TODOLISTKEY]: todoList });
-          await initTodoList()
+          const currentDate = new Date();
+          const year = currentDate.getFullYear().toString();
+          const monthDay = `${currentDate.getDate()}-${currentDate.getMonth() + 1}`;
+          const history = await getLocalStorage(year);
+          let yearObj = history[year] || {};
+          let dayObj = yearObj[monthDay] || [{}];
+          let journalList = dayObj[0][DAILYJOURNALLISTKEY] || [];
+          journalList.push({ id: Date.now() + Math.random().toString(36), item: response.trim(), completed: false });
+
+          dayObj[0][DAILYJOURNALLISTKEY] = journalList;
+          yearObj[monthDay] = dayObj;
+          history[year] = yearObj;
+          await setLocalStorage({[year]: history[year]});
+          await initDailyJournal();
+          chrome.runtime.sendMessage({ type: 'DAILY_JOURNAL_ADDED', response: response.trim() });
         }
       }
     );
   })
-
-  todoListSubContainer.addEventListener('change', async (event) => {
-    if (event.target.tagName === 'INPUT' && event.target.type === 'checkbox') {
-      const todoListObj = await getLocalStorage(TODOLISTKEY);
-      const todoList = todoListObj[TODOLISTKEY] || [];
-      const index = event.target.dataset.index;
-      const updatedTodoList = [...todoList];
-      updatedTodoList[index] = {
-        ...updatedTodoList[index],
-        completed: event.target.checked,
-      };
-      await setLocalStorage({ [TODOLISTKEY]: updatedTodoList });
-    }
-  });
 }
 
 async function loadSettings(settings) {
@@ -530,11 +570,11 @@ async function loadSettings(settings) {
   else changeTextTo(timerEle, getTimeString(0, false))
   if(settings.musicPlayer && !musicPlayerInitialized) setupMusicPlayer()
   else removeMusicPlayer()
-  if(settings.todoList) {
-  todoListCotainer.classList.add('show')
-    await initTodoList()
+  if(settings.dailyJournal) {
+  dailyJournalListCotainer.classList.add('show')
+    await initDailyJournal()
   } else {
-    todoListCotainer.classList.remove('show')
+    dailyJournalListCotainer.classList.remove('show')
   }
 }
 const initiateTimer = async () => {

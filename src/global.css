@@ -686,12 +686,14 @@ body.light .poll-btn button {
   text-align: center;
   width: 250px;
   box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.5);
+  z-index: 100;
 }
 
 #alertTitle, #promptTitle {
   text-decoration: none;
   border: none;
   color: var(--primary-color);
+  width: 100%;
 }
 
 .modal input {
@@ -749,7 +751,7 @@ body.light .poll-btn button {
   color: black;
 }
 
-#promptCancel {
+#promptCancel, #alertNo {
   background: #ffc4c0;
   border: 2px solid #c00d00;
   width: 100%;
@@ -1033,4 +1035,194 @@ body.light .poll-btn button {
 @keyframes fadeout {
   from { opacity: 1; visibility: visible; transform: translateY(-30px) skew(0) rotate(0); }
   to { opacity: 0; visibility: hidden; transform: translateY(100px) skew(20deg) rotate(30deg); }
+}
+
+#daily-journal-list-container {
+  width: 230px;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: linear-gradient(45deg, var(--secondary-color-1), var(--secondary-color-2));
+  box-shadow: inset 0 0 10px 0 var(--secondary-color-2);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10px 20px;
+  z-index: 10;
+  border-radius: 5px;
+  border: 1px solid #000;
+  overflow: hidden;
+
+  display: none;
+  &.show {
+    display: inline-block;
+  }
+
+  & h2 {
+    color: #000;
+    border-bottom: none;
+    padding-bottom: 0px;
+    box-shadow: inset 0 0 5px 0 var(--secondary-color-2), 0 0 5px 0 var(--secondary-color-1); 
+    padding: 10px;
+    border-radius: 5px;
+  }
+
+  & ul {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    margin:0;
+    padding: 0;
+    max-height: 300px;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 5px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: var(--secondary-color-2);
+    }
+    &::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-color);
+    }
+    &::-webkit-scrollbar-track {
+      background: var(--secondary-color-1);
+    }
+
+    & li {
+      position: relative;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      padding-right: 20px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 5px;
+      word-break: break-word;
+      & label {
+        width: 100%;
+        display: inline-block;
+      }
+      & input[type="checkbox"] {
+        width: 15px;
+        height: 15px;
+      }
+      & input[type="checkbox"]:checked + label {
+        text-decoration: line-through;
+        color: #000;
+      }
+
+      &:hover{
+        background-color: var(--secondary-color-1);
+        & .dlt-btn {
+          pointer-events: all;
+          opacity: 1;
+        }
+      }
+      & .dlt-btn {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 20px;
+        height: 20px;
+        border: none;
+        background-color: unset;
+        cursor: pointer;
+        pointer-events: none;
+        opacity: 0;
+      }
+
+
+      & .dlt-btn::after, & .dlt-btn::before {
+        content: '';
+        position: absolute;
+        width: 80%;
+        height: 3px;
+        left:50%;
+        top:50%;
+        transform: translate(-50%, -50%) rotate(45deg);
+        z-index: 10;
+        background-color: var(--primary-color);
+        border-radius: 3px;
+      }
+      & .dlt-btn::after{
+        transform: translate(-50%, -50%) rotate(-45deg);
+      }
+    }
+  }
+  & .punches {
+    position: absolute;
+    top:-8px;
+    left: 50%;
+    width: 100%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+
+    & .punch {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background-color: #000;
+      margin-left: 5px;
+      border-radius: 30%;
+    }
+  }
+}
+
+.light #daily-journal-list-container .punch {
+  /* background-color: var(--secondary-color-2); */
+  border: 1px solid #000;
+}
+
+#daily-journal-list-container .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+}
+
+#daily-journal-list-container .add-btn {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--primary-color);
+  background-color: var(--secondary-color-2);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: .25s all;
+  box-shadow:inset 0 0 20px  var(--primary-color), 0 0 40px  var(--primary-color);
+
+  &:hover {
+    border-color: none;
+    border-radius: 30%;
+    &::before, &::after {
+      width: 80%;
+    }
+  }
+  &:active {
+    box-shadow:inset 0 0 20px  var(--primary-color), 0 0 20px  var(--primary-color);
+    transform: scale(.9);
+  }
+
+  &::before, &::after {
+    content: '';
+    position: absolute;
+    left:50%;
+    top:50%;
+    width: 70%;
+    height: 7px;
+    background-color: var(--secondary-color-1);
+    transform: translate(-50%, -50%);
+    border-radius: 2px;
+    transition: .25s all;
+    border: 1px solid var(--secondary-color-2);
+  }
+  &::after {
+    transform: translate(-48%, -50%) rotate(90deg);
+  }
 }

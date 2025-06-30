@@ -15,9 +15,10 @@ import {
   showCustomPrompt,
   getFocusOptionsForTasks,
   createNewTabForSettings,
-  createNewTabForTimers
+  createNewTabForTimers,
+  showCustomAlert
 } from '../utils.js'
-import { SETTINGSKEY, LIGHTTHEME, TASKS, chartColors, chartBorderColors, FOCUS, DARKTHEME, TASKSALIASKEY, TIMERKEY, modes } from '../constants.js'
+import { SETTINGSKEY, LIGHTTHEME, TASKS, chartColors, chartBorderColors, FOCUS, DARKTHEME, TASKSALIASKEY, TIMERKEY, modes, DAILYJOURNALLISTKEY } from '../constants.js'
 import { CONFIG } from '../config.js'
 
 const container = document.querySelector('.container')
@@ -113,6 +114,7 @@ deleteHistoryBtn.addEventListener('click', async () => {
   if(confirm("Are you sure you wanna delete all of your history for this year?")) {
     await clearHistory()
     await init()
+    chrome.runtime.sendMessage({ type: 'DELETE_ALL_DATA' });
   }
 })
 userGuideBtn.addEventListener('click', async () => {
@@ -162,10 +164,13 @@ deleteSomeHistoryBtn.addEventListener('click', async () => {
 })
 exportDataBtn.addEventListener('click', async () => {
   await exportData()
+  chrome.runtime.sendMessage({ type: 'EXPORT_DATA' });
 })
 
 importDataBtn.addEventListener('click', async () => {
   await importData()
+  chrome.runtime.sendMessage({ type: 'IMPORT_DATA' });
+  location.reload()
 })
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -242,7 +247,7 @@ async function init() {
         let focus = 0
         let breaks = 0
         data.forEach((d) => {
-          if (d.type.toLowerCase() === FOCUS.toLowerCase()) focus += d.duration
+          if (d?.type?.toLowerCase() === FOCUS.toLowerCase()) focus += d.duration
           else breaks += d.duration
           const task = getValidTask(d.task, d.type)
           weeklyTasks[task][i-1] += d.duration
@@ -306,7 +311,7 @@ async function init() {
         let focus = 0
         let breaks = 0
         data.forEach((d) => {
-          if (d.type.toLowerCase() === FOCUS.toLowerCase()) focus += d.duration
+          if (d?.type?.toLowerCase() === FOCUS.toLowerCase()) focus += d.duration
           else breaks += d.duration
           const task = getValidTask(d.task, d.type)
           monthlyTasks[task] += d.duration
@@ -354,7 +359,7 @@ async function init() {
         let focus = 0
         let breaks = 0
         data.forEach((d) => {
-          if (d.type.toLowerCase() === FOCUS.toLowerCase()) focus += d.duration
+          if (d?.type?.toLowerCase() === FOCUS.toLowerCase()) focus += d.duration
           else breaks += d.duration
         })
 
@@ -384,6 +389,13 @@ async function init() {
   timerBtn.addEventListener('click', async () => {
       await createNewTabForTimers(false, true)
     })
+  chrome.runtime.sendMessage({ type: 'START_SESSION' });
+  chrome.runtime.sendMessage({ type: 'PAGE_VIEW', properties: {
+    currentUrl: window?.location?.href,
+    pathName: 'history',
+    screenWidth: window?.screen?.width,
+    screenHeight: window?.screen?.height
+  } });
 }
 
 function setBars(data, maxValueOfGraph, range=WEEK, totalDays=7) {
@@ -598,13 +610,14 @@ async function makecalendarGraph(currentYear, currentDate, currentMonth, current
       const currentDateWithMonth = currentDate.getDate()+'-'+(currentDate.getMonth()+1)
       const calendarBox = document.createElement('span')
       calendarBox.classList.add('calendar-box')
+      const data = (his && his[currentDateWithMonth]) ? his[currentDateWithMonth] : []
+      const haveJournal = data[0] && data[0][DAILYJOURNALLISTKEY] && data[0][DAILYJOURNALLISTKEY].length > 0
       if(his && currentDateWithMonth in his) {
-        const data = his[currentDateWithMonth]
         let focus = 0
         let breaks = 0
         let focusCount = 0
         for(const d of data) {
-          if (d.type.toLowerCase() === FOCUS.toLowerCase()) {
+          if (d?.type?.toLowerCase() === FOCUS.toLowerCase()) {
             focus += d.duration
             focusCount++
           }
@@ -627,6 +640,154 @@ async function makecalendarGraph(currentYear, currentDate, currentMonth, current
         calendarBox.setAttribute('data-value', `0 pomodoros on ${formatDateWithOrdinal(currentDate)}`)
         boxes.push({"ele": calendarBox, "focus": 0})
       }
+
+      if(haveJournal) {
+          calendarBox.classList.add('has-journal')
+        }
+      calendarBox.addEventListener('click', async (e) => {
+        
+        // Only allow editing if the date is less than 6 months from today
+        const boxDate = new Date(currentYear, currentMonth - m - 1, i - firstDayOfCurrentMonth);
+        const now = new Date();
+        const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+        const editable = boxDate > sixMonthsAgo;
+        const journalList = data[0] ? data[0][DAILYJOURNALLISTKEY] : []
+          let anyChange = false
+          const journalListContainer = document.querySelector('.journal-list-bg')
+          const dailyJournalListSubContainer = journalListContainer.querySelector('.daily-journal-list');
+          const dailyJournalAddBtn = journalListContainer.querySelector('.add-btn')
+          const dailyJournalDeleteBtns = journalListContainer.querySelectorAll('.dlt-btn')
+          const dailyJournalCheckboxes = journalListContainer.querySelectorAll('.journal-checkbox')
+          const title = journalListContainer.querySelector('#title')
+          title.innerText = `Daily Journal for ${formatDateWithOrdinal(currentDate)}`
+          const crossBtn = document.querySelector('.cross-btn')
+          journalListContainer.classList.add('show');
+          journalListContainer.addEventListener('click', (e) => {
+            if (e.target === journalListContainer) {
+              journalListContainer.classList.remove('show');
+              anyChange && location.reload()
+              
+            }
+          });
+          crossBtn.addEventListener('click', (e) => {
+            journalListContainer.classList.remove('show');
+              anyChange && location.reload()
+          });
+          if(!editable) {
+            dailyJournalAddBtn.disabled = true
+            dailyJournalDeleteBtns.forEach(btn => {
+              btn.disabled = true
+            })
+            dailyJournalCheckboxes.forEach(checkbox => {
+              checkbox.disabled = true
+            })
+          }
+          else {
+            dailyJournalAddBtn.disabled = false
+            dailyJournalDeleteBtns.forEach(btn => {
+              btn.disabled = false
+            })
+            dailyJournalCheckboxes.forEach(checkbox => {
+              checkbox.disabled = false
+            })
+          }
+          dailyJournalAddBtn.addEventListener('click', async ()=> {
+            if(!editable) return
+            showCustomPrompt(
+              "Add a daily journal item!",
+              `What would you like to add to your daily journal?`,
+              '',
+              async (response) => {
+                if (response !== null && response.trim() !== "") {
+                  const year = currentDate.getFullYear().toString();
+                  const monthDay = `${currentDate.getDate()}-${currentDate.getMonth() + 1}`;
+                  const history = await getLocalStorage(year);
+                  let yearObj = history[year] || {};
+                  let dayObj = yearObj[monthDay] || [{}];
+                  let journalList = dayObj[0][DAILYJOURNALLISTKEY] || [];
+                  journalList.push({ id: Date.now() + Math.random().toString(36), item: response.trim(), completed: false });
+        
+                  dayObj[0][DAILYJOURNALLISTKEY] = journalList;
+                  yearObj[monthDay] = dayObj;
+                  history[year] = yearObj;
+                  await setLocalStorage({[year]: history[year]});
+                  initJournal(journalList)
+                  anyChange = true
+                  chrome.runtime.sendMessage({ type: 'DAILY_JOURNAL_ADDED', response: response.trim() });
+                }
+              }
+            );
+          })
+
+          initJournal()
+          function initJournal(newJournalList=null) {
+            const list = (newJournalList ?? journalList ?? []);
+            if (list.length === 0) {
+              dailyJournalListSubContainer.style.display = 'flex'
+              dailyJournalListSubContainer.style.justifyContent = 'center'
+              dailyJournalListSubContainer.style.alignItems = 'center'
+              dailyJournalListSubContainer.innerHTML = `<span style="display: inline-block;opacity:0.6;text-align:center; padding-inline: auto;">You don't have any journals for this day</span>`;
+            } else {
+              dailyJournalListSubContainer.innerHTML = list
+                .map((dailyJournal, index) => `
+                  <li>
+                    <input type="checkbox" class='journal-checkbox' id="dailyJournal-${index}" data-index="${index}" ${dailyJournal.completed ? 'checked' : ''}>
+                    <label for="dailyJournal-${index}">${dailyJournal.item}</label>
+                    <button class='dlt-btn' data-index="${index}"></button>
+                  </li>
+                `)
+                .join('');
+            }
+                
+                dailyJournalListSubContainer.querySelectorAll('.dlt-btn').forEach(button => {
+                  button.addEventListener('click', async (event) => {
+                    showCustomAlert('Are you sure you want to delete this item?', 'This action cannot be undone.', async (response) => {
+                      if(response) {
+                        if(!editable) return
+                        anyChange = true
+                        const idx = event.target.dataset.index;
+                        const year = currentDate.getFullYear().toString();
+                        const monthDay = `${currentDate.getDate()}-${currentDate.getMonth() + 1}`;
+                        const history = await getLocalStorage(year);
+                        let yearObj = history[year] || {};
+                        let dayObj = yearObj[monthDay] || [{}];
+                        let journalList = dayObj[0][DAILYJOURNALLISTKEY] || [];
+                        const updatedDailyJournalList = journalList.filter((_, i) => i !== parseInt(idx, 10));
+                        dayObj[0][DAILYJOURNALLISTKEY] = updatedDailyJournalList;
+                        yearObj[monthDay] = dayObj;
+                        history[year] = yearObj;
+                        await setLocalStorage({[year]: history[year]});
+                        initJournal(updatedDailyJournalList)
+                      }
+                    })
+                  });
+                });
+  
+                dailyJournalListSubContainer.addEventListener('change', async (event) => {
+                  if (event.target.tagName === 'INPUT' && event.target.type === 'checkbox') {
+                    if(!editable) return
+                    anyChange = true
+                    const idx = event.target.dataset.index;
+                    const year = currentDate.getFullYear().toString();
+                    const monthDay = `${currentDate.getDate()}-${currentDate.getMonth() + 1}`;
+                    const history = await getLocalStorage(year);
+                    let yearObj = history[year] || {};
+                    let dayObj = yearObj[monthDay] || [{}];
+                    let journalList = dayObj[0][DAILYJOURNALLISTKEY] || [];
+                    const updatedTodoList = [...journalList];
+                    updatedTodoList[idx] = {
+                      ...updatedTodoList[idx],
+                      completed: event.target.checked,
+                    };
+                    dayObj[0][DAILYJOURNALLISTKEY] = updatedTodoList;
+                    yearObj[monthDay] = dayObj;
+                    history[year] = yearObj;
+                    await setLocalStorage({[year]: history[year]});
+                  }
+                });
+          }
+      });
+      calendarBox.setAttribute('data-date', currentDateWithMonth)
       calendarCol.appendChild(calendarBox)
       if(i%7 == 0 || i === noOfDaysThisMonth) {
         calendarMonthBoxesContainers[index].appendChild(calendarCol)
@@ -684,7 +845,7 @@ async function generateSessionsToDelete() {
   if(!sessions) sessions = []
   const container = document.querySelector(".specific-sessions-container");
   container.innerHTML = "<p style='text-align:center; opacity: 0.5;'>No sessions for the selected date</p>";
-  if(sessions.length === 0) return
+  if(sessions.length === 0 || (sessions.length === 1 && sessions[0]['dailyJournalList'])) return
   container.innerHTML = "";
   const table = document.createElement("table");
   table.className = "sessions-table";

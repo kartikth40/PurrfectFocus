@@ -42,7 +42,7 @@ export const NEWTABSETTINGSIDKEY = 'newTabSettingsId'
 export const NEWTABHISTORYIDKEY = 'newTabHistoryId'
 export const NEWTABSTREAKIDKEY = 'newTabStreakId'
 export const TASKSALIASKEY = 'tasks_alias'
-export const TODOLISTKEY = 'todolist'
+export const DAILYJOURNALLISTKEY = 'dailyJournalList'
 
 // others
 export const showSurvey = true
