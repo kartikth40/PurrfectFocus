@@ -27,7 +27,8 @@ import {
   LASTUPDATEKEY,
   TIMERKEY,
   modes,
-  TOASTIFY} from "./constants.js"
+  TOASTIFY,
+  BLOCKEDLISTKEY} from "./constants.js"
 
 const print = printer()
 
@@ -265,7 +266,7 @@ export async function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
   }
 }
 
-export async function createNewTabForTimers(notify=true, openNewTab=true) {
+export async function createNewTabForTimers(notify=true, openNewTab=true, removeAllOthers=false) {
   let sound = 'Alarm Clock Old'
   let timerObj = await getSessionStorage(TIMERKEY)
   const timer = timerObj[TIMERKEY]
@@ -290,9 +291,28 @@ export async function createNewTabForTimers(notify=true, openNewTab=true) {
   }
     return
   }
+
   const res = await getSessionStorage(NEWTABTIMERIDKEY)
+
   async function callback() {
-    if (chrome.runtime.lastError) {
+    if(removeAllOthers) {
+      await chrome.tabs.query({ active: true, currentWindow: true }, async function (tabs) {
+        const currentTabId = tabs && tabs.length > 0 && tabs[0]?.id;
+        if (currentTabId && res[NEWTABTIMERIDKEY] !== currentTabId) {
+          await setSessionStorage({[NEWTABTIMERIDKEY]: currentTabId})
+          res[NEWTABTIMERIDKEY] && chrome.tabs.remove(res[NEWTABTIMERIDKEY], async function() {
+            try {
+              if (chrome.runtime.lastError) {
+              console.warn("Failed to remove tab:", chrome.runtime.lastError);
+              }
+            } catch (err) {
+              console.error("Error while removing tab:", err);
+            }
+          });
+        }
+      });
+    }
+    else if (chrome.runtime.lastError) {
       await chrome.tabs.create({url:"src/newTab/over.html", active: true}, async function(tab){
         await setSessionStorage({[NEWTABTIMERIDKEY]: tab.id})
         if(notify) {
@@ -319,7 +339,10 @@ export async function createNewTabForTimers(notify=true, openNewTab=true) {
     } 
     if(res[NEWTABTIMERIDKEY]) {
       await chrome.tabs.get(res[NEWTABTIMERIDKEY],callback);
-    }else {
+    }else if(removeAllOthers) {
+      callback()
+    }
+    else {
       await chrome.tabs.create({url:"src/newTab/over.html", active: true}, async function(tab){
         await setSessionStorage({[NEWTABTIMERIDKEY]: tab.id})
         if(notify) {
@@ -477,7 +500,8 @@ export const setNewSettings = async (formValues) => {
       musicPlayerAutoStart:formValues.musicPlayerAutoStart === 'on',
       openNewTab:formValues.openNewTabOnCompletion === 'on',
       mode: formValues.timerModeSelect ?? modes.POMODORO,
-      dailyJournal: formValues.dailyJournalListCheckbox === 'on'
+      dailyJournal: formValues.dailyJournalListCheckbox === 'on',
+      blockSites: formValues.blockSites === 'on'
     }
   }
 }
@@ -506,6 +530,7 @@ export const setFormValues = (data) => {
   document.querySelector('#open-new-tab').checked = settings.openNewTab
   document.querySelector('#timer-mode-select').value = settings.mode
   document.querySelector('#daily-journal-list').checked = settings.dailyJournal
+  document.querySelector('#block-sites').checked = settings.blockSites
 }
 
 export function changeTextTo(element, text) {
@@ -960,12 +985,13 @@ export function showCustomPrompt(title, message, value, callback, inputType = "t
 }
 
 
-export function showCustomAlert(title, message, callback) {
+export function showCustomAlert(title, message, callback, hideNoBtn=false) {
   const modal = document.getElementById("customAlert");
   const alertMessage = document.getElementById("alertMessage");
   const alertTitle = document.getElementById("alertTitle");
   const alertOk = document.getElementById("alertOk");
   const alertNo = document.getElementById("alertNo");
+  if (hideNoBtn) alertNo.style.display = 'none'
 
   if (!title) alertTitle.style.display = "none";
   else alertTitle.innerHTML = title;
@@ -974,13 +1000,13 @@ export function showCustomAlert(title, message, callback) {
   modal.style.display = "flex";
 
   function handleKeyDown(event) {
-    if (event.key === "Enter") {
+    if (event.key === "Enter" || ( hideNoBtn && event.key === "Escape")) {
       event.preventDefault();
-      alertOk.click();
+      alertOk?.click();
     }
     else if (event.key === "Escape") {
       event.preventDefault();
-      alertNo.click();
+      alertNo?.click();
     }
   }
 
@@ -989,11 +1015,13 @@ export function showCustomAlert(title, message, callback) {
     document.removeEventListener("keydown", handleKeyDown);
     callback(true);
   };
-  alertNo.onclick = function () {
-    modal.style.display = "none";
-    document.removeEventListener("keydown", handleKeyDown);
-    callback(false);
-  };
+  if(!hideNoBtn) {
+    alertNo.onclick = function () {
+      modal.style.display = "none";
+      document.removeEventListener("keydown", handleKeyDown);
+      callback(false);
+    };
+  }
   setTimeout(() => document.addEventListener("keydown", handleKeyDown), 100);
 }
 
@@ -1009,7 +1037,7 @@ export function getFocusOptionsForTasks(tasksAlias) {
   .join('')
 }
 
-export function showToast(title, message, color = TOASTIFY.colors.purple, mini=false) {
+export function showToast(title, message, color = TOASTIFY.colors.purple, mini=false, shorter=false) {
   const toastContainer = document.getElementById("toast-container");
 
   // Clear any existing toast before showing a new one
@@ -1028,7 +1056,7 @@ export function showToast(title, message, color = TOASTIFY.colors.purple, mini=f
 
   const toastMessage = document.createElement("p");
   toastMessage.className = "toast-message";
-  toastMessage.textContent = message;
+  toastMessage.innerHTML = message;
 
   toastContainer.className = "";
   toastContainer.innerHTML = "";
@@ -1037,15 +1065,18 @@ export function showToast(title, message, color = TOASTIFY.colors.purple, mini=f
   toastContainer.appendChild(toastTitle);
   toastContainer.appendChild(toastMessage);
   toastContainer.classList.add("show-toast");
+
+  const toastLife = shorter ? (TOASTIFY.life / 2) : TOASTIFY.life
+
   if(mini) toastContainer.classList.add("mini-toast")
   toastContainer.scheduleHide = () => {
     toastContainer.hideTimeout = setTimeout(() => {
       toastContainer.classList.remove("show-toast");
       toastContainer.classList.add("hide-toast");
-    }, 4700);
+    }, toastLife - 300);
     toastContainer.fadeOutTimeout = setTimeout(() => {
       toastContainer.classList.remove("hide-toast");
-    }, 5000);
+    }, toastLife);
   };
 
   toastContainer.clearTimeouts = () => {
@@ -1073,5 +1104,36 @@ export function getOrCreateAnonymousId() {
       await setLocalStorage({ anonymousId: newId });
       resolve(newId);
     }
+  });
+}
+
+
+export async function setBlockRules() {
+  const blockedWebsitesObj = (await getSyncStorage([BLOCKEDLISTKEY]))
+  const blockedWebsites = blockedWebsitesObj[BLOCKEDLISTKEY]
+  if(!blockedWebsites || blockedWebsites.length <= 0) return
+  const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
+  const idsToRemove = existingRules.map(rule => rule.id);
+  await chrome.declarativeNetRequest.updateDynamicRules({
+    removeRuleIds: idsToRemove,
+    addRules: blockedWebsites.map((site, index) => ({
+      id: index+1000,
+      priority: 1,
+      action: { "type": "redirect", "redirect": { "url": (chrome.runtime.getURL("src/newTab/over.html") + "?redirected=" + site) } },
+      condition: {
+        urlFilter: site,
+        resourceTypes: ["main_frame", "sub_frame"]
+      }
+    }))
+  });
+}
+
+export async function unSetBlockRules() {
+  const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
+  const idsToRemove = existingRules.map(rule => rule.id);
+  await chrome.declarativeNetRequest.updateDynamicRules({
+    removeRuleIds: idsToRemove
+  });
+  await chrome.declarativeNetRequest.getDynamicRules((rules) => {
   });
 }

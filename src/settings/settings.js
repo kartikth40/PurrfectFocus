@@ -1,6 +1,6 @@
 import { CONFIG } from "../config.js"
-import { LIGHTTHEME, modes, SETTINGSKEY } from "../constants.js"
-import { changeTextTo, createNewTabForHistory, createNewTabForTimers, getSyncStorage, setFormValues, setNewSettings } from "../utils.js"
+import { BLOCKEDLISTKEY, LIGHTTHEME, modes, SETTINGSKEY, TOASTIFY } from "../constants.js"
+import { changeTextTo, createNewTabForHistory, createNewTabForTimers, getSyncStorage, setFormValues, setNewSettings, setSyncStorage, showToast, unSetBlockRules } from "../utils.js"
 
 const container = document.querySelector('.container')
 const durationDivs = document.querySelectorAll('.duration')
@@ -16,7 +16,7 @@ const darkCard = document.querySelector('.theme-card-dark')
 const darkCardRadio = document.querySelector('#app-theme-dark')
 
 const settingsForm = document.querySelector('#settings-form')
-const saveBtn = document.querySelector('.submit-btn')
+const saveBtn = document.querySelector('.settings-save-btn')
 
 const musicPlayerCheckbox = document.getElementById("music-player");
 const autoStartMusicCheckbox = document.getElementById("music-auto-start");
@@ -27,12 +27,19 @@ const timerBtn = document.querySelector('.timer-tab-btn')
 const versionTag = document.querySelector('#version')
 const supportBtn = document.querySelector('.support-tab-btn')
 
-supportBtn.href = CONFIG.SUPPORT_URL
+const blockSitesForm = document.querySelector('.block-list-form')
+const blockedSitesList = document.getElementById('blocked-sites-list');
+const addBlockedListBtn = document.getElementById('add-block-site');
+const newBlockListItemInput = document.getElementById('new-block-site')
 
+let blockedSites = []
+
+supportBtn.href = CONFIG.SUPPORT_URL
 
 let settingsChanged = false
 
 chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
+
   // settings status change
   if(request.settingsSaved) {
     if(request.reload) location.reload()
@@ -67,6 +74,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   autoStartMusicCheckbox.disabled = !musicPlayerCheckbox.checked;
   
   evaluateSettingsAppearance(isPomodoro)
+
+  if(!store?.settings?.blockSites) {
+    blockSitesForm.classList.add('disabled')
+    await unSetBlockRules()
+  }else {
+    blockSitesForm.classList.remove('disabled')
+  }
   
   lightCardRadio.addEventListener('click', () => {
     lightCard.classList.add('checked')
@@ -130,7 +144,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       }catch (e) {
         console.warn(e);
       }
+      if(!settings.blockSites) {
+        blockSitesForm.classList.add('disabled')
+        await unSetBlockRules()
+      }else {
+        blockSitesForm.classList.remove('disabled')
+      }
   })
+  addBlockedListBtn.addEventListener('click', async (e) => {
+    e.preventDefault()
+    const newValue = newBlockListItemInput.value
+    const saved = await saveNewSiteToBlockLIst(newValue)
+    if(saved) newBlockListItemInput.value = ''
+  });
 
   musicPlayerCheckbox.addEventListener("change", () => {
     autoStartMusicCheckbox.disabled = !musicPlayerCheckbox.checked;
@@ -151,6 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const manifestData = chrome.runtime.getManifest();
   versionTag.textContent = `~ v${manifestData.version}`;
+
   chrome.runtime.sendMessage({ type: 'START_SESSION' });
   chrome.runtime.sendMessage({ type: 'PAGE_VIEW', properties: {
     currentUrl: window.location.href,
@@ -158,6 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     screenWidth: window?.screen?.width,
     screenHeight: window?.screen?.height
   } });
+  await loadBlockedList()
 })
 
 
@@ -171,6 +199,7 @@ function evaluateSettingsAppearance(isPomodoro) {
     durationDivs.forEach(durationDiv => {
       durationDiv.querySelector('input').disabled = true
       durationDiv.classList.add('disabled')
+      durationDiv?.parentElement?.querySelector('h2')?.classList?.add('disabled')
     })
     autoStartCheckbox.forEach(checkbox => {
       checkbox.disabled = true
@@ -184,6 +213,7 @@ function evaluateSettingsAppearance(isPomodoro) {
     durationDivs.forEach(durationDiv => {
       durationDiv.querySelector('input').disabled = false
       durationDiv.classList.remove('disabled')
+      durationDiv?.parentElement?.querySelector('h2')?.classList?.remove('disabled')
     })
     autoStartCheckbox.forEach(checkbox => {
       checkbox.disabled = false
@@ -207,6 +237,88 @@ function evaluateSettingsAppearance(isPomodoro) {
       }else{
         soundSelects[index].disabled = true
       }
+    })
   })
-})
+}
+
+function renderBlockedSites() {
+  blockedSitesList.innerHTML = '';
+  blockedSites.forEach((url, index) => {
+    const item = document.createElement('div');
+    item.className = 'blocked-site-item';
+    item.dataset.index = index;
+    item.innerHTML = `
+      <input type="text" class="blocked-site-url" value="${url}" />
+      <button type="button" class="remove-site-btn">x</button>
+    `;
+    item.querySelector('.remove-site-btn').addEventListener('click', async () => {
+      await loadBlockedList()
+      blockedSites.splice(index, 1)
+      await saveBlockedSites(true)
+      showToast('Done!', "Removed that URL.", TOASTIFY.colors.green, null, true)
+      renderBlockedSites()
+    })
+    item.querySelector('.blocked-site-url').addEventListener('change', async (e) => {
+      const newValue = e.target.value
+      await saveNewSiteToBlockLIst(newValue, index)
+    })
+    blockedSitesList.appendChild(item);
+  });
+}
+
+async function loadBlockedList() {
+  const savedList = await getSyncStorage([BLOCKEDLISTKEY])
+  blockedSites = savedList[BLOCKEDLISTKEY] || []
+  renderBlockedSites()
+}
+
+async function saveNewSiteToBlockLIst(newValue, index=-1) {
+  if(!newValue) {
+    showToast('OOPS!', "That's an invalid URL.", TOASTIFY.colors.orange, null, true)
+  }
+  await loadBlockedList()
+  const newVal = newValue.trim()
+  if (blockedSites.includes(newVal)) {
+    showToast('OOPS!', 'You already have this URL blocked.', TOASTIFY.colors.orange, null, true)
+    return
+  }
+  try{
+    const url = new URL(newVal)
+    if(index >= 0) blockedSites[index] = newVal
+    else blockedSites.push(newVal)
+    await saveBlockedSites()
+    showToast(
+      'Success!',
+      "List updated.",
+      TOASTIFY.colors.green, null, true
+    );
+
+  }catch (e) {
+    showToast('OOPS!', "That's an invalid URL.", TOASTIFY.colors.orange, null, true)
+  }
+  await loadBlockedList()
+  return true
+}
+
+async function saveBlockedSites(removed=false) {
+  await setSyncStorage({ [BLOCKEDLISTKEY]: blockedSites });
+  if(removed) return
+  for (const site of blockedSites) {
+    try {
+      const urlObj = new URL(site);
+
+      await chrome.runtime.sendMessage({
+        type: 'SITE_BLOCKED',
+        properties: {
+          site: site,
+          host: urlObj.host,
+          site_count: blockedSites.length
+        }
+      });
+    } catch (e) {
+      console.warn(`Invalid URL skipped: ${site}`, e);
+    }
+  }
+
+
 }

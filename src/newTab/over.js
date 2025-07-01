@@ -1,6 +1,6 @@
 import { CONFIG } from "../config.js"
 import { SETTINGSKEY, TIMERKEY, FOCUS, SHORTBREAK, LONGBREAK, PAUSE, PLAY, LIGHTTHEME, SIMPLETIMERSTYLE, TASKS, TASKSALIASKEY, CURRENTTASKKEY, showSurvey, modes, TOASTIFY, DAILYJOURNALLISTKEY } from "../constants.js"
-import { changeTextTo, createNewTabForHistory, createNewTabForSettings, createNewTabForStreak, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setTimerInStore, timerDuration, getValidTask, setSyncStorage, showCustomAlert, showCustomPrompt, showToast } from "../utils.js"
+import { changeTextTo, createNewTabForHistory, createNewTabForSettings, createNewTabForStreak, getFocusText, getLocalStorage, getRandomBreakQuote, getRandomFocusQuote, getSessionStorage, getSyncStorage, getTimeString, playMusic, printer, resumeTimer, setLocalStorage, setTimerInStore, timerDuration, getValidTask, setSyncStorage, showCustomAlert, showCustomPrompt, showToast, createNewTabForTimers, unSetBlockRules } from "../utils.js"
 
 const container = document.querySelector('.container')
 const focusTitle = document.querySelector('.focus-title')
@@ -34,12 +34,12 @@ let audio = null
 let settings
 let musicPlayerInitialized = false
 
-
 const print = printer()
 document.addEventListener('DOMContentLoaded', async () => {
   // await handleNotificationTone(true)
   addEventListeners()
   await init()
+  await maybeShowRedirectModal()
   setTimeout(() => {
     loadingScreen.classList.add('fade-out');
     setTimeout(() => {
@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 500)
   }, 200)
 })
+
 async function init() {
   const timer = await getSessionStorage(TIMERKEY)
   if(!timer?.timer || timer?.timer?.type === FOCUS) {
@@ -107,6 +108,11 @@ async function init() {
   await setLocalStorage({ lastActive: Date.now() })
   if(settings.musicPlayer && !musicPlayerInitialized) setupMusicPlayer()
   else removeMusicPlayer()
+
+  if(!settings?.blockSites) {
+    await unSetBlockRules()
+  }
+
   chrome.runtime.sendMessage({ type: 'START_SESSION' });
   chrome.runtime.sendMessage({ type: 'PAGE_VIEW', properties: {
     currentUrl: window.location.href,
@@ -745,4 +751,33 @@ async function setFocusOptionForTasks(timer) {
                           .join('')
   taskSelect.value = getValidTask(timer?.task)
   taskSelect.disabled = false
+}
+
+function getQueryParams() {
+  return new URLSearchParams(window?.location?.search);
+}
+
+async function maybeShowRedirectModal() {
+  const params = getQueryParams();
+  const redirect = params.get("redirected")
+  if (redirect) {
+    await showFocusModal(redirect);
+  }
+}
+
+async function showFocusModal(url) {
+  let hostName = null
+  try{
+   hostName = (new URL(url)).host
+  }
+  catch (e) {
+    hostName = null
+  }
+  showToast(
+    '🚀 Stay Focused!',
+    (hostName ? `<i> Tried to access:  "${hostName}" </i> <br><br>` : '') 
+    +`Access to this site is blocked during your focus sessions.`,
+    TOASTIFY.colors.orange
+  )
+  await createNewTabForTimers(false, true, true)
 }

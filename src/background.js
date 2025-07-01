@@ -15,7 +15,9 @@ import {
   checkUserActivity,
   getValidTask,
   setSessionStorage,
-  getOrCreateAnonymousId} from "./utils.js"
+  getOrCreateAnonymousId,
+  setBlockRules,
+  unSetBlockRules} from "./utils.js"
 import {
   PLAY,
   PAUSE,
@@ -47,7 +49,9 @@ const initPostHog = getOrCreateAnonymousId().then((anonymousId) => {
   return posthog;
 });
 
+
 let intervalId = createState(0)
+let blockingSites = createState(false)
 const print = printer()
 
 
@@ -99,6 +103,7 @@ chrome.runtime.onStartup.addListener(async () => {
       await setSessionStorage(localTimerObj);
     }
   }
+  await unSetBlockRules()
 });
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
@@ -121,7 +126,7 @@ async function startActualTimer(timer) {
     }
   }
   await setTimerInStore(timerObj)
-  startTimer(chrome, timer?.time ?? 0)
+  await startTimer(chrome, timer?.time ?? 0)
   try{
     await chrome.runtime.sendMessage({timerStarted: true})
   }catch (e) {
@@ -145,6 +150,10 @@ async function pauseActualTimer(timer) {
     }
   }
   await setTimerInStore(timerObj)
+  if(blockingSites.getState()) {
+    await unSetBlockRules()
+    blockingSites.setState(false)
+  }
   print.it('session -> paused')
 
 }
@@ -153,6 +162,10 @@ async function stopActualTimer() {
   print.log('message received - stop timer')
   clearInterval(intervalId.getState())
   await setTimerInStore({[TIMERKEY]: null})
+  if(blockingSites.getState()) {
+    await unSetBlockRules()
+    blockingSites.setState(false)
+  }
 }
 
 async function resetCurrentTimer() {
@@ -185,6 +198,10 @@ async function resetCurrentTimer() {
     }
   }
   await setTimerInStore(newTimerObj)
+  if(blockingSites.getState()) {
+    await unSetBlockRules()
+    blockingSites.setState(false)
+  }
 }
   
 chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
@@ -277,6 +294,15 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
       });
     })
   }
+  if (request.type === 'SITE_BLOCKED') {
+    initPostHog.then((ph) => {
+      ph.capture('site_blocked', {
+        site: request?.properties?.site,
+        host: request?.properties?.host,
+        site_count: request?.properties?.site_count
+      });
+    })
+  }
 })
 
 const startTimer = async (chrome, timer) => {
@@ -317,6 +343,10 @@ const startTimer = async (chrome, timer) => {
       await setTimerInStore(timerToStore, timer)
       if (timer % (5 * 60) === 0 && timer !== 0) {
         startSession();
+      }
+      if (result?.timer?.type === FOCUS && !blockingSites.getState() && settings.blockSites) {
+          blockingSites.setState(true)
+          await setBlockRules()
       }
     }
   }, 1000)
@@ -490,6 +520,10 @@ const setNextTimer = async (timerEnds=false, shouldStopWatchEnd=false) => {
   }
   if(isPomodoro && timerEnds) {
     await createNotification(prevTimer, nextTimer)
+  }
+  if(blockingSites.getState()) {
+    await unSetBlockRules()
+    blockingSites.setState(false)
   }
   const nextType = timerToStore?.[TIMERKEY]?.type;
   if (settingsObj?.settings?.mode === modes.POMODORO && (

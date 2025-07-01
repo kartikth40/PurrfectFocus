@@ -17,7 +17,8 @@ import {
   setLocalStorage,
   setSyncStorage,
   showCustomPrompt,
-  showToast} from "../utils.js"
+  showToast,
+  unSetBlockRules} from "../utils.js"
 import {
   PLAY,
   PAUSE,
@@ -360,6 +361,9 @@ document.addEventListener('DOMContentLoaded', async () => {
               "*It will reset the current timer.\nIf any."
             );
       })
+      if(!settings?.blockSites) {
+        await unSetBlockRules()
+      }
       chrome.runtime.sendMessage({ type: 'START_SESSION' });
       chrome.runtime.sendMessage({ type: 'PAGE_VIEW', properties: {
         currentUrl: window.location.href,

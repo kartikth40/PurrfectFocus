@@ -3,7 +3,7 @@
   width: 100%;
   color: var(--secondary-color-1);
   position: relative;
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -18,23 +18,32 @@
   color: #000;
 }
 
+.settings-tab {
+  display: flex;
+  gap: 20px;
+  max-height: 80vh;
+}
+
+
 
 #settings-form{
-  padding: 10px 20px;
+  padding: 10px;
+  padding-bottom: 0;
   border: 2px dashed var(--secondary-color-1);
   width: 100%;
   border-radius: 10px;
-  font-size: 12px;
+  font-size: 10px;
   position:relative;
   z-index: 1;
   backdrop-filter: blur(1px);
   background-color: #23232385;
-  user-select: none;
+  overflow-y: auto;
 }
 .row{
   display: flex;
-  gap: 40px;
+  gap: 20px;
   width: 100%;
+  padding: 10px;
 }
 .col {
   display: flex;
@@ -72,11 +81,32 @@
   z-index: -1;
 }
 #settings-form h2 {
-  font-size: 2rem;
+  font-size: 1rem;
   line-height: 1em;
+
+  &.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    text-decoration-color: #d9d9d970;
+    color: #c2c2c270;
+  }
+}
+.light #settings-form h2.disabled {
+  text-decoration-color: #00000070;
+  color: #00000070;
+}
+
+#settings-form p {
+  margin-block: 2px;
+
+  & i {
+    font-size: 8px;
+  }
 }
 #settings-form select, #settings-form input {
-  font-size: 12px;
+  font-size: 10px;
   border: 2px solid var(--secondary-color-1);
   box-shadow: 1px 1px 5px 0 var(--primary-color), inset 0 0 1px 0 var(--primary-color);
   margin-right: 5px;
@@ -156,7 +186,7 @@ label {
   width: max-content;
   display: flex;
   align-items: center;
-  font-size: 16px;
+  font-size: 10px;
   & input {
     margin-left: 5px;
     margin-right: 0;
@@ -165,7 +195,7 @@ label {
 .auto-start {
   display: flex;
   align-items: center;
-  font-size: 12px;
+  font-size: 10px;
 }
 .indent {
   margin-left: 20px;
@@ -225,9 +255,9 @@ label {
   text-align: center;
   border-radius: 5px;
   border: 1px solid #fff;
-  padding: 10px 20px;
-  width: 100%;
-  height: 30px;
+  padding: 5px 10px;
+  width: 50%;
+  height: 25px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -309,8 +339,8 @@ label {
 }
 .submit-btn:disabled {
   box-shadow: inset 0 0 0px transparent;
-  background-color: rgb(32, 32, 32);
-  color: rgb(68, 68, 68);
+  background-color: rgb(66, 66, 66);
+  color: rgb(155, 155, 155);
 }
 .submit-btn:disabled:hover {
   border-radius: 5px;
@@ -398,7 +428,7 @@ label {
   align-items: center;
 }
 
-.open-new-tab, .daily-journal-list {
+.open-new-tab, .daily-journal-list, .block-sites {
   display: flex;
   align-items: center;
   margin-bottom: 5px;
@@ -453,4 +483,202 @@ label {
   background-color: var(--secondary-color-2);
   color: black;
   border: 1px dashed black;
+}
+
+.block-list-form {
+  padding: 10px;
+  border: 2px dashed var(--secondary-color-1);
+  width: 300px;
+  border-radius: 10px;
+  font-size: 10px;
+  position:relative;
+  z-index: 1;
+  backdrop-filter: blur(1px);
+  background-color: #23232385;
+  height: 100%;
+
+  &.disabled {
+    display: none;
+    & input {
+      pointer-events: none;
+      cursor: not-allowed;
+      opacity: .5;
+    }
+    & button {
+      pointer-events: none;
+      cursor: not-allowed;
+      opacity: .5;
+    }
+  }
+
+  /* Custom scrollbar styles */
+  &::-webkit-scrollbar {
+    width: 2px !important;
+    background: rgba(0,0,0,0.1);
+    border-radius: 2px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 2px;
+    box-shadow: 0 0 2px var(--secondary-color-2);
+    width: 2px !important;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-color-2);
+  }
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) rgba(0,0,0,0.1);
+
+  &::after{
+  content: '';
+  position: absolute;
+  width: 80%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  bottom: 10%;
+  left: -20%;
+  filter: blur(100px);
+  z-index: -1;
+  }
+  &::before{
+    content: '';
+    position: absolute;
+    width: 80%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    top: -10%;
+    right: 0;
+    filter: blur(100px);
+    z-index: -1;
+  }
+
+  & .row{
+    height: 100%;
+  }
+
+  & h2 {
+    font-size: 1rem;
+    line-height: 1em;
+  }
+
+  & .col {
+    height: 100%;
+    gap: 10px;
+  }
+
+  .blocked-site-item {
+    display: flex;
+    gap: 2px;
+  }
+
+  .remove-site-btn {
+    border-radius: 5px;
+    background-color: var(--secondary-color-2);
+    border: 1px solid var(--primary-color);
+    cursor: pointer;
+    &:hover {
+      background-color: var(--secondary-color-1);
+    }
+  }
+
+  .top {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+    justify-content: center;
+
+  }
+
+  #blocked-sites-list{
+    height: 100%;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 2px;
+    border: 1px dashed var(--secondary-color-2);
+    border-radius: 5px;
+  }
+  .blocked-site-url {
+    width: 100%;
+  }
+
+
+
+  .bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+    justify-content: center;
+
+    & #block-site-input{
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      gap: 2px;
+    }
+    
+    & #new-block-site {
+      font-size: 10px;
+      padding: 5px 10px;
+      &::placeholder {
+        color: rgba(0, 0, 0, 0.5);
+      }
+    }
+    
+    & .submit-btn {
+      padding: 5px 10px;
+      font-size: 12px;
+      margin: 0;
+      position: relative;
+      border: 1px solid #fff;
+
+      &::before {
+        position: absolute;
+        content: '';
+        width: 95%;
+        left: 50%;
+        top: -3px;
+        transform: translateX(-50%);
+        height: 2px;
+        background-color: #fff;
+        /* z-index: -10 ; */
+      }
+    }
+  }
+
+}
+
+.light .block-list-form {
+  backdrop-filter: blur(2px);
+  background-color: #ffffff85;
+  border: 2px dashed black;
+
+  #blocked-sites-list{
+    border: 1px dashed black;
+  }
+
+  .remove-site-btn {
+    border: 1px solid rgb(0, 0, 0);
+    background-color: var(--secondary-color-2);
+    &:hover {
+      background-color: var(--secondary-color-1);
+    }
+  }
+
+  & .submit-btn {
+    border: 1px solid var(--primary-color);
+  }
+  & .submit-btn::before {
+    background-color: var(--primary-color);
+  }
 }

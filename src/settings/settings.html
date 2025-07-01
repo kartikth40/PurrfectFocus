@@ -92,14 +92,22 @@
               <div class="settings-checkbox-container">
                 <label class="daily-journal-list" for="daily-journal-list">
                   <input type='hidden' value='off' name='dailyJournalListCheckbox'>
-                  <input type="checkbox" checked class="daily-journal-list-checkbox" name="dailyJournalListCheckbox" id="daily-journal-list">Show Daily Journal on the Main Panel
+                  <input type="checkbox" checked class="daily-journal-list-checkbox" name="dailyJournalListCheckbox" id="daily-journal-list">
+                  <p>✍️ Show Daily Journal</p>
                 </label>
               </div>
               <div class="settings-checkbox-container">
                 <label class="open-new-tab" for="open-new-tab">
                   <input type='hidden' value='off' name='openNewTabOnCompletion'>
                   <input type="checkbox" checked class="open-new-tab-checkbox" name="openNewTabOnCompletion" id="open-new-tab"> 
-                  Open the Main Panel on completion
+                  <p>🤲 Open Main Panel on completion</p>
+                </label>
+              </div>
+              <div class="settings-checkbox-container">
+                <label class="block-sites" for="block-sites">
+                  <input type='hidden' value='off' name='blockSites'>
+                  <input type="checkbox" checked class="block-sites-checkbox" name="blockSites" id="block-sites"> 
+                  <p>✋ Enable Site Blocking</p>
                 </label>
               </div>
               <div class="settings-checkbox-container  timer-mode-container">
@@ -266,12 +274,30 @@
         </div>
         <div class="row">
           <div class="btn-container">
-            <button type="submit" class="submit-btn" disabled>
-              Save
+            <button type="submit" class="submit-btn settings-save-btn" disabled>
+              Save Settings
             </button>
             <span class="alert">* Saving would reset the current timer</span>
           </div>
         </div>
+    </form>
+    <form class="block-list-form">
+      <div class="row">
+        <div class="col">
+          <div class="top">
+            <h2>Blocked Sites</h2>
+            <i>These sites will be blocked only while a focus session is active.</i>
+          </div>
+          <div id="blocked-sites-list">
+          </div>
+          <div class="bottom">
+            <div id="block-site-input">
+              <input type="text" id="new-block-site" placeholder="site URL (e.g., example.com)" />
+              <button id="add-block-site" class="submit-btn">➕ Add Site</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </form>
     </div>
   </div>

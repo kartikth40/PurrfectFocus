@@ -945,7 +945,7 @@ body.light .poll-btn button {
   position: fixed;
   bottom: 0;
   right: 20px;
-  z-index: 9999;
+  z-index: 99999;
   opacity: 0;
   visibility: hidden;
   padding: 5px 10px;

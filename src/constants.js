@@ -37,6 +37,7 @@ export const SETTINGSKEY = 'settings'
 export const TIMERKEY = 'timer'
 export const LASTUPDATEKEY = 'lastDataUpdate'
 export const CURRENTTASKKEY = 'currentTask'
+export const BLOCKEDLISTKEY = 'blockedList'
 export const NEWTABTIMERIDKEY = 'newTabTimerId'
 export const NEWTABSETTINGSIDKEY = 'newTabSettingsId'
 export const NEWTABHISTORYIDKEY = 'newTabHistoryId'
@@ -78,7 +79,8 @@ export const defaultSettings = {
     musicPlayerAutoStart: true,
     openNewTab: true,
     mode: modes.POMODORO,
-    todoList: true
+    todoList: true,
+    blockSites: true
   }
 }
 
@@ -98,7 +100,8 @@ export const TOASTIFY = {
     red: 'red',
     orange: 'orange',
     purple: 'purple',
-  }
+  },
+  life: 10000
 }
 
 export const chartColors = [
