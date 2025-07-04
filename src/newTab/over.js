@@ -386,7 +386,7 @@ function addEventListeners() {
     const isPomodoro = settings.mode === modes.POMODORO
     const timer = await getSessionStorage(TIMERKEY)
     if(!isPomodoro && timer?.timer?.status === PLAY){
-      showToast('Reminder!', "Pause is not allowed in Stopwatch mode.", TOASTIFY.colors.orange)
+      showToast('Reminder!', "Pause is not allowed in Stopwatch mode.", TOASTIFY.colors.orange, null, true)
       return
     } 
     // if started already
@@ -518,7 +518,7 @@ function addEventListeners() {
         } else if (parsedTime > max) {
         errorMessage = `The time must not exceed ${max} minute(s). Please try again.`;
         }
-        showToast("Invalid Input!", errorMessage, TOASTIFY.colors.red)
+        showToast("Invalid Input!", errorMessage, TOASTIFY.colors.red, null, true)
       }
       },
       "number",

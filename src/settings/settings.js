@@ -49,7 +49,7 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
     settingsChanged = false
     setTimeout(() => {
       saveBtn.classList.remove('saved')
-      changeTextTo(saveBtn, 'Save')
+      changeTextTo(saveBtn, 'Save Settings')
     }, 1500)
   }else if(request.updateNextTimer) {
     location.reload()
@@ -132,24 +132,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     }else document.body.classList.remove('light')
     chrome.action.setBadgeText({text: ''})
     chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]})
-      try{
-        await chrome.runtime.sendMessage({resetCurrentTimer: true})
-        await chrome.runtime.sendMessage({saveSettings: true, newSettings: settingsObj})
-        if(settings.mode === modes.STOPWATCH) {
-          await chrome.runtime.sendMessage({switchToStopwatch: true})
-        }else {
-          await chrome.runtime.sendMessage({switchToPomodoro: true})
-        }
-        evaluateSettingsAppearance(settings.mode === modes.POMODORO)
-      }catch (e) {
-        console.warn(e);
-      }
-      if(!settings.blockSites) {
-        blockSitesForm.classList.add('disabled')
-        await unSetBlockRules()
+    try{
+      await chrome.runtime.sendMessage({resetCurrentTimer: true})
+      await chrome.runtime.sendMessage({saveSettings: true, newSettings: settingsObj})
+      if(settings.mode === modes.STOPWATCH) {
+        await chrome.runtime.sendMessage({switchToStopwatch: true})
       }else {
-        blockSitesForm.classList.remove('disabled')
+        await chrome.runtime.sendMessage({switchToPomodoro: true})
       }
+      evaluateSettingsAppearance(settings.mode === modes.POMODORO)
+    }catch (e) {
+      console.warn(e);
+    }
+    if(!settings.blockSites) {
+      blockSitesForm.classList.add('disabled')
+      await unSetBlockRules()
+    }else {
+      blockSitesForm.classList.remove('disabled')
+    }
+
+    await chrome.runtime.sendMessage({ type: 'SETTINGS_SAVED' , properties:{
+      focusTime: settings?.focus?.time,
+      focusNotificationTone: settings?.focus?.notifications ? settings?.focus?.sound : null,
+      focusAutoStart: settings?.focus?.autoStart,
+      shortBreakTime: settings?.shortBreak?.time,
+      shortBreakNotificationTone: settings?.shortBreak?.notifications ? settings?.shortBreak?.sound : null,
+      shortBreakAutoStart: settings?.shortBreak?.autoStart,
+      longBreakTime: settings?.longBreak?.time,
+      longBreakNotificationTone: settings?.longBreak?.notifications ? settings?.longBreak?.sound : null,
+      longBreakAutoStart: settings?.longBreak?.autoStart,
+      isMusicPlayerActive: settings?.musicPlayer,
+      theme: settings?.theme,
+      openNewTab: settings?.openNewTab,
+      showDailyJournal: settings?.dailyJournal,
+      enableSiteBlocking: settings?.blockSites,
+      timerMode: settings?.mode
+    }})
   })
   addBlockedListBtn.addEventListener('click', async (e) => {
     e.preventDefault()

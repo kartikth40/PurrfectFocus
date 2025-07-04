@@ -158,20 +158,20 @@ p{
   transform: translate(-50%, -50%);
   z-index: 2;
   font-size: 15px;
-  color: var(--primary-color);
+  color: var(--secondary-color-1);
   padding: 5px 10px;
   border-radius: 5px;
-  background-color: var(--primary-color);
-  box-shadow: inset 5px 10px 60px var(--secondary-color-1), inset -5px 5px 70px var(--primary-color);
+  background-color: #b16dff81;
+  backdrop-filter: blur(10px);
   letter-spacing: 1px;
+  box-shadow: 0 0 2px var(--primary-color);
 }
 .light .is-sample{
+  background-color: #c592ff81;
   color: #000;
-  box-shadow: inset 5px 10px 60px var(--secondary-color-1), inset -5px 5px 70px var(--primary-color-4), 0 0 10px var(--primary-color-2);
 }
 .is-sample.active {
   display: inline-block;
-  box-shadow: inset 5px 10px 60px var(--secondary-color-1), inset -5px 5px 70px var(--primary-color);
 }
 .no-data {
   pointer-events: none;
@@ -738,6 +738,40 @@ footer {
   }
 }
 
+.privacy-policy-container{
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  font-size: .7em;
+  font-weight: 500;
+  color: var(--primary-color-1);
+  padding: 0;
+  border-radius: 5px;
+  box-shadow: 0 0 10px var(--primary-color-2);
+  background: linear-gradient(45deg, var(--primary-color-4) 25%, var(--primary-color-3) 50%, var(--primary-color-4) 75%);
+  background-size: 200px 100%;
+  cursor: pointer;
+  & a {
+    text-decoration: none;
+    padding: 5px;
+    color: var(--primary-color);
+  }
+  & a:active{
+    color: var(--primary-color);
+  }
+  &:hover {
+    opacity: 0.8;
+    box-shadow: 0 0 10px var(--primary-color-4);
+  }
+}
+
+.light .privacy-policy-container {
+  color: var(--primary-color);
+  background: linear-gradient(45deg, var(--primary-color-2) 25%, var(--primary-color-1) 50%, var(--primary-color-2) 75%);
+  border: 2px solid var(--primary-color-4);
+  background-size: 200px 100%;
+}
+
 .made-by {
   position: absolute;
   bottom: 5px;
@@ -907,9 +941,17 @@ footer {
     max-width: 50vw;
     display: block;
     position: absolute;
-    top: 50%;
+    top: 100px;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%);
+
+    & #daily-journal-list-container ul li {
+      font-size: 16px;
+
+      & .dlt-bnt {
+        width: 28px !important;
+      }
+    }
 
     & .add-btn:disabled, & .dlt-btn:disabled, & .journal-checkbox:disabled{
       opacity: 0.5;

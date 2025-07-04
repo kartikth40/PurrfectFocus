@@ -951,6 +951,8 @@ body.light .poll-btn button {
   padding: 5px 10px;
   border-radius: 10px;
   transform: translateY(100px);
+  border: 5px solid white;
+  box-shadow: 5px 5px 0 white;
   &.show-toast {
     animation: fadein 0.3s forwards;
   }
@@ -988,15 +990,19 @@ body.light .poll-btn button {
   }
   &.green{
     background-color: #c5f3c5;
+    box-shadow: 5px 5px 0 #00ff00;
   }
   &.red{
     background-color: #f3c5c5;
+    box-shadow: 5px 5px 0 #ff0000;
   }
   &.orange {
     background-color: #f3e0c5;
+    box-shadow: 5px 5px 0 #ff9500;
   }
   &.purple{
     background-color: var(--secondary-color-2);
+    box-shadow: 5px 5px 0 #9a42ff;
   }
 }
 
@@ -1008,22 +1014,20 @@ body.light .poll-btn button {
     color: #000;
   }
   &.green{
-    box-shadow: 0 0 5px rgb(79, 187, 79);
+    box-shadow: 5px 5px 0 #000000;
     background-color: #c5f3c5;
   }
   &.red{
-    box-shadow: 0 0 5px rgb(187, 79, 79);
+    box-shadow: 5px 5px 0 #000000;
     background-color: #f3c5c5;
   }
   &.orange {
-    box-shadow: 0 0 5px rgb(201, 182, 75);
+    box-shadow: 5px 5px 0 #000000;
     background-color: #f3e0c5;
   }
   &.purple{
-    & * {
-      color: var(--secondary-color-1);
-    }
-    background-color: var(--primary-color);
+    box-shadow: 5px 5px 0 #9d48ff;
+    background-color: var(--primary-color-4);
   }
 }
 
@@ -1042,8 +1046,8 @@ body.light .poll-btn button {
   position: absolute;
   top: 10px;
   left: 10px;
-  background: linear-gradient(45deg, var(--secondary-color-1), var(--secondary-color-2));
-  box-shadow: inset 0 0 10px 0 var(--secondary-color-2);
+  background: var(--secondary-color-2);
+  box-shadow: inset 0 0 10px 0 var(--secondary-color-2), 0 0 10px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1063,7 +1067,8 @@ body.light .poll-btn button {
     color: #000;
     border-bottom: none;
     padding-bottom: 0px;
-    box-shadow: inset 0 0 5px 0 var(--secondary-color-2), 0 0 5px 0 var(--secondary-color-1); 
+    border: 1px dashed black;
+    box-shadow:  0 0 5px 0 var(--secondary-color-2), 0 0 5px 0 var(--secondary-color-1); 
     padding: 10px;
     border-radius: 5px;
   }
@@ -1077,6 +1082,7 @@ body.light .poll-btn button {
     padding: 0;
     max-height: 300px;
     overflow-y: auto;
+    gap: 2px;
 
     &::-webkit-scrollbar {
       width: 5px;
@@ -1097,12 +1103,15 @@ body.light .poll-btn button {
       margin: 0;
       padding: 0;
       padding-right: 20px;
+      padding-left: 5px;
       width: 100%;
       display: flex;
       justify-content: center;
-      align-items: flex-start;
+      align-items: center;
       gap: 5px;
       word-break: break-word;
+      border-radius: 5px;
+      border: 1px dashed transparent;
       & label {
         width: 100%;
         display: inline-block;
@@ -1118,6 +1127,7 @@ body.light .poll-btn button {
 
       &:hover{
         background-color: var(--secondary-color-1);
+        border: 1px dashed black;
         & .dlt-btn {
           pointer-events: all;
           opacity: 1;
@@ -1128,12 +1138,19 @@ body.light .poll-btn button {
         right: 0;
         top: 0;
         width: 20px;
-        height: 20px;
+        height: 100%;
         border: none;
         background-color: unset;
         cursor: pointer;
         pointer-events: none;
         opacity: 0;
+        border-radius: 4px;
+        box-shadow: 0 0 2px transparent;
+        transition: .25s all;
+        &:hover {
+          background-color: var(--secondary-color-2);
+          box-shadow: 0 0 2px var(--primary-color), inset 0 0 2px var(--primary-color);
+        }
       }
 
 
@@ -1190,12 +1207,12 @@ body.light .poll-btn button {
   position: relative;
   width: 30px;
   height: 30px;
-  border: 1px solid var(--primary-color);
-  background-color: var(--secondary-color-2);
+  border: none;
+  background-color: black;
   border-radius: 5px;
   cursor: pointer;
   transition: .25s all;
-  box-shadow:inset 0 0 20px  var(--primary-color), 0 0 40px  var(--primary-color);
+  box-shadow: 0 0 2px  var(--primary-color);
 
   &:hover {
     border-color: none;
@@ -1205,7 +1222,7 @@ body.light .poll-btn button {
     }
   }
   &:active {
-    box-shadow:inset 0 0 20px  var(--primary-color), 0 0 20px  var(--primary-color);
+    box-shadow: 0 0 5px  var(--primary-color);
     transform: scale(.9);
   }
 

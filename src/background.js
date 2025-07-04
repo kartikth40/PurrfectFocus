@@ -41,6 +41,8 @@ import posthog from 'posthog-js';
 let sessionActive = false;
 let sessionTimeout = null;
 
+let musicPlayTimer = null
+
 const initPostHog = getOrCreateAnonymousId().then((anonymousId) => {
   posthog.init(CONFIG.POSTHOG_API_KEY, {
     api_host: 'https://us.i.posthog.com'
@@ -262,11 +264,17 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
       });
   }
   if (request.type === 'MUSIC_PLAYING') {
-    initPostHog.then((ph) => {
-        ph.capture('playing_music', {
-          music_track: request.track
+    if(musicPlayTimer){
+      clearTimeout(musicPlayTimer)
+    } 
+    musicPlayTimer = setTimeout(() => {
+      initPostHog.then((ph) => {
+          ph.capture('playing_music', {
+            music_track: request.track
+          });
         });
-      });
+      musicPlayTimer = null
+    },30 * 1000)
   }
   if (request.type === 'EXPORT_DATA') {
     initPostHog.then((ph) => {
@@ -300,6 +308,27 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
         site: request?.properties?.site,
         host: request?.properties?.host,
         site_count: request?.properties?.site_count
+      });
+    })
+  }
+  if (request.type === 'SETTINGS_SAVED') {
+    initPostHog.then((ph) => {
+      ph.capture('settings_saved', {
+        focusTime: request?.properties.focusTime,
+        focusNotificationTone: request?.properties.focusNotificationTone,
+        focusAutoStart: request?.properties.focusAutoStart,
+        shortBreakTime: request?.properties.shortBreakTime,
+        shortBreakNotificationTone: request?.properties.shortBreakNotificationTone,
+        shortBreakAutoStart: request?.properties.shortBreakAutoStart,
+        longBreakTime: request?.properties.longBreakTime,
+        longBreakNotificationTone: request?.properties.longBreakNotificationTone,
+        longBreakAutoStart: request?.properties.longBreakAutoStart,
+        isMusicPlayerActive: request?.properties.isMusicPlayerActive,
+        theme: request?.properties.theme,
+        openNewTab: request?.properties.openNewTab,
+        showDailyJournal: request?.properties.showDailyJournal,
+        enableSiteBlocking: request?.properties.enableSiteBlocking,
+        timerMode: request?.properties.timerMode
       });
     })
   }
