@@ -94,7 +94,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   if (!alarms.some(alarm => alarm.name === "checkActivity")) {
     chrome.alarms.create("checkActivity", { periodInMinutes: 180 });
   }
-  chrome.runtime.setUninstallURL(CONFIG.UNINSTALL_SURVEY_FORM_URL);
+  chrome.runtime.setUninstallURL(CONFIG.UNINSTALL_SURVEY_URL)
 });
 
 chrome.runtime.onStartup.addListener(async () => {

@@ -1109,31 +1109,29 @@ export function getOrCreateAnonymousId() {
 
 
 export async function setBlockRules() {
-  // const blockedWebsitesObj = (await getSyncStorage([BLOCKEDLISTKEY]))
-  // const blockedWebsites = blockedWebsitesObj[BLOCKEDLISTKEY]
-  // if(!blockedWebsites || blockedWebsites.length <= 0) return
-  // const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
-  // const idsToRemove = existingRules.map(rule => rule.id);
-  // await chrome.declarativeNetRequest.updateDynamicRules({
-  //   removeRuleIds: idsToRemove,
-  //   addRules: blockedWebsites.map((site, index) => ({
-  //     id: index+1000,
-  //     priority: 1,
-  //     action: { "type": "redirect", "redirect": { "url": (chrome.runtime.getURL("src/newTab/over.html") + "?redirected=" + site) } },
-  //     condition: {
-  //       urlFilter: site,
-  //       resourceTypes: ["main_frame", "sub_frame"]
-  //     }
-  //   }))
-  // });
+  const blockedWebsitesObj = (await getSyncStorage([BLOCKEDLISTKEY]))
+  const blockedWebsites = blockedWebsitesObj[BLOCKEDLISTKEY]
+  if(!blockedWebsites || blockedWebsites.length <= 0) return
+  const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
+  const idsToRemove = existingRules.map(rule => rule.id);
+  await chrome.declarativeNetRequest.updateDynamicRules({
+    removeRuleIds: idsToRemove,
+    addRules: blockedWebsites.map((site, index) => ({
+      id: index+1000,
+      priority: 1,
+      action: { "type": "redirect", "redirect": { "url": (chrome.runtime.getURL("src/newTab/over.html") + "?redirected=" + site) } },
+      condition: {
+        urlFilter: site,
+        resourceTypes: ["main_frame", "sub_frame"]
+      }
+    }))
+  });
 }
 
 export async function unSetBlockRules() {
-  // const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
-  // const idsToRemove = existingRules.map(rule => rule.id);
-  // await chrome.declarativeNetRequest.updateDynamicRules({
-  //   removeRuleIds: idsToRemove
-  // });
-  // await chrome.declarativeNetRequest.getDynamicRules((rules) => {
-  // });
+  const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
+  const idsToRemove = existingRules.map(rule => rule.id);
+  await chrome.declarativeNetRequest.updateDynamicRules({
+    removeRuleIds: idsToRemove
+  });
 }

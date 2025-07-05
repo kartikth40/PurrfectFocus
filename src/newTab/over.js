@@ -710,9 +710,9 @@ if(showSurvey) {
   pollBtn.classList.add('active')
   const votePoll = document?.getElementById("votePoll")
   if(votePoll) {
-      votePoll.innerText = CONFIG.POLL_TITLE
+      votePoll.innerText = CONFIG.LINK_TITLE
       votePoll.addEventListener("click", function() {
-      chrome.tabs.create({ url: CONFIG.POLL_FORM_URL });
+      chrome.tabs.create({ url: CONFIG.LINK_URL });
     });
   }
 }else {
