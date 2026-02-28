@@ -12,6 +12,7 @@ const untilLongBreakCount = document.querySelector('#until-long-count')
 const untilLongBreak = document.querySelector('.until-long')
 const stopBtn = document.querySelector('.focus-btn-stop')
 const nextBtn = document.querySelector('.focus-btn-next')
+const doneBtn = document.querySelector('.focus-btn-done')
 const quote = document.querySelector('.quote')
 const breakActivitiesSuggestions = document.querySelector('.break-suggestions-container')
 const settingsBtn = document.querySelector('.settings-tab-btn')
@@ -33,6 +34,42 @@ supportBtn.href = CONFIG.SUPPORT_URL
 let audio = null
 let settings
 let musicPlayerInitialized = false
+let musicDataCache = null
+let isLoopingTrack = localStorage.getItem('loopCurrentTrack') === 'true'
+let isSeekingTrack = false
+
+function updateTrackPlayingStatus(isPlaying) {
+  const trackTitleElement = document.getElementById("track-title")
+  if (!trackTitleElement) return
+  const text = isPlaying ? 'Now Playing...' : 'Not Playing'
+  trackTitleElement.classList.remove('track-status-idle', 'track-status-playing')
+  trackTitleElement.classList.add(isPlaying ? 'track-status-playing' : 'track-status-idle')
+  trackTitleElement.textContent = text
+  trackTitleElement.title = text
+}
+
+function applyTimerModeControls(isPomodoro) {
+  if (!isPomodoro) {
+    nextBtn.querySelector('img').src = '/icons/end.png'
+    timerEdit.style.display = 'none'
+    mode.innerText = 'Stopwatch Mode'
+    doneBtn.style.display = 'none'
+    doneBtn.classList.remove('active')
+  } else {
+    nextBtn.querySelector('img').src = '/icons/next.png'
+    mode.innerText = 'Pomodoro Mode'
+    timerEdit.style.display = 'block'
+    doneBtn.style.display = ''
+  }
+}
+
+const sendRuntimeMessageSafely = async (message) => {
+  try {
+    await chrome.runtime.sendMessage(message)
+  } catch (e) {
+    console.warn(e)
+  }
+}
 
 const print = printer()
 document.addEventListener('DOMContentLoaded', async () => {
@@ -81,21 +118,14 @@ async function init() {
   const timerCounts = timer.timer ? timer.timer.counts : 0
   untilLongBreakCount.innerText = interval - timerCounts + 1
   await handleUntilLongBreakCount(settings, timer.timer)
-  if (!isPomodoro) {
-    nextBtn.querySelector('img').src = '/icons/end.png';
-    timerEdit.style.display = 'none'
-    mode.innerText = 'Stopwatch Mode'
-  }else {
-    nextBtn.querySelector('img').src = '/icons/next.png';
-    mode.innerText = 'Pomodoro Mode'
-    timerEdit.style.display = 'block'
-  }
+  applyTimerModeControls(isPomodoro)
   if(timer?.timer?.type === LONGBREAK) changeTextTo( untilLongBreak, '')
   if(timer?.timer && (timer?.timer?.status === PLAY || timer?.timer?.status === PAUSE)) {
     changeTextTo(timerEle, getTimeString(timer.timer.time, false))
     changeTextTo(focusBtnText, getFocusText(timer.timer, settings))
     stopBtn.classList.add('active')
     nextBtn.classList.add('active')
+    if(isPomodoro) doneBtn.classList.add('active')
   }
   if(timer?.timer && timer?.timer?.status === PAUSE) {
     chrome.action.setBadgeText({text: getTimeString(timer.timer.time)})
@@ -104,33 +134,38 @@ async function init() {
   if(!timer?.timer) {
     stopBtn.classList.remove('active')
     nextBtn.classList.remove('active')
+    doneBtn.classList.remove('active')
   }
   await setLocalStorage({ lastActive: Date.now() })
-  if(settings.musicPlayer && !musicPlayerInitialized) setupMusicPlayer()
+  if(settings.musicPlayer) {
+    if(!musicPlayerInitialized) setupMusicPlayer()
+  }
   else removeMusicPlayer()
 
   if(!settings?.blockSites) {
     await unSetBlockRules()
   }
 
-  chrome.runtime.sendMessage({ type: 'START_SESSION' });
-  chrome.runtime.sendMessage({ type: 'PAGE_VIEW', properties: {
+  await sendRuntimeMessageSafely({ type: 'START_SESSION' })
+  await sendRuntimeMessageSafely({ type: 'PAGE_VIEW', properties: {
     currentUrl: window.location.href,
     pathName: 'over',
     screenWidth: window?.screen?.width,
     screenHeight: window?.screen?.height
-  } });
+  } })
 }
 
 async function initDailyJournal() {
   dailyJournalListCotainer.classList.add('show')
   const currentDate = new Date();
-  const year = currentDate.getFullYear().toString();
-  const monthDay = `${currentDate.getDate()}-${currentDate.getMonth() + 1}`;
-  const history = await getLocalStorage(year);
-  let yearObj = history[year] || {};
-  let dayObj = yearObj[monthDay] || [{}];
-  let journalList = dayObj[0][DAILYJOURNALLISTKEY] || [];
+  const {
+    year,
+    monthDay,
+    history,
+    yearObj,
+    dayObj,
+    journalList
+  } = await getDailyJournalState(currentDate)
 
   dailyJournalListSubContainer.innerHTML = journalList
     .map((dailyJournal, index) => `
@@ -148,12 +183,14 @@ async function initDailyJournal() {
         if(response) {
           const idx = event.target.dataset.index;
           const currentDate = new Date();
-          const year = currentDate.getFullYear().toString();
-          const monthDay = `${currentDate.getDate()}-${currentDate.getMonth() + 1}`;
-          const history = await getLocalStorage(year);
-          let yearObj = history[year] || {};
-          let dayObj = yearObj[monthDay] || [{}];
-          let journalList = dayObj[0][DAILYJOURNALLISTKEY] || [];
+          const {
+            year,
+            monthDay,
+            history,
+            yearObj,
+            dayObj,
+            journalList
+          } = await getDailyJournalState(currentDate)
           const updatedDailyJournalList = journalList.filter((_, i) => i !== parseInt(idx, 10));
           dayObj[0][DAILYJOURNALLISTKEY] = updatedDailyJournalList;
           yearObj[monthDay] = dayObj;
@@ -169,14 +206,15 @@ async function initDailyJournal() {
 dailyJournalListSubContainer.addEventListener('change', async (event) => {
   if (event.target.tagName === 'INPUT' && event.target.type === 'checkbox') {
     const idx = event.target.dataset.index;
-    // --- fetch and update using correct path ---
     const currentDate = new Date();
-    const year = currentDate.getFullYear().toString();
-    const monthDay = `${currentDate.getDate()}-${currentDate.getMonth() + 1}`;
-    const history = await getLocalStorage(year);
-    let yearObj = history[year] || {};
-    let dayObj = yearObj[monthDay] || [{}];
-  let journalList = dayObj[0][DAILYJOURNALLISTKEY] || [];
+    const {
+      year,
+      monthDay,
+      history,
+      yearObj,
+      dayObj,
+      journalList
+    } = await getDailyJournalState(currentDate)
     const updatedTodoList = [...journalList];
     updatedTodoList[idx] = {
       ...updatedTodoList[idx],
@@ -195,6 +233,15 @@ function setupMusicPlayer() {
   document.getElementById("next").addEventListener("click", nextTrack);
   document.getElementById("prev").addEventListener("click", prevTrack);
   document.getElementById("category-select").addEventListener("change", changeCategory);
+  document.getElementById("track-select").addEventListener("change", changeTrack);
+  document.getElementById("loop-toggle").addEventListener("click", toggleLoopMode);
+  document.getElementById("track-progress").addEventListener("input", handleTrackSeekInput)
+  document.getElementById("track-progress").addEventListener("change", handleTrackSeekChange)
+  restoreMusicPlayerSelections()
+  updateLoopButtonLabel()
+  resetTrackProgressUI()
+  updateTrackPlayingStatus(false)
+  musicPlayerInitialized = true
   settings.musicPlayer = true
 }
 
@@ -204,6 +251,13 @@ function removeMusicPlayer() {
   document.getElementById("next").removeEventListener("click", nextTrack);
   document.getElementById("prev").removeEventListener("click", prevTrack);
   document.getElementById("category-select").removeEventListener("change", changeCategory);
+  document.getElementById("track-select").removeEventListener("change", changeTrack);
+  document.getElementById("loop-toggle").removeEventListener("click", toggleLoopMode);
+  document.getElementById("track-progress").removeEventListener("input", handleTrackSeekInput)
+  document.getElementById("track-progress").removeEventListener("change", handleTrackSeekChange)
+  resetTrackProgressUI()
+  updateTrackPlayingStatus(false)
+  musicPlayerInitialized = false
   settings.musicPlayer = false
 }
 
@@ -212,6 +266,7 @@ async function pauseMusic() {
     await audio.pause();
     document.getElementById("play-pause").classList.remove('pause')
     document.getElementById("play-pause").classList.add('play')
+    updateTrackPlayingStatus(false)
   }
 }
 
@@ -225,10 +280,12 @@ async function togglePlayPause() {
     await audio.play();
     document.getElementById("play-pause").classList.remove('play')
     document.getElementById("play-pause").classList.add('pause')
+    updateTrackPlayingStatus(true)
   } else {
     await audio.pause();
     document.getElementById("play-pause").classList.remove('pause')
     document.getElementById("play-pause").classList.add('play')
+    updateTrackPlayingStatus(false)
   }
 }
 
@@ -240,53 +297,214 @@ async function prevTrack() {
   await loadTrack(null, -1);
 }
 
-async function loadTrack(category = null, nextIndex=null) {
+async function loadTrack(category = null, nextIndex=null, selectedIndex = null) {
   if(audio){
     await audio.pause();
     audio.currentTime = 0;
     audio.removeEventListener("ended", nextTrack);
     audio = null;
   }
-  let currentlyPlaying = localStorage.getItem('currentlyPlaying')
-  let currentCategory = category || 'FOCUS';
-  let currentTrackIndex = 0;
-  let currentTrack = '';
-  if(currentlyPlaying) {
-    let [category, index] = currentlyPlaying.split('-')
-    if (category && !isNaN(index)) {
-      currentCategory = category;
-      currentTrackIndex = parseInt(index);
+  const currentlyPlaying = localStorage.getItem('currentlyPlaying')
+  let currentCategory = category || document.getElementById("category-select")?.value || 'FOCUS';
+  let currentTrackIndex = selectedIndex ?? 0;
+  if(currentlyPlaying && selectedIndex === null) {
+    const [storedCategory, index] = currentlyPlaying.split('-')
+    if (storedCategory && !isNaN(index)) {
+      currentCategory = category || storedCategory
+      currentTrackIndex = parseInt(index)
       if(nextIndex) {
         currentTrackIndex += nextIndex
       }
     }
-    let playObj = await playMusic(currentCategory, currentTrackIndex)
+    const playObj = await playMusic(currentCategory, currentTrackIndex)
     currentTrackIndex = playObj.index
-    currentTrack = playObj.title
     audio = playObj.audio
-    localStorage.setItem('currentlyPlaying', `${currentCategory}-${currentTrackIndex}`)
   }
   else {
-    let playObj = await playMusic(currentCategory, null)
+    if(nextIndex && currentlyPlaying) {
+      const [storedCategory, index] = currentlyPlaying.split('-')
+      if (storedCategory && !isNaN(index)) {
+        currentCategory = category || storedCategory
+        currentTrackIndex = parseInt(index) + nextIndex
+      }
+    }
+    const playObj = await playMusic(currentCategory, currentTrackIndex)
     currentTrackIndex = playObj.index
-    currentTrack = playObj.title
     audio = playObj.audio
-    localStorage.setItem('currentlyPlaying', `${currentCategory}-${currentTrackIndex}`)
   }
-  currentTrack = currentTrack.replace(/-/g, ' ')
-  document.getElementById("track-title").textContent = `${currentTrack}`;
+  if (!audio) {
+    updateTrackPlayingStatus(false)
+    return
+  }
+  localStorage.setItem('currentlyPlaying', `${currentCategory}-${currentTrackIndex}`)
+  document.getElementById("category-select").value = currentCategory
+  await populateTrackSelect(currentCategory, currentTrackIndex)
+  if (audio) {
+    audio.loop = isLoopingTrack
+    audio.addEventListener('loadedmetadata', syncTrackProgressUI)
+    audio.addEventListener('timeupdate', syncTrackProgressUI)
+  }
   if (audio.paused) {
     audio.play();
   }
   document.getElementById("play-pause").classList.remove('play')
   document.getElementById("play-pause").classList.add('pause')
-  audio.addEventListener("ended", nextTrack);
+  updateTrackPlayingStatus(true)
+  if (isLoopingTrack) {
+    audio.removeEventListener("ended", nextTrack)
+  } else {
+    audio.addEventListener("ended", nextTrack)
+  }
+}
+
+function handleTrackSeekInput(event) {
+  if (!audio || !audio.duration || Number.isNaN(audio.duration)) return
+  isSeekingTrack = true
+  const progress = Number(event.target.value)
+  const nextTime = (progress / 100) * audio.duration
+  updateTrackTimeLabels(nextTime, audio.duration)
+}
+
+function handleTrackSeekChange(event) {
+  if (!audio || !audio.duration || Number.isNaN(audio.duration)) return
+  const progress = Number(event.target.value)
+  audio.currentTime = (progress / 100) * audio.duration
+  isSeekingTrack = false
+  syncTrackProgressUI()
+}
+
+function syncTrackProgressUI() {
+  if (!audio) {
+    resetTrackProgressUI()
+    return
+  }
+
+  const trackProgress = document.getElementById("track-progress")
+  if (!trackProgress) return
+
+  const duration = Number.isFinite(audio.duration) ? audio.duration : 0
+  const currentTime = Number.isFinite(audio.currentTime) ? audio.currentTime : 0
+
+  if (!isSeekingTrack) {
+    const progress = duration > 0 ? Math.floor((currentTime / duration) * 100) : 0
+    trackProgress.value = `${Math.max(0, Math.min(100, progress))}`
+  }
+
+  updateTrackTimeLabels(currentTime, duration)
+}
+
+function resetTrackProgressUI() {
+  const trackProgress = document.getElementById("track-progress")
+  if (trackProgress) {
+    trackProgress.value = '0'
+  }
+  updateTrackTimeLabels(0, 0)
+  isSeekingTrack = false
+}
+
+function updateTrackTimeLabels(currentTime = 0, duration = 0) {
+  const currentTimeElement = document.getElementById("track-current-time")
+  const durationElement = document.getElementById("track-duration")
+  if (currentTimeElement) {
+    currentTimeElement.textContent = formatTrackTime(currentTime)
+  }
+  if (durationElement) {
+    durationElement.textContent = formatTrackTime(duration)
+  }
+}
+
+function formatTrackTime(valueInSeconds = 0) {
+  const safeValue = Number.isFinite(valueInSeconds) ? Math.max(0, Math.floor(valueInSeconds)) : 0
+  const minutes = Math.floor(safeValue / 60).toString().padStart(2, '0')
+  const seconds = (safeValue % 60).toString().padStart(2, '0')
+  return `${minutes}:${seconds}`
 }
 
 async function changeCategory(event) {
   localStorage.removeItem('currentlyPlaying')
   let currentCategory = event.target.value;
-  await loadTrack(currentCategory);
+  await populateTrackSelect(currentCategory, 0)
+  await loadTrack(currentCategory, null, 0)
+}
+
+async function changeTrack(event) {
+  const category = document.getElementById("category-select")?.value || 'FOCUS'
+  const selectedIndex = parseInt(event.target.value)
+  if (isNaN(selectedIndex)) return
+  await loadTrack(category, null, selectedIndex)
+}
+
+async function populateTrackSelect(category, selectedIndex = 0) {
+  const trackSelect = document.getElementById("track-select")
+  if (!trackSelect) return
+  const musicData = await getMusicData()
+  const tracks = musicData?.[category] || []
+
+  trackSelect.innerHTML = tracks.map((track, index) => {
+    const title = track.replace('.mp3', '').replace(/-/g, ' ')
+    return `<option value="${index}">${title}</option>`
+  }).join('')
+
+  if (!tracks.length) {
+    trackSelect.innerHTML = '<option value="">No tracks</option>'
+    trackSelect.disabled = true
+    return
+  }
+
+  trackSelect.disabled = false
+  const safeIndex = Math.max(0, Math.min(selectedIndex, tracks.length - 1))
+  trackSelect.value = `${safeIndex}`
+}
+
+async function getMusicData() {
+  if (musicDataCache) return musicDataCache
+  try {
+    const response = await fetch(chrome.runtime.getURL('/music.json'))
+    musicDataCache = await response.json()
+    return musicDataCache
+  } catch (e) {
+    console.warn('Failed to load music data', e)
+    return null
+  }
+}
+
+async function restoreMusicPlayerSelections() {
+  const categorySelect = document.getElementById("category-select")
+  const currentlyPlaying = localStorage.getItem('currentlyPlaying')
+  let category = categorySelect?.value || 'FOCUS'
+  let index = 0
+
+  if (currentlyPlaying) {
+    const [storedCategory, storedIndex] = currentlyPlaying.split('-')
+    if (storedCategory) category = storedCategory
+    if (!isNaN(storedIndex)) index = parseInt(storedIndex)
+  }
+
+  if (categorySelect) {
+    categorySelect.value = category
+  }
+  await populateTrackSelect(category, index)
+}
+
+function toggleLoopMode() {
+  isLoopingTrack = !isLoopingTrack
+  localStorage.setItem('loopCurrentTrack', isLoopingTrack ? 'true' : 'false')
+  updateLoopButtonLabel()
+  if (!audio) return
+  audio.loop = isLoopingTrack
+  if (isLoopingTrack) {
+    audio.removeEventListener("ended", nextTrack)
+  } else {
+    audio.removeEventListener("ended", nextTrack)
+    audio.addEventListener("ended", nextTrack)
+  }
+}
+
+function updateLoopButtonLabel() {
+  const loopToggle = document.getElementById("loop-toggle")
+  if (!loopToggle) return
+  loopToggle.textContent = isLoopingTrack ? 'Loop: On' : 'Loop: Off'
+  loopToggle.classList.toggle('active', isLoopingTrack)
 }
 
 function addEventListeners() {
@@ -308,6 +526,7 @@ function addEventListeners() {
       }
       stopBtn.classList.add('active')
       nextBtn.classList.add('active')
+      if(isPomodoro) doneBtn.classList.add('active')
       if(timer?.timer) changeTextTo(focusTitle, timer?.timer?.type)
       if(settings.musicPlayer && settings.musicPlayerAutoStart) await loadTrack()
     }
@@ -325,6 +544,7 @@ function addEventListeners() {
       changeTextTo(focusTitle, 'Start Focusing')
       stopBtn.classList.remove('active')
       nextBtn.classList.remove('active')
+      doneBtn.classList.remove('active')
       if(isPomodoro) changeTextTo(timerEle, getTimeString(store.settings.focus.time * 60, false))
       else changeTextTo(timerEle, getTimeString(0, false))
       await handleUntilLongBreakCount(store.settings, null)
@@ -351,6 +571,7 @@ function addEventListeners() {
       if(!timer) {
         stopBtn.classList.remove('active')
         nextBtn.classList.remove('active')
+        doneBtn.classList.remove('active')
       }
     }
     else if(request.saveSettings){
@@ -368,13 +589,9 @@ function addEventListeners() {
       !timer || timer?.type === FOCUS ? await setFocusOptionForTasks() : await setRestOptionForTasks()
     }
     if(request.switchToStopwatch) {
-      nextBtn.querySelector('img').src = '/icons/end.png';
-      timerEdit.style.display = 'none'
-      mode.innerText = 'Stopwatch Mode'
+      applyTimerModeControls(false)
     }else if(request.switchToPomodoro) {
-      nextBtn.querySelector('img').src = '/icons/next.png';
-      mode.innerText = 'Pomodoro Mode'
-      timerEdit.style.display = 'block'
+      applyTimerModeControls(true)
     }
     if(request.invalidSession) {
       showToast('Session Not Saved!', 'Session duration must be at least one minute.', TOASTIFY.colors.orange)
@@ -412,6 +629,10 @@ function addEventListeners() {
   })
   nextBtn.addEventListener('click', async () => {
     await nextTimer()
+  })
+
+  doneBtn.addEventListener('click', async () => {
+    await finishTimer()
   })
 
   settingsBtn.addEventListener('click',async () => {
@@ -534,12 +755,14 @@ function addEventListeners() {
       async (response) => {
         if (response !== null && response.trim() !== "") {
           const currentDate = new Date();
-          const year = currentDate.getFullYear().toString();
-          const monthDay = `${currentDate.getDate()}-${currentDate.getMonth() + 1}`;
-          const history = await getLocalStorage(year);
-          let yearObj = history[year] || {};
-          let dayObj = yearObj[monthDay] || [{}];
-          let journalList = dayObj[0][DAILYJOURNALLISTKEY] || [];
+          const {
+            year,
+            monthDay,
+            history,
+            yearObj,
+            dayObj,
+            journalList
+          } = await getDailyJournalState(currentDate)
           journalList.push({ id: Date.now() + Math.random().toString(36), item: response.trim(), completed: false });
 
           dayObj[0][DAILYJOURNALLISTKEY] = journalList;
@@ -547,11 +770,41 @@ function addEventListeners() {
           history[year] = yearObj;
           await setLocalStorage({[year]: history[year]});
           await initDailyJournal();
-          chrome.runtime.sendMessage({ type: 'DAILY_JOURNAL_ADDED', response: response.trim() });
+          await sendRuntimeMessageSafely({ type: 'DAILY_JOURNAL_ADDED', response: response.trim() })
         }
       }
     );
   })
+}
+
+async function getDailyJournalState(currentDate = new Date()) {
+  const year = currentDate.getFullYear().toString()
+  const monthDay = `${currentDate.getDate()}-${currentDate.getMonth() + 1}`
+  const historyStore = await getLocalStorage(year)
+  const history = historyStore || {}
+  const yearObj = (history[year] && typeof history[year] === 'object') ? history[year] : {}
+  let dayObj = yearObj[monthDay]
+
+  if (!Array.isArray(dayObj) || dayObj.length === 0) {
+    dayObj = [{}]
+  }
+
+  if (!dayObj[0] || typeof dayObj[0] !== 'object' || Array.isArray(dayObj[0])) {
+    dayObj[0] = {}
+  }
+
+  if (!Array.isArray(dayObj[0][DAILYJOURNALLISTKEY])) {
+    dayObj[0][DAILYJOURNALLISTKEY] = []
+  }
+
+  return {
+    year,
+    monthDay,
+    history,
+    yearObj,
+    dayObj,
+    journalList: dayObj[0][DAILYJOURNALLISTKEY]
+  }
 }
 
 async function loadSettings(settings) {
@@ -574,7 +827,10 @@ async function loadSettings(settings) {
   const isPomodoro = settings.mode === modes.POMODORO
   if(isPomodoro) changeTextTo(timerEle, getTimeString(timerDuration(timer?.timer?.type, settings)*60, false))
   else changeTextTo(timerEle, getTimeString(0, false))
-  if(settings.musicPlayer && !musicPlayerInitialized) setupMusicPlayer()
+  applyTimerModeControls(isPomodoro)
+  if(settings.musicPlayer) {
+    if(!musicPlayerInitialized) setupMusicPlayer()
+  }
   else removeMusicPlayer()
   if(settings.dailyJournal) {
   dailyJournalListCotainer.classList.add('show')
@@ -600,7 +856,9 @@ const initiateTimer = async () => {
     }
     try{
       await chrome.runtime.sendMessage({startTimer: true, timer: timerObj})
-    }catch{e=>console.warn(e)}
+    }catch (e) {
+      console.warn(e)
+    }
   })
   if(isPomodoro) {
     changeTextTo(focusBtnText, 'Pause')
@@ -610,6 +868,7 @@ const initiateTimer = async () => {
   changeTextTo(focusTitle, timer?.type ?? FOCUS)
   stopBtn.classList.add('active')
   nextBtn.classList.add('active')
+  if(isPomodoro) doneBtn.classList.add('active')
 }
 
 async function nextTimer() {
@@ -619,7 +878,17 @@ async function nextTimer() {
     if(settings?.mode === modes.STOPWATCH) {
       await chrome.runtime.sendMessage({stopwatchNextTimer: true})
     }else await chrome.runtime.sendMessage({nextTimer: true})
-  }catch{e=>console.warn(e)}
+  }catch (e) {
+    console.warn(e)
+  }
+}
+
+async function finishTimer() {
+  try {
+    await chrome.runtime.sendMessage({ finishTimer: true })
+  } catch (e) {
+    console.warn(e)
+  }
 }
 
 
@@ -629,6 +898,7 @@ const stopTimer = async (settings) => {
   changeTextTo(focusTitle, 'Start Focusing')
   stopBtn.classList.remove('active')
   nextBtn.classList.remove('active')
+  doneBtn.classList.remove('active')
   breakActivitiesSuggestions.classList.remove('show')
   const isPomodoro = settings.mode === modes.POMODORO
   if(isPomodoro) changeTextTo(timerEle, getTimeString(settings.focus.time * 60, false))
@@ -638,7 +908,9 @@ const stopTimer = async (settings) => {
   await handleUntilLongBreakCount(settings, null)
   try{
     await chrome.runtime.sendMessage({stopTimer: true})
-  }catch{e=>console.warn(e)}
+  }catch (e) {
+    console.warn(e)
+  }
 }
 
 const updateNextTimer = async () => {
@@ -683,7 +955,9 @@ const pause = async (timer) => {
   chrome.action.setBadgeBackgroundColor({color: 'rgb(255, 202, 118)'})
   try{
     await chrome.runtime.sendMessage({pauseTimer: true, timer: timer})
-  }catch{e=>console.warn(e)}
+  }catch (e) {
+    console.warn(e)
+  }
 }
 
 const resume = async (timer) => {

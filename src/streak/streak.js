@@ -7,15 +7,23 @@ const maxStreakCount = document.querySelector('.max-streak')
 const currentStreak = document.querySelector('.current-streak')
 const streakWeekCheckboxes = document.querySelectorAll('.streak-check')
 
+const sendRuntimeMessageSafely = async (message) => {
+  try {
+    await chrome.runtime.sendMessage(message)
+  } catch (e) {
+    console.warn(e)
+  }
+}
+
 
 document.addEventListener('DOMContentLoaded', async () => {
   await init()
-  chrome.runtime.sendMessage({ type: 'PAGE_VIEW', properties: {
+  await sendRuntimeMessageSafely({ type: 'PAGE_VIEW', properties: {
     currentUrl: window.location.href,
     pathName: 'streak',
     screenWidth: window?.screen?.width,
     screenHeight: window?.screen?.height
-  } });
+  } })
 })
 
 

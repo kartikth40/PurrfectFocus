@@ -297,6 +297,7 @@ input:hover, select:hover {
   box-shadow: 0 0 0 transparent;
 }
 .focus-btns-int button {
+  position: relative;
   box-shadow: inset 10px -10px 25px var(--primary-color);
   border: 2px solid black;
   background: var(--secondary-color-2);
@@ -321,6 +322,37 @@ input:hover, select:hover {
   display: block;
   width: 24px;
   height:24px;
+}
+
+.focus-btns-int button:hover .tooltip,
+.focus-btns-int button:focus-visible .tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+}
+
+.focus-btns-int .tooltip {
+  top: auto;
+  bottom: calc(100% + 2px);
+  padding: 3px 10px;
+  border: 2px solid black;
+  border-radius: 8px;
+  font-family: "Poppins", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  color: #000;
+  background: linear-gradient(45deg, var(--primary-color), var(--secondary-color-2));
+  box-shadow: inset -2px 2px 8px var(--secondary-color-2), inset 2px -2px 10px var(--primary-color);
+}
+
+.light .focus-btns-int .tooltip {
+  background: var(--secondary-color-2);
+  box-shadow: inset -2px 2px 12px var(--secondary-color-2), inset 2px -2px 10px var(--secondary-color-2);
+}
+
+.focus-btns-int .tooltip::before {
+  display: none;
 }
 
 .focus-btns-int {
@@ -1042,7 +1074,7 @@ body.light .poll-btn button {
 }
 
 #daily-journal-list-container {
-  width: 230px;
+  width: 250px;
   position: absolute;
   top: 10px;
   left: 10px;

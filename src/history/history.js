@@ -78,6 +78,14 @@ const YEAR = 'year'
 const maxHeightOfGraph = monthBarsContainer.clientHeight - 15
 let maxValueOfGraph = 0
 
+const sendRuntimeMessageSafely = async (message) => {
+  try {
+    await chrome.runtime.sendMessage(message)
+  } catch (e) {
+    console.warn(e)
+  }
+}
+
 dateInput.addEventListener('change', async () => {
   const newValue = dateInput.value
   if(newValue !== today.toISOString().split('T')[0]) {
@@ -114,7 +122,7 @@ deleteHistoryBtn.addEventListener('click', async () => {
   if(confirm("Are you sure you wanna delete all of your history for this year?")) {
     await clearHistory()
     await init()
-    chrome.runtime.sendMessage({ type: 'DELETE_ALL_DATA' });
+    await sendRuntimeMessageSafely({ type: 'DELETE_ALL_DATA' })
   }
 })
 userGuideBtn.addEventListener('click', async () => {
@@ -164,12 +172,12 @@ deleteSomeHistoryBtn.addEventListener('click', async () => {
 })
 exportDataBtn.addEventListener('click', async () => {
   await exportData()
-  chrome.runtime.sendMessage({ type: 'EXPORT_DATA' });
+  await sendRuntimeMessageSafely({ type: 'EXPORT_DATA' })
 })
 
 importDataBtn.addEventListener('click', async () => {
   await importData()
-  chrome.runtime.sendMessage({ type: 'IMPORT_DATA' });
+  await sendRuntimeMessageSafely({ type: 'IMPORT_DATA' })
   location.reload()
 })
 
@@ -389,13 +397,13 @@ async function init() {
   timerBtn.addEventListener('click', async () => {
       await createNewTabForTimers(false, true)
     })
-  chrome.runtime.sendMessage({ type: 'START_SESSION' });
-  chrome.runtime.sendMessage({ type: 'PAGE_VIEW', properties: {
+  await sendRuntimeMessageSafely({ type: 'START_SESSION' })
+  await sendRuntimeMessageSafely({ type: 'PAGE_VIEW', properties: {
     currentUrl: window?.location?.href,
     pathName: 'history',
     screenWidth: window?.screen?.width,
     screenHeight: window?.screen?.height
-  } });
+  } })
 }
 
 function setBars(data, maxValueOfGraph, range=WEEK, totalDays=7) {
@@ -713,7 +721,7 @@ async function makecalendarGraph(currentYear, currentDate, currentMonth, current
                   await setLocalStorage({[year]: history[year]});
                   initJournal(journalList)
                   anyChange = true
-                  chrome.runtime.sendMessage({ type: 'DAILY_JOURNAL_ADDED', response: response.trim() });
+                  await sendRuntimeMessageSafely({ type: 'DAILY_JOURNAL_ADDED', response: response.trim() })
                 }
               }
             );

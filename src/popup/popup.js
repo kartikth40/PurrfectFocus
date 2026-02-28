@@ -47,6 +47,7 @@ const untilLongBreakCount = document.querySelector('#until-long-count')
 const untilLongBreak = document.querySelector('.until-long')
 const stopBtn = document.querySelector('.focus-btn-stop')
 const nextBtn = document.querySelector('.focus-btn-next')
+const doneBtn = document.querySelector('.focus-btn-done')
 const timerTag = document.querySelector('.timer-tag')
 const timerEdit = document.querySelector('.timer-edit')
 const pollBtn = document?.querySelector(".poll-btn")
@@ -61,8 +62,31 @@ const taskSelect = document.getElementById('tasks-select')
 const taskEdit = document.querySelector('.task-edit')
 const mode = document.querySelector('.mode')
 
+function applyTimerModeControls(isPomodoro) {
+  if (!isPomodoro) {
+    nextBtn.querySelector('img').src = '/icons/end.png'
+    timerEdit.style.display = 'none'
+    mode.innerText = 'Stopwatch Mode'
+    doneBtn.style.display = 'none'
+    doneBtn.classList.remove('active')
+  } else {
+    nextBtn.querySelector('img').src = '/icons/next.png'
+    mode.innerText = 'Pomodoro Mode'
+    timerEdit.style.display = 'block'
+    doneBtn.style.display = ''
+  }
+}
+
 
 const print = printer()
+
+const sendRuntimeMessageSafely = async (message) => {
+  try {
+    await chrome.runtime.sendMessage(message)
+  } catch (e) {
+    console.warn(e)
+  }
+}
 
 // listening messages
 chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
@@ -98,10 +122,12 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
     if(!timer) {
       stopBtn.classList.remove('active')
       nextBtn.classList.remove('active')
+      doneBtn.classList.remove('active')
     }
   }
   else if(request.saveSettings) {
     const store = await getSyncStorage(SETTINGSKEY)
+    const isPomodoro = store?.settings?.mode === modes.POMODORO
     if(store?.settings?.theme === LIGHTTHEME) {
       document.body.classList.add('light')
     }else document.body.classList.remove('light')
@@ -112,6 +138,7 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
       timerTag.classList.remove('simple')
       timerTag.classList.add('cat-walk')
     }
+    applyTimerModeControls(isPomodoro)
   }
   else if(request.taskChange) {
     taskSelect.value = request.taskChange
@@ -164,15 +191,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const store = await getSyncStorage(SETTINGSKEY)
   let settings = store.settings
   const isPomodoro = settings.mode === modes.POMODORO
-  if (!isPomodoro) {
-    nextBtn.querySelector('img').src = '/icons/end.png';
-    timerEdit.style.display = 'none'
-    mode.innerText = 'Stopwatch Mode'
-  }else {
-    nextBtn.querySelector('img').src = '/icons/next.png';
-    mode.innerText = 'Pomodoro Mode'
-    timerEdit.style.display = 'block'
-  }
+  applyTimerModeControls(isPomodoro)
   if(settings?.theme === LIGHTTHEME) {
     document.body.classList.add('light')
   }else document.body.classList.remove('light')
@@ -198,6 +217,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     changeTextTo(focusTitle, sessionStore.timer.type)
     stopBtn.classList.add('active')
     nextBtn.classList.add('active')
+    if(isPomodoro) doneBtn.classList.add('active')
   }
   if(sessionStore?.timer && sessionStore?.timer?.status === PAUSE) {
     chrome.action.setBadgeText({text: getTimeString(sessionStore.timer.time)})
@@ -237,6 +257,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   nextBtn.addEventListener('click', async () => {
     await nextTimer()
+  })
+
+  doneBtn.addEventListener('click', async () => {
+    await finishTimer()
   })
 
   timerTag.addEventListener('click', async () => {
@@ -364,13 +388,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       if(!settings?.blockSites) {
         await unSetBlockRules()
       }
-      chrome.runtime.sendMessage({ type: 'START_SESSION' });
-      chrome.runtime.sendMessage({ type: 'PAGE_VIEW', properties: {
+      await sendRuntimeMessageSafely({ type: 'START_SESSION' })
+      await sendRuntimeMessageSafely({ type: 'PAGE_VIEW', properties: {
         currentUrl: window.location.href,
         pathName: 'popup',
         screenWidth: window?.screen?.width,
         screenHeight: window?.screen?.height
-      } });
+      } })
 })
 
 async function nextTimer() {
@@ -391,6 +415,7 @@ const stopTimer = async (settings) => {
   changeTextTo(focusTitle, 'Start Focusing')
   stopBtn.classList.remove('active')
   nextBtn.classList.remove('active')
+  doneBtn.classList.remove('active')
   const isPomodoro = settings.mode === modes.POMODORO
   if(isPomodoro) changeTextTo(timerEle, getTimeString(settings.focus.time * 60, false))
   else changeTextTo(timerEle, getTimeString(0, false))
@@ -455,6 +480,7 @@ const initiateTimer = async () => {
   changeTextTo(focusTitle, timerEle?.type ?? FOCUS)
   stopBtn.classList.add('active')
   nextBtn.classList.add('active')
+  if(isPomodoro) doneBtn.classList.add('active')
 }
 
 if(showSurvey) {
@@ -501,4 +527,12 @@ async function setFocusOptionForTasks(timer) {
                           .join('')
   taskSelect.value = getValidTask(timer?.task)
   taskSelect.disabled = false
+}
+
+async function finishTimer() {
+  try {
+    await chrome.runtime.sendMessage({finishTimer: true})
+  } catch (e) {
+    console.warn(e)
+  }
 }

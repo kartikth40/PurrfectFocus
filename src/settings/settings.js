@@ -38,6 +38,14 @@ supportBtn.href = CONFIG.SUPPORT_URL
 
 let settingsChanged = false
 
+const sendRuntimeMessageSafely = async (message) => {
+  try {
+    await chrome.runtime.sendMessage(message)
+  } catch (e) {
+    console.warn(e)
+  }
+}
+
 chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
 
   // settings status change
@@ -196,13 +204,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const manifestData = chrome.runtime.getManifest();
   versionTag.textContent = `~ v${manifestData.version}`;
 
-  chrome.runtime.sendMessage({ type: 'START_SESSION' });
-  chrome.runtime.sendMessage({ type: 'PAGE_VIEW', properties: {
+  await sendRuntimeMessageSafely({ type: 'START_SESSION' })
+  await sendRuntimeMessageSafely({ type: 'PAGE_VIEW', properties: {
     currentUrl: window.location.href,
     pathName: 'settings',
     screenWidth: window?.screen?.width,
     screenHeight: window?.screen?.height
-  } });
+  } })
   await loadBlockedList()
 })
 
@@ -320,6 +328,11 @@ async function saveNewSiteToBlockLIst(newValue, index=-1) {
 
 async function saveBlockedSites(removed=false) {
   await setSyncStorage({ [BLOCKEDLISTKEY]: blockedSites });
+  try {
+    await chrome.runtime.sendMessage({ syncBlockRules: true })
+  } catch (e) {
+    console.warn(e)
+  }
   if(removed) return
   for (const site of blockedSites) {
     try {

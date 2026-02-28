@@ -18,4 +18,16 @@ Purrfect Pomodoro Timer: Productivity, Time Management & Daily Journal
  [] Minimize permissions—only request what’s necessary.
 
  [] Update the store listing (description, screenshots, changelog).
+
+## Release Checklist
+
+Use the full manual pre-release test checklist here:
+
+- [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md)
+
+Recommended flow:
+
+1. Run through all sections in `RELEASE_CHECKLIST.md`.
+2. Fix issues found during manual validation.
+3. Re-run critical timer/blocking/music checks before packaging.
  

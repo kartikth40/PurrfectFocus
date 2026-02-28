@@ -56,14 +56,33 @@ let intervalId = createState(0)
 let blockingSites = createState(false)
 const print = printer()
 
+const sendRuntimeMessage = async (message) => {
+  try {
+    await chrome.runtime.sendMessage(message)
+  } catch (e) {
+    console.warn(e)
+  }
+}
+
+const trackEvent = (event, properties = null) => {
+  initPostHog.then((ph) => {
+    if (properties) ph.capture(event, properties)
+    else ph.capture(event)
+  })
+}
+
+const clearBlockingState = async () => {
+  if (!blockingSites.getState()) return
+  await unSetBlockRules()
+  blockingSites.setState(false)
+}
+
 
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === "install") {
     await chrome.tabs.create({url:"src/userGuide/userGuide.html", active: true})
     await setLocalStorage({[TASKSALIASKEY]: TASKS_ALIAS})
-    initPostHog.then((ph) => {
-      ph.capture('extension_installed');
-    });
+    trackEvent('extension_installed')
   }
   else if (details.reason === "update") {
     const thisVersion = chrome.runtime.getManifest().version;
@@ -80,12 +99,10 @@ chrome.runtime.onInstalled.addListener(async (details) => {
       }
 
       // Fire the update event to PostHog with both versions for clarity
-      initPostHog.then((ph) => {
-        ph.capture('extension_updated', {
-          previousVersion: prevVersion,
-          currentVersion: thisVersion
-        });
-      });
+      trackEvent('extension_updated', {
+        previousVersion: prevVersion,
+        currentVersion: thisVersion
+      })
     }
   }
   await initBackgroundJs();
@@ -129,11 +146,7 @@ async function startActualTimer(timer) {
   }
   await setTimerInStore(timerObj)
   await startTimer(chrome, timer?.time ?? 0)
-  try{
-    await chrome.runtime.sendMessage({timerStarted: true})
-  }catch (e) {
-    console.warn(e);
-  }
+  await sendRuntimeMessage({timerStarted: true})
 }
 
 async function pauseActualTimer(timer) {
@@ -152,10 +165,7 @@ async function pauseActualTimer(timer) {
     }
   }
   await setTimerInStore(timerObj)
-  if(blockingSites.getState()) {
-    await unSetBlockRules()
-    blockingSites.setState(false)
-  }
+  await clearBlockingState()
   print.it('session -> paused')
 
 }
@@ -164,10 +174,7 @@ async function stopActualTimer() {
   print.log('message received - stop timer')
   clearInterval(intervalId.getState())
   await setTimerInStore({[TIMERKEY]: null})
-  if(blockingSites.getState()) {
-    await unSetBlockRules()
-    blockingSites.setState(false)
-  }
+  await clearBlockingState()
 }
 
 async function resetCurrentTimer() {
@@ -200,137 +207,141 @@ async function resetCurrentTimer() {
     }
   }
   await setTimerInStore(newTimerObj)
-  if(blockingSites.getState()) {
-    await unSetBlockRules()
-    blockingSites.setState(false)
+  await clearBlockingState()
+}
+
+async function syncBlockRulesFromSettings() {
+  const settingsObj = await getSyncStorage(SETTINGSKEY)
+  const settings = settingsObj?.[SETTINGSKEY]
+  const timerObj = await getSessionStorage(TIMERKEY)
+  const timer = timerObj?.[TIMERKEY]
+
+  const shouldBlockNow =
+    settings?.blockSites
+    && timer?.type === FOCUS
+    && timer?.status === PLAY
+
+  if (shouldBlockNow) {
+    await setBlockRules()
+    blockingSites.setState(true)
+  } else {
+    await clearBlockingState()
+  }
+}
+
+const actionHandlers = {
+  startTimer: async (request) => {
+    await startActualTimer(request?.timer)
+    trackEvent('timer_started')
+  },
+  pauseTimer: async (request) => {
+    await pauseActualTimer(request?.timer)
+    await sendRuntimeMessage({ timerPaused: true })
+  },
+  stopTimer: async () => {
+    await stopActualTimer()
+    await sendRuntimeMessage({ timerStopped: true })
+    trackEvent('timer_stopped')
+  },
+  resetCurrentTimer: async () => {
+    await resetCurrentTimer()
+    await sendRuntimeMessage({ timerReset: true })
+  },
+  nextTimer: async () => {
+    await setNextTimer()
+  },
+  stopwatchNextTimer: async () => {
+    await setNextTimer(false, true)
+  },
+  finishTimer: async () => {
+    await setNextTimer(true, true, true)
+  },
+  syncBlockRules: async () => {
+    await syncBlockRulesFromSettings()
+  }
+}
+
+const analyticsHandlers = {
+  START_SESSION: () => {
+    startSession()
+  },
+  DAILY_JOURNAL_ADDED: (request) => {
+    trackEvent('daily_journal_added', {
+      item: request.response.trim()
+    })
+  },
+  MUSIC_PLAYING: (request) => {
+    if(musicPlayTimer){
+      clearTimeout(musicPlayTimer)
+    }
+    musicPlayTimer = setTimeout(() => {
+      trackEvent('playing_music', {
+        music_track: request.track
+      })
+      musicPlayTimer = null
+    },30 * 1000)
+  },
+  EXPORT_DATA: () => {
+    trackEvent('data_exported')
+  },
+  IMPORT_DATA: () => {
+    trackEvent('data_imported')
+  },
+  DELETE_ALL_DATA: () => {
+    trackEvent('all_data_deleted')
+  },
+  PAGE_VIEW: (request) => {
+    trackEvent('$pageview', {
+      $current_url: request?.properties?.currentUrl,
+      $pathname: request?.properties?.pathName,
+      $screen_width: request?.properties?.screenWidth,
+      $screen_height: request?.properties?.screenHeight,
+      extension_version: chrome.runtime.getManifest().version
+    })
+  },
+  SITE_BLOCKED: (request) => {
+    trackEvent('site_blocked', {
+      site: request?.properties?.site,
+      host: request?.properties?.host,
+      site_count: request?.properties?.site_count
+    })
+  },
+  SETTINGS_SAVED: (request) => {
+    trackEvent('settings_saved', {
+      focusTime: request?.properties.focusTime,
+      focusNotificationTone: request?.properties.focusNotificationTone,
+      focusAutoStart: request?.properties.focusAutoStart,
+      shortBreakTime: request?.properties.shortBreakTime,
+      shortBreakNotificationTone: request?.properties.shortBreakNotificationTone,
+      shortBreakAutoStart: request?.properties.shortBreakAutoStart,
+      longBreakTime: request?.properties.longBreakTime,
+      longBreakNotificationTone: request?.properties.longBreakNotificationTone,
+      longBreakAutoStart: request?.properties.longBreakAutoStart,
+      isMusicPlayerActive: request?.properties.isMusicPlayerActive,
+      theme: request?.properties.theme,
+      openNewTab: request?.properties.openNewTab,
+      showDailyJournal: request?.properties.showDailyJournal,
+      enableSiteBlocking: request?.properties.enableSiteBlocking,
+      timerMode: request?.properties.timerMode
+    })
   }
 }
   
 chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
-  if (request.startTimer) {
-    await startActualTimer(request?.timer)
-    initPostHog.then((ph) => {
-      ph.capture('timer_started');
-    });
-  }
-  else if(request.pauseTimer) {
-    await pauseActualTimer(request?.timer)
-    try{
-      await chrome.runtime.sendMessage({timerPaused: true})
-    }catch (e) {
-      console.warn(e);
-  }
-  }
-  else if(request.stopTimer) {
-    await stopActualTimer()
-    try{
-      await chrome.runtime.sendMessage({timerStopped: true})
-    }catch (e) {
-      console.warn(e);
-    }
-    initPostHog.then((ph) => {
-      ph.capture('timer_stopped');
-    });
-  }
-  else if(request.resetCurrentTimer) {
-    await resetCurrentTimer()
-    try{
-      await chrome.runtime.sendMessage({timerReset: true})
-    }catch (e) {
-      console.warn(e);
+  for (const action of Object.keys(actionHandlers)) {
+    if (request[action]) {
+      await actionHandlers[action](request)
+      break
     }
   }
-  else if(request.nextTimer) {
-    await setNextTimer();
-  } else if(request.stopwatchNextTimer) {
-    await setNextTimer(false, true);
-  }
+
   if(request.saveSettings) {
     await setSyncStorage(request.newSettings)
-    try{
-      await chrome.runtime.sendMessage({settingsSaved: true, reload: request.reload})
-    }catch (e) {
-      console.warn(e);
+    await sendRuntimeMessage({settingsSaved: true, reload: request.reload})
   }
-  }
-  if (request.type === 'START_SESSION') {
-    startSession();
-  }
-  if (request.type === 'DAILY_JOURNAL_ADDED') {
-    initPostHog.then((ph) => {
-        ph.capture('daily_journal_added', {
-          item: request.response.trim()
-        });
-      });
-  }
-  if (request.type === 'MUSIC_PLAYING') {
-    if(musicPlayTimer){
-      clearTimeout(musicPlayTimer)
-    } 
-    musicPlayTimer = setTimeout(() => {
-      initPostHog.then((ph) => {
-          ph.capture('playing_music', {
-            music_track: request.track
-          });
-        });
-      musicPlayTimer = null
-    },30 * 1000)
-  }
-  if (request.type === 'EXPORT_DATA') {
-    initPostHog.then((ph) => {
-        ph.capture('data_exported');
-      });
-  }
-  if (request.type === 'IMPORT_DATA') {
-    initPostHog.then((ph) => {
-        ph.capture('data_imported');
-      });
-  }
-  if (request.type === 'DELETE_ALL_DATA') {
-    initPostHog.then((ph) => {
-        ph.capture('all_data_deleted');
-      });
-  }
-  if (request.type === 'PAGE_VIEW') {
-    initPostHog.then((ph) => {
-      ph.capture('$pageview', {
-        $current_url: request?.properties?.currentUrl,
-        $pathname: request?.properties?.pathName,
-        $screen_width: request?.properties?.screenWidth,
-        $screen_height: request?.properties?.screenHeight,
-        extension_version: chrome.runtime.getManifest().version
-      });
-    })
-  }
-  if (request.type === 'SITE_BLOCKED') {
-    initPostHog.then((ph) => {
-      ph.capture('site_blocked', {
-        site: request?.properties?.site,
-        host: request?.properties?.host,
-        site_count: request?.properties?.site_count
-      });
-    })
-  }
-  if (request.type === 'SETTINGS_SAVED') {
-    initPostHog.then((ph) => {
-      ph.capture('settings_saved', {
-        focusTime: request?.properties.focusTime,
-        focusNotificationTone: request?.properties.focusNotificationTone,
-        focusAutoStart: request?.properties.focusAutoStart,
-        shortBreakTime: request?.properties.shortBreakTime,
-        shortBreakNotificationTone: request?.properties.shortBreakNotificationTone,
-        shortBreakAutoStart: request?.properties.shortBreakAutoStart,
-        longBreakTime: request?.properties.longBreakTime,
-        longBreakNotificationTone: request?.properties.longBreakNotificationTone,
-        longBreakAutoStart: request?.properties.longBreakAutoStart,
-        isMusicPlayerActive: request?.properties.isMusicPlayerActive,
-        theme: request?.properties.theme,
-        openNewTab: request?.properties.openNewTab,
-        showDailyJournal: request?.properties.showDailyJournal,
-        enableSiteBlocking: request?.properties.enableSiteBlocking,
-        timerMode: request?.properties.timerMode
-      });
-    })
+
+  if (request.type && analyticsHandlers[request.type]) {
+    analyticsHandlers[request.type](request)
   }
 })
 
@@ -345,6 +356,7 @@ const startTimer = async (chrome, timer) => {
     timer += incrementFactor
     if (isPomodoro && timer < 0) {
       await finishCurrentTimer(isPomodoro, settings)
+      await setNextTimer(true)
     }else {
       print.log('⏲ -> ' + timer +' '+ getTimeString(timer))
       const result = await getSessionStorage(TIMERKEY)
@@ -357,7 +369,9 @@ const startTimer = async (chrome, timer) => {
       }
       try{
         await chrome.runtime.sendMessage({time: getTimeString(timer, false)})
-      } catch{(e) => console.warn(e)}
+      } catch (e) {
+        console.warn(e)
+      }
       const timerToStore = {
         [TIMERKEY]: {
           time: timer,
@@ -383,7 +397,7 @@ const startTimer = async (chrome, timer) => {
   intervalId.setState(intId)
 }
   
-async function finishCurrentTimer(isPomodoro=true, settings={}) {
+async function finishCurrentTimer(isPomodoro=true, settings={}, forceFinish=false) {
   print.log('start timer 🔚')
   clearInterval(intervalId.getState())
   chrome.action.setBadgeText({text: getTimeString(0)})
@@ -396,14 +410,17 @@ async function finishCurrentTimer(isPomodoro=true, settings={}) {
   const task = getValidTask(timerObj?.timer?.task, timerObj?.timer?.type)
   let startTime = timerObj?.timer?.startTime
   let endTime = getCurrentTimeString()
-  const shouldSaveSession = startTime && endTime && (DEVELOPING || (isPomodoro && startTime !== endTime) || (!isPomodoro && timerObj?.timer?.time > 60))
-  let duration = timerObj?.timer?.type === SHORTBREAK 
-                    ? settings?.shortBreak?.time
-                    : timerObj?.timer?.type === LONGBREAK
+  const configuredDuration = timerObj?.timer?.type === SHORTBREAK 
+  ? settings?.shortBreak?.time
+  : timerObj?.timer?.type === LONGBREAK
                     ? settings?.longBreak?.time
                     : settings?.focus?.time
-
-  if (!isPomodoro && startTime && endTime) {
+  const elapsedSeconds = isPomodoro
+    ? Math.max(0, ((configuredDuration ?? 0) * 60) - (timerObj?.timer?.time ?? 0))
+    : Math.max(0, timerObj?.timer?.time ?? 0)
+  let duration = parseFloat((elapsedSeconds / 60).toFixed(2))
+                    
+  if (!duration && startTime && endTime) {
     const [startHours, startMinutes] = startTime.split(':').map(Number);
     const [endHours, endMinutes] = endTime.split(':').map(Number);
     let startTotalMinutes = startHours * 60 + startMinutes;
@@ -411,11 +428,18 @@ async function finishCurrentTimer(isPomodoro=true, settings={}) {
     if (endTotalMinutes < startTotalMinutes) {
       endTotalMinutes += 24 * 60; // Add 24 hours in minutes if end time is on the next day
     }
-    duration = endTotalMinutes - startTotalMinutes;
+    duration = (endTotalMinutes - startTotalMinutes) < duration ? (endTotalMinutes - startTotalMinutes) : duration;
   }
-  if(!isPomodoro && (duration < 1 || timerObj?.timer?.time < 60)) {
-    await chrome.runtime.sendMessage({invalidSession: true})
+  let isValidSession = true
+  const isUnderOneMinute = elapsedSeconds < 60
+  if (isUnderOneMinute) {
+    isValidSession = false
+    await chrome.runtime.sendMessage({ invalidSession: true })
   }
+  const shouldSaveSession = startTime && endTime && (
+    DEVELOPING
+    || elapsedSeconds >= 60
+  )
   if(timerObj?.timer?.type === FOCUS) await setLocalStorage({[CURRENTTASKKEY]: task})
   const sessionObj = {
     startTime: startTime,
@@ -444,10 +468,10 @@ async function finishCurrentTimer(isPomodoro=true, settings={}) {
       [currentDateWithMonth]: [sessionObj],...oldHistory} 
     })
   }
-  await setNextTimer(true)
+  return isValidSession && shouldSaveSession
 }
 
-const setNextTimer = async (timerEnds=false, shouldStopWatchEnd=false) => {
+const setNextTimer = async (timerEnds=false, shouldSaveTimer=false, forceFinish=false) => {
   const settingsObj = await getSyncStorage(SETTINGSKEY)
   const isPomodoro = settingsObj[SETTINGSKEY]?.mode === modes.POMODORO
   const status = await getSessionStorage(TIMERKEY)
@@ -461,8 +485,9 @@ const setNextTimer = async (timerEnds=false, shouldStopWatchEnd=false) => {
   clearInterval(intervalId.getState())
   chrome.action.setBadgeBackgroundColor({color: 'rgb(255, 202, 118)'})
   let timerToStore = {}
-
-  if(!isPomodoro && shouldStopWatchEnd) await finishCurrentTimer(isPomodoro, settingsObj?.settings)
+  if(shouldSaveTimer){ 
+    await finishCurrentTimer(isPomodoro, settingsObj?.settings, forceFinish)
+  }
 
   if(status?.timer?.type === FOCUS) {
     const interval = parseInt(settingsObj?.settings?.longBreak?.interval)
@@ -547,13 +572,10 @@ const setNextTimer = async (timerEnds=false, shouldStopWatchEnd=false) => {
     console.warn(e);
   }
   }
-  if(isPomodoro && timerEnds) {
+  if(isPomodoro && timerEnds && !shouldSaveTimer) {
     await createNotification(prevTimer, nextTimer)
   }
-  if(blockingSites.getState()) {
-    await unSetBlockRules()
-    blockingSites.setState(false)
-  }
+  await clearBlockingState()
   const nextType = timerToStore?.[TIMERKEY]?.type;
   if (settingsObj?.settings?.mode === modes.POMODORO && (
     (nextType === FOCUS && settingsObj?.settings?.focus?.autoStart) ||

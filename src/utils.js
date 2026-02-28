@@ -1107,24 +1107,74 @@ export function getOrCreateAnonymousId() {
   });
 }
 
+function normalizeBlockedDomain(site) {
+  if (!site || typeof site !== 'string') return null
+  const raw = site.trim()
+  if (!raw) return null
+
+  try {
+    const url = raw.includes('://') ? new URL(raw) : new URL(`https://${raw}`)
+    const host = url.hostname.toLowerCase().replace(/^www\./, '')
+    return host || null
+  } catch (e) {
+    const sanitized = raw
+      .toLowerCase()
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .split('/')[0]
+      .split('?')[0]
+      .split('#')[0]
+      .trim()
+    return sanitized || null
+  }
+}
+
 
 export async function setBlockRules() {
-  const blockedWebsitesObj = (await getSyncStorage([BLOCKEDLISTKEY]))
+  const blockedWebsitesObj = await getSyncStorage([BLOCKEDLISTKEY])
   const blockedWebsites = blockedWebsitesObj[BLOCKEDLISTKEY]
-  if(!blockedWebsites || blockedWebsites.length <= 0) return
   const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
   const idsToRemove = existingRules.map(rule => rule.id);
+
+  if(!blockedWebsites || blockedWebsites.length <= 0) {
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: idsToRemove,
+      addRules: []
+    });
+    return
+  }
+
+  const expandedDomains = blockedWebsites
+    .flatMap((site) => normalizeBlockedDomain(site))
+    .filter(Boolean)
+
+  const uniqueDomains = [...new Set(expandedDomains)]
+  if(uniqueDomains.length <= 0) {
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: idsToRemove,
+      addRules: []
+    });
+    return
+  }
+
+  const addRules = uniqueDomains.map((domain, index) => ({
+    id: index + 1000,
+    priority: 1,
+    action: {
+      "type": "redirect",
+      "redirect": {
+        "url": (chrome.runtime.getURL("src/newTab/over.html") + "?redirected=" + encodeURIComponent(domain))
+      }
+    },
+    condition: {
+      requestDomains: [domain],
+      resourceTypes: ["main_frame", "sub_frame"]
+    }
+  }))
+
   await chrome.declarativeNetRequest.updateDynamicRules({
     removeRuleIds: idsToRemove,
-    addRules: blockedWebsites.map((site, index) => ({
-      id: index+1000,
-      priority: 1,
-      action: { "type": "redirect", "redirect": { "url": (chrome.runtime.getURL("src/newTab/over.html") + "?redirected=" + site) } },
-      condition: {
-        urlFilter: site,
-        resourceTypes: ["main_frame", "sub_frame"]
-      }
-    }))
+    addRules
   });
 }
 

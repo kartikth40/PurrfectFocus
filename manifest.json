@@ -1,6 +1,6 @@
 {
     "name": "Purrfect Pomodoro Timer: Productivity, Time Management & Daily Journal",
-    "version": "1.5.0",
+    "version": "1.5.2",
     "description": "Purrfect Pomodoro Timer",
     "permissions": ["storage", "notifications", "alarms", "offscreen", "declarativeNetRequest", "declarativeNetRequestWithHostAccess"],
     "host_permissions": [

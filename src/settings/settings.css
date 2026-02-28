@@ -600,7 +600,10 @@ label {
     gap: 5px;
     align-items: center;
     justify-content: center;
-
+    & i {
+      color: #ff0000;
+      font-size: 1.2em;
+    }
   }
 
   #blocked-sites-list{
