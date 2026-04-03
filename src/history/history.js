@@ -176,9 +176,10 @@ exportDataBtn.addEventListener('click', async () => {
 })
 
 importDataBtn.addEventListener('click', async () => {
-  await importData()
-  await sendRuntimeMessageSafely({ type: 'IMPORT_DATA' })
-  location.reload()
+  await importData(async () => {
+    await sendRuntimeMessageSafely({ type: 'IMPORT_DATA' })
+    location.reload()
+  })
 })
 
 document.addEventListener('DOMContentLoaded', async () => {

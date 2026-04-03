@@ -668,7 +668,7 @@ export async function exportData() {
   document.body.removeChild(link)
 }
 
-export async function importData() {
+export async function importData(onSuccess) {
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = 'application/json'
@@ -687,6 +687,10 @@ export async function importData() {
         const mergedData = mergeHistory(existingData, newData)
         await setLocalStorage(mergedData)
         alert('Data imported successfully!')
+        // Call success callback after import completes
+        if (onSuccess) {
+          await onSuccess()
+        }
       } catch (error) {
         alert('Failed to import data. Invalid JSON format.')
       }
@@ -717,6 +721,9 @@ function mergeHistory(existingData, newData) {
             }
           }
         }
+    } else {
+      // For non-year keys (settings, tasksAlias, etc.), overwrite with imported data
+      existingData[key] = newData[key]
     }
   }
   return existingData
