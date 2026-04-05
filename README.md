@@ -1,7 +1,8 @@
 <p align="center">
-  <img src="public/cat.png" alt="Purrfect Pomodoro Timer" width="80" />
+  <a href="https://chromewebstore.google.com/detail/purrfect-pomodoro-timer-p/aobapnhgpjlldncjopmbbfeoomombhel">
+    <img src="public/cat.png" alt="Purrfect Pomodoro Timer" width="80" />
+  </a>
 </p>
-
 <h1 align="center">Purrfect Pomodoro Timer</h1>
 
 <p align="center">
@@ -24,7 +25,9 @@
 
 
 <p align="center">
-  <img src="docs/images/purrfect_focus.png" alt="Purrfect Focus Screenshots" />
+  <a href="https://chromewebstore.google.com/detail/purrfect-pomodoro-timer-p/aobapnhgpjlldncjopmbbfeoomombhel">
+    <img src="docs/images/purrfect_focus.png" alt="Purrfect Focus Screenshots" />
+  </a>
 </p>
 
 ## Features
