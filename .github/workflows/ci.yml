@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Verify build
+        run: npm run build
+
+      - name: Verify DEVELOPING flag is false
+        run: |
+          if grep -q "export const DEVELOPING = true" src/constants.js; then
+            echo "❌ DEVELOPING flag is set to true! Must be false for production."
+            exit 1
+          fi
+          echo "✅ DEVELOPING flag is false"

@@ -8,7 +8,9 @@
     "dev": "vite",
     "build": "vite build",
     "watch": "nodemon --watch src --watch public --ext js,ts,html,css --exec \"npm run build\"",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "",
@@ -17,9 +19,11 @@
     "posthog-js": "^1.255.1"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.2",
     "cpx": "^1.5.0",
     "nodemon": "^3.1.10",
     "vite": "^6.3.5",
-    "vite-plugin-static-copy": "^3.0.2"
+    "vite-plugin-static-copy": "^3.0.2",
+    "vitest": "^4.1.2"
   }
 }
