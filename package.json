@@ -1,6 +1,6 @@
 {
   "name": "purrfect-focus",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "description": "Purrfect Pomodoro Timer: Productivity, Time Management & Daily Journal",
   "main": "index.js",
   "type": "module",
