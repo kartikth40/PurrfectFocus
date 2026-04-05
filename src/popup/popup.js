@@ -318,13 +318,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         "Renaming this task will update it everywhere, including history.\n\nEnter the new task name:", 
         oldTaskAlias,
         async (response) => {
-          if (response !== null && response.length <= 10) {
+          if (response !== null && response.length <= 20) {
             tasksAlias[oldSelectedTask] = response
             await chrome.runtime.sendMessage({taskAliasUpdated: true})
             await setLocalStorage({[TASKSALIASKEY]: tasksAlias})
             oldSelectedTask === TASKS.REST ? setRestOptionForTasks() : setFocusOptionForTasks()
-          } else if (response !== null && response.length > 10) {
-            showToast("Oops! 😋", "Task name should be less than 10 characters.", TOASTIFY.colors.red)
+          } else if (response !== null && response.length > 20) {
+            showToast("Oops! 😋", "Task name should be less than 20 characters.", TOASTIFY.colors.red)
           }
       });
     })
@@ -422,6 +422,7 @@ const stopTimer = async (settings) => {
   chrome.action.setBadgeText({text: ''})
   chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]})
   await handleUntilLongBreakCount(settings, null)
+  await setFocusOptionForTasks()
   try{
     await chrome.runtime.sendMessage({stopTimer: true})
   } catch (e) {

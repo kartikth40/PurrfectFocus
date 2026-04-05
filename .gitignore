@@ -3,6 +3,7 @@ node_modules/
 
 # Vite or other build outputs
 dist/
+dist.zip
 .vite/
 
 # OS junk

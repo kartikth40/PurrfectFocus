@@ -1,33 +1,96 @@
-# PurrfectPomodoro Timer
-Purrfect Pomodoro Timer: Productivity, Time Management & Daily Journal
+<p align="center">
+  <img src="public/cat.png" alt="Purrfect Pomodoro Timer" width="80" />
+</p>
 
-![Purrfect focus - Marquee promo tile](https://github.com/user-attachments/assets/6e855724-b592-4224-999b-e481cf525c4b)
+<h1 align="center">Purrfect Pomodoro Timer</h1>
 
+<p align="center">
+  A cat-themed Chrome extension for time management, focus sessions, and daily journaling.
+</p>
 
-✅ Before Publishing
- [] Update version number in manifest.json.
+<p align="center">
+  <a href="https://chromewebstore.google.com/detail/purrfect-pomodoro-timer-p/aobapnhgpjlldncjopmbbfeoomombhel">
+    <img src="https://img.shields.io/badge/Chrome%20Web%20Store-Install-blue?logo=googlechrome&logoColor=white" alt="Chrome Web Store" />
+  </a>
+  <img src="https://img.shields.io/badge/manifest-v3-green" alt="Manifest V3" />
+  <img src="https://img.shields.io/badge/license-MIT%20(Non--Commercial)-yellow" alt="License" />
+</p>
 
- [] Set development variables as false.
+---
 
- [] Test all features (including new ones) thoroughly.
+## Screenshots
 
- [] Check both light and dark themes for UI consistency.
+<table>
+  <tr>
+    <td align="center"><img src="public/imgs/popup.png" width="220" /><br /><sub>Popup</sub></td>
+    <td align="center"><img src="public/imgs/main-page.png" width="220" /><br /><sub>Timer Page</sub></td>
+    <td align="center"><img src="public/imgs/music-player.png" width="220" /><br /><sub>Music Player</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="public/imgs/settings.png" width="220" /><br /><sub>Settings</sub></td>
+    <td align="center"><img src="public/imgs/history.png" width="220" /><br /><sub>History & Charts</sub></td>
+    <td></td>
+  </tr>
+</table>
 
- [] Remove console logs and unused code.
+## Features
 
- [] Minimize permissions—only request what’s necessary.
+- 🍅 **Pomodoro Timer** — configurable focus, short break, and long break durations with auto-start options
+- ⏱️ **Stopwatch Mode** — alternative free-running timer for flexible sessions
+- 🎯 **Task Categories** — Work, Study, Personal, Chores, Other, Rest — with renamable aliases
+- 🚫 **Site Blocking** — block distracting websites during focus sessions using declarativeNetRequest
+- 🔔 **Notifications** — desktop notifications with 24 selectable alarm sounds per timer phase
+- 🎵 **Music Player** — ambient background music streamed during sessions
+- 📊 **Session History** — track your productivity with interactive charts (Chart.js)
+- 🔥 **Streak Tracking** — visualize your daily consistency
+- 📝 **Daily Journal** — lightweight to-do list to plan your day
+- 💾 **Data Import/Export** — backup and restore your history as JSON
+- 🌙 **Dark & Light Themes** — purple-toned UI with full theme support
+- 📦 **Manifest V3** — built on the latest Chrome extension platform
 
- [] Update the store listing (description, screenshots, changelog).
+## Tech Stack
 
-## Release Checklist
+| Layer | Technology |
+|-------|-----------|
+| Runtime | Vanilla JavaScript (ES Modules) |
+| Styling | Vanilla CSS with custom properties |
+| Build | Vite 6 + Rollup |
+| Analytics | PostHog |
+| Charts | Chart.js |
+| Platform | Chrome Extension (Manifest V3) |
 
-Use the full manual pre-release test checklist here:
+## Project Structure
 
-- [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md)
+```
+src/
+├── background.js      # Service worker — timer logic, messaging, site blocking
+├── config.js          # External URLs and API keys
+├── constants.js       # All constants, defaults, storage keys
+├── utils.js           # Shared utilities across all pages
+├── global.css         # Global styles and CSS variables
+├── popup/             # Extension popup UI
+├── newTab/            # Full-page timer overlay
+├── settings/          # Settings page
+├── history/           # Session history with charts
+├── streak/            # Streak tracking
+├── offScreen/         # Offscreen document for notification audio
+└── userGuide/         # First-install guide
+```
 
-Recommended flow:
+## Contributing
 
-1. Run through all sections in `RELEASE_CHECKLIST.md`.
-2. Fix issues found during manual validation.
-3. Re-run critical timer/blocking/music checks before packaging.
- 
+Found a bug or have a feature idea? [Open an issue](../../issues) — I'd love to hear from you.
+
+Pull requests are welcome for bug fixes. For larger changes, please open an issue first to discuss.
+
+## License
+
+This project is licensed under a **non-commercial MIT license**. You're free to read, learn from, and modify the code for personal or educational use. Republishing it as a competing extension or using it commercially requires written permission. See [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center">
+  <a href="https://chromewebstore.google.com/detail/purrfect-pomodoro-timer-p/aobapnhgpjlldncjopmbbfeoomombhel">
+    ⭐ Try it on the Chrome Web Store
+  </a>
+</p>
