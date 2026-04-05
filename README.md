@@ -13,40 +13,40 @@
     <img src="https://img.shields.io/badge/Chrome%20Web%20Store-Install-blue?logo=googlechrome&logoColor=white" alt="Chrome Web Store" />
   </a>
   <img src="https://img.shields.io/badge/manifest-v3-green" alt="Manifest V3" />
+  <a href="https://github.com/kartikth40/PurrfectFocus/actions/workflows/ci.yml">
+    <img src="https://github.com/kartikth40/PurrfectFocus/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  </a>
+  <a href="https://github.com/kartikth40/PurrfectFocus/releases/latest">
+    <img src="https://img.shields.io/github/v/release/kartikth40/PurrfectFocus?label=version" alt="Version" />
+  </a>
+  <a href="https://github.com/kartikth40/PurrfectFocus/issues">
+    <img src="https://img.shields.io/github/issues/kartikth40/PurrfectFocus" alt="Issues" />
+  </a>
+  <a href="https://github.com/kartikth40/PurrfectFocus/stargazers">
+    <img src="https://img.shields.io/github/stars/kartikth40/PurrfectFocus" alt="Stars" />
+  </a>
   <img src="https://img.shields.io/badge/license-MIT%20(Non--Commercial)-yellow" alt="License" />
 </p>
 
----
 
-## Screenshots
-
-<table>
-  <tr>
-    <td align="center"><img src="public/imgs/popup.png" width="220" /><br /><sub>Popup</sub></td>
-    <td align="center"><img src="public/imgs/main-page.png" width="220" /><br /><sub>Timer Page</sub></td>
-    <td align="center"><img src="public/imgs/music-player.png" width="220" /><br /><sub>Music Player</sub></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="public/imgs/settings.png" width="220" /><br /><sub>Settings</sub></td>
-    <td align="center"><img src="public/imgs/history.png" width="220" /><br /><sub>History & Charts</sub></td>
-    <td></td>
-  </tr>
-</table>
+<p align="center">
+  <img src="docs/images/purrfect_focus.png" alt="Purrfect Focus Screenshots" />
+</p>
 
 ## Features
 
-- 🍅 **Pomodoro Timer** — configurable focus, short break, and long break durations with auto-start options
-- ⏱️ **Stopwatch Mode** — alternative free-running timer for flexible sessions
-- 🎯 **Task Categories** — Work, Study, Personal, Chores, Other, Rest — with renamable aliases
-- 🚫 **Site Blocking** — block distracting websites during focus sessions using declarativeNetRequest
-- 🔔 **Notifications** — desktop notifications with 24 selectable alarm sounds per timer phase
-- 🎵 **Music Player** — ambient background music streamed during sessions
-- 📊 **Session History** — track your productivity with interactive charts (Chart.js)
-- 🔥 **Streak Tracking** — visualize your daily consistency
-- 📝 **Daily Journal** — lightweight to-do list to plan your day
-- 💾 **Data Import/Export** — backup and restore your history as JSON
-- 🌙 **Dark & Light Themes** — purple-toned UI with full theme support
-- 📦 **Manifest V3** — built on the latest Chrome extension platform
+- 🍅 **Pomodoro Timer** - configurable focus, short break, and long break durations with auto-start options
+- ⏱️ **Stopwatch Mode** - alternative free-running timer for flexible sessions
+- 🎯 **Task Categories** - Work, Study, Personal, Chores, Other, Rest - with renamable aliases
+- 🚫 **Site Blocking** - block distracting websites during focus sessions using declarativeNetRequest
+- 🔔 **Notifications** - desktop notifications with 24 selectable alarm sounds per timer phase
+- 🎵 **Music Player** - ambient background music streamed during sessions
+- 📊 **Session History** - track your productivity with interactive charts (Chart.js)
+- 🔥 **Streak Tracking** - visualize your daily consistency
+- 📝 **Daily Journal** - lightweight to-do list to plan your day
+- 💾 **Data Import/Export** - backup and restore your history as JSON
+- 🌙 **Dark & Light Themes** - purple-toned UI with full theme support
+- 📦 **Manifest V3** - built on the latest Chrome extension platform
 
 ## Tech Stack
 
@@ -63,7 +63,7 @@
 
 ```
 src/
-├── background.js      # Service worker — timer logic, messaging, site blocking
+├── background.js      # Service worker - timer logic, messaging, site blocking
 ├── config.js          # External URLs and API keys
 ├── constants.js       # All constants, defaults, storage keys
 ├── utils.js           # Shared utilities across all pages
@@ -79,7 +79,7 @@ src/
 
 ## Contributing
 
-Found a bug or have a feature idea? [Open an issue](../../issues) — I'd love to hear from you.
+Found a bug or have a feature idea? [Open an issue](../../issues) - I'd love to hear from you.
 
 Pull requests are welcome for bug fixes. For larger changes, please open an issue first to discuss.
 
