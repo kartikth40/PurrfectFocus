@@ -1,6 +1,6 @@
 {
   "name": "purrfect-focus",
-  "version": "1.5.2",
+  "version": "1.5.4",
   "description": "Purrfect Pomodoro Timer: Productivity, Time Management & Daily Journal",
   "main": "index.js",
   "type": "module",
@@ -10,7 +10,22 @@
     "watch": "nodemon --watch src --watch public --ext js,ts,html,css --exec \"npm run build\"",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src/ tests/",
+    "format": "prettier --write src/ tests/",
+    "format:check": "prettier --check src/ tests/",
+    "bump": "node scripts/bump-version.js",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "src/**/*.js": [
+      "eslint --no-warn-ignored",
+      "prettier --write"
+    ],
+    "tests/**/*.js": [
+      "eslint --no-warn-ignored",
+      "prettier --write"
+    ]
   },
   "keywords": [],
   "author": "",
@@ -19,9 +34,16 @@
     "posthog-js": "^1.255.1"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@vitest/coverage-v8": "^4.1.2",
     "cpx": "^1.5.0",
+    "eslint": "^10.2.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.4.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "nodemon": "^3.1.10",
+    "prettier": "^3.8.1",
     "vite": "^6.3.5",
     "vite-plugin-static-copy": "^3.0.2",
     "vitest": "^4.1.2"
