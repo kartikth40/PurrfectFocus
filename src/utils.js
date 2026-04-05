@@ -11,7 +11,7 @@ import {
   STOP,
   PLAY,
   PAUSE,
-  defaultSettings, 
+  defaultSettings,
   ALLLOGTYPE,
   STEPSLOGTYPE,
   HELPERLOGTYPE,
@@ -28,47 +28,49 @@ import {
   TIMERKEY,
   modes,
   TOASTIFY,
-  BLOCKEDLISTKEY} from "./constants.js"
+  BLOCKEDLISTKEY,
+} from './constants.js'
 
 const print = printer()
 
 export function printer() {
   function print(message) {
-    if(!DEVELOPING) return
-    if(!STACKTRACELOGTYPE) console.log(message)
+    if (!DEVELOPING) return
+    if (!STACKTRACELOGTYPE) console.log(message)
     else {
-      const stackTrace = new Error().stack.split("\n")[3].trim()
+      const stackTrace = new Error().stack.split('\n')[3].trim()
       const time = getTime()
-      if(typeof message === 'object') {
+      if (typeof message === 'object') {
         console.log(`${JSON.stringify(message)} \n - ${stackTrace} - |${time}|`)
-      }else{
+      } else {
         console.log(`${message} \n - ${stackTrace} - |${time}|`)
       }
     }
   }
   return {
     log: (message) => {
-      if(ALLLOGTYPE || STEPSLOGTYPE) print(message)
+      if (ALLLOGTYPE || STEPSLOGTYPE) print(message)
     },
     helper: (message) => {
-      if(ALLLOGTYPE || HELPERLOGTYPE) print(message)
+      if (ALLLOGTYPE || HELPERLOGTYPE) print(message)
     },
     it: (message) => {
-      if(ALLLOGTYPE) print(message)
-    }
+      if (ALLLOGTYPE) print(message)
+    },
   }
 }
 
-function getTime(concise=false) {
-  let date = new Date();
+function getTime(concise = false) {
+  let date = new Date()
   let hours = date.getHours().toString().padStart(2, '0')
   let minutes = date.getMinutes().toString().padStart(2, '0')
-  if(concise) return `${hours}:${minutes}`
+  if (concise) return `${hours}:${minutes}`
   let seconds = date.getSeconds().toString().padStart(2, '0')
   let milliseconds = date.getMilliseconds().toString().padStart(3, '0')
   return `${hours}:${minutes}:${seconds}.${milliseconds}`
 }
 
+/** @param {number} initialState */
 export function createState(initialState) {
   let state = initialState
 
@@ -76,58 +78,55 @@ export function createState(initialState) {
     getState: () => state,
     setState: (newState) => {
       state = newState
-      print.helper("State updated: " + state)
+      print.helper('State updated: ' + state)
     },
   }
 }
 
 export async function initBackgroundJs() {
-  const store = await getSyncStorage(SETTINGSKEY);
+  const store = await getSyncStorage(SETTINGSKEY)
   if (!Object.keys(store).length) {
-    await setSyncStorage(defaultSettings);
+    await setSyncStorage(defaultSettings)
   } else {
-    const updatedSettings = { ...defaultSettings.settings, ...store.settings };
-    await setSyncStorage({ [SETTINGSKEY]: updatedSettings });
+    const updatedSettings = { ...defaultSettings.settings, ...store.settings }
+    await setSyncStorage({ [SETTINGSKEY]: updatedSettings })
   }
 }
 
 export function storageChangesLogger() {
-  if(!DEVELOPING) return
-  chrome.storage.onChanged.addListener(
-    (changes, storageType) => {
-      let oldValue = null
-      let newValue = null
-      if(storageType === 'session') {
-        if(changes?.timer) {
-          print.helper('-> TIMER UPDATED -> ')
-          oldValue = changes.timer.oldValue
-          newValue = changes.timer.newValue
-        }
+  if (!DEVELOPING) return
+  chrome.storage.onChanged.addListener((changes, storageType) => {
+    let oldValue = null
+    let newValue = null
+    if (storageType === 'session') {
+      if (changes?.timer) {
+        print.helper('-> TIMER UPDATED -> ')
+        oldValue = changes.timer.oldValue
+        newValue = changes.timer.newValue
       }
-      else if(storageType === 'sync') {
-        if(changes?.settings) {
-          print.helper('-> SETTINGS UPDATED -> ')
-          oldValue = changes.settings.oldValue
-          newValue = changes.settings.newValue
-        }
-      }
-      if(oldValue) {
-        oldValue.which = 'OLD VALUE'
-        print.helper(oldValue)
-      } 
-      if(newValue) {
-        newValue.which = 'NEW VALUE'
-        print.helper(newValue)
+    } else if (storageType === 'sync') {
+      if (changes?.settings) {
+        print.helper('-> SETTINGS UPDATED -> ')
+        oldValue = changes.settings.oldValue
+        newValue = changes.settings.newValue
       }
     }
-  )
+    if (oldValue) {
+      oldValue.which = 'OLD VALUE'
+      print.helper(oldValue)
+    }
+    if (newValue) {
+      newValue.which = 'NEW VALUE'
+      print.helper(newValue)
+    }
+  })
 }
 
 export async function getSessionStorage(key) {
   try {
     return await chrome.storage.session.get(key)
   } catch (error) {
-    console.error('Error retrieving session storage for '+ key +': ', error)
+    console.error('Error retrieving session storage for ' + key + ': ', error)
     return null
   }
 }
@@ -145,7 +144,7 @@ export async function getSyncStorage(key) {
   try {
     return await chrome.storage.sync.get(key)
   } catch (error) {
-    console.error('Error retrieving sync storage for '+ key +': ', error)
+    console.error('Error retrieving sync storage for ' + key + ': ', error)
     return null
   }
 }
@@ -163,7 +162,7 @@ export async function getLocalStorage(key) {
   try {
     return await chrome.storage.local.get(key)
   } catch (error) {
-    console.error('Error retrieving local storage for '+ key +': ', error)
+    console.error('Error retrieving local storage for ' + key + ': ', error)
     return null
   }
 }
@@ -177,292 +176,303 @@ export async function setLocalStorage(obj) {
   }
 }
 
-export async function createNotification(prevTimer=FOCUS, nextTimer=FOCUS) {
+export async function createNotification(prevTimer = FOCUS, nextTimer = FOCUS) {
   const settingsObj = await getSyncStorage(SETTINGSKEY)
-  if(prevTimer === FOCUS) {
-    if(settingsObj.settings.focus.notifications) {
+  if (prevTimer === FOCUS) {
+    if (settingsObj.settings.focus.notifications) {
       await createNewTabForTimers(true, settingsObj?.settings?.openNewTab)
       const notificationId = `my-notification-${Date.now()}`
       await chrome.notifications.create(
         notificationId,
         {
-          iconUrl:"/cat.png",
-          message:"Take a " + nextTimer,
-          title:"Break Time!",
-          type:"basic",
+          iconUrl: '/cat.png',
+          message: 'Take a ' + nextTimer,
+          title: 'Break Time!',
+          type: 'basic',
           silent: true,
-          buttons:[
-           { title: "Take a Break"}
-          ]
+          buttons: [{ title: 'Take a Break' }],
         },
-        ()=> {print.it('notify')}
-      )
-      await chrome.notifications.onButtonClicked.addListener(async function(notifId, btnIdx) {
-        if (notifId === notificationId) {
-            if (btnIdx === 0) {
-              await chrome.windows.getCurrent({ populate: true },async function(currentWindow) {
-                await chrome.windows.update(currentWindow.id, { focused: true }, async function() {})
-              })
-            }
+        () => {
+          print.it('notify')
         }
-    })
+      )
+      await chrome.notifications.onButtonClicked.addListener(async function (notifId, btnIdx) {
+        if (notifId === notificationId) {
+          if (btnIdx === 0) {
+            await chrome.windows.getCurrent({ populate: true }, async function (currentWindow) {
+              await chrome.windows.update(currentWindow.id, { focused: true }, async function () {})
+            })
+          }
+        }
+      })
     }
-  }else if(prevTimer === SHORTBREAK) {
-    if(settingsObj.settings.shortBreak.notifications) {
+  } else if (prevTimer === SHORTBREAK) {
+    if (settingsObj.settings.shortBreak.notifications) {
       await createNewTabForTimers(true, settingsObj?.settings?.openNewTab)
       const notificationId = `my-notification-${Date.now()}`
       await chrome.notifications.create(
         notificationId,
         {
-          iconUrl:"/cat.png",
-          message:"Start Focusing Again",
-          title:"FOCUS!",
-          type:"basic",
+          iconUrl: '/cat.png',
+          message: 'Start Focusing Again',
+          title: 'FOCUS!',
+          type: 'basic',
           silent: true,
-          buttons:[
-            { title: "Start Focusing"}
-           ]
+          buttons: [{ title: 'Start Focusing' }],
         },
-        ()=> {print.it('notify')}
-      )
-      await chrome.notifications.onButtonClicked.addListener(async function(notifId, btnIdx) {
-        if (notifId === notificationId) {
-            if (btnIdx === 0) {
-              await chrome.windows.getCurrent({ populate: true }, async function(currentWindow) {
-                await chrome.windows.update(currentWindow.id, { focused: true }, async function() {})
-              })
-            }
+        () => {
+          print.it('notify')
         }
-    })
+      )
+      await chrome.notifications.onButtonClicked.addListener(async function (notifId, btnIdx) {
+        if (notifId === notificationId) {
+          if (btnIdx === 0) {
+            await chrome.windows.getCurrent({ populate: true }, async function (currentWindow) {
+              await chrome.windows.update(currentWindow.id, { focused: true }, async function () {})
+            })
+          }
+        }
+      })
     }
-  }else if(prevTimer === LONGBREAK) {
-    if(settingsObj.settings.longBreak.notifications) {
+  } else if (prevTimer === LONGBREAK) {
+    if (settingsObj.settings.longBreak.notifications) {
       await createNewTabForTimers(true, settingsObj?.settings?.openNewTab)
       const notificationId = `my-notification-${Date.now()}`
       await chrome.notifications.create(
         notificationId,
         {
-          iconUrl:"/cat.png",
-          message:"Good work you completed a set.",
-          title:"Well Done!",
-          type:"basic",
+          iconUrl: '/cat.png',
+          message: 'Good work you completed a set.',
+          title: 'Well Done!',
+          type: 'basic',
           silent: true,
-          buttons:[
-            { title: "Take a Break"}
-           ]
+          buttons: [{ title: 'Take a Break' }],
         },
-        ()=> {print.it('notify')}
-      )
-      await chrome.notifications.onButtonClicked.addListener(async function(notifId, btnIdx) {
-        if (notifId === notificationId) {
-            if (btnIdx === 0) {
-              await chrome.windows.getCurrent({ populate: true }, async function(currentWindow) {
-                await chrome.windows.update(currentWindow.id, { focused: true }, async function() {})
-              })
-            }
+        () => {
+          print.it('notify')
         }
-    })
+      )
+      await chrome.notifications.onButtonClicked.addListener(async function (notifId, btnIdx) {
+        if (notifId === notificationId) {
+          if (btnIdx === 0) {
+            await chrome.windows.getCurrent({ populate: true }, async function (currentWindow) {
+              await chrome.windows.update(currentWindow.id, { focused: true }, async function () {})
+            })
+          }
+        }
+      })
     }
   }
 }
 
-export async function createNewTabForTimers(notify=true, openNewTab=true, removeAllOthers=false) {
+export async function createNewTabForTimers(notify = true, openNewTab = true, removeAllOthers = false) {
   let sound = 'Alarm Clock Old'
   let timerObj = await getSessionStorage(TIMERKEY)
   const timer = timerObj[TIMERKEY]
 
-  if(notify){
-    await chrome.storage.sync.get([SETTINGSKEY]).then( async res => {
-      if(timer?.type === FOCUS && res?.settings?.focus?.notifications) {
+  if (notify) {
+    await chrome.storage.sync.get([SETTINGSKEY]).then(async (res) => {
+      if (timer?.type === FOCUS && res?.settings?.focus?.notifications) {
         sound = res.settings.focus.sound
-      }else if(timer?.type === SHORTBREAK && res?.settings?.shortBreak?.notifications) {
+      } else if (timer?.type === SHORTBREAK && res?.settings?.shortBreak?.notifications) {
         sound = res.settings.shortBreak.sound
-      }else if(timer?.type === LONGBREAK && res?.settings?.longBreak?.notifications) {
+      } else if (timer?.type === LONGBREAK && res?.settings?.longBreak?.notifications) {
         sound = res.settings.longBreak.sound
       }
-    }) 
+    })
   }
-  if(notify && !openNewTab) {
-    await chrome.storage.session.set({notificationTriggered:true})
+  if (notify && !openNewTab) {
+    await chrome.storage.session.set({ notificationTriggered: true })
     try {
       await playNotificationSound(sound)
-    }catch (e) {
-    console.warn(e);
-  }
+    } catch (e) {
+      console.warn(e)
+    }
     return
   }
 
   const res = await getSessionStorage(NEWTABTIMERIDKEY)
 
   async function callback() {
-    if(removeAllOthers) {
+    if (removeAllOthers) {
       await chrome.tabs.query({ active: true, currentWindow: true }, async function (tabs) {
-        const currentTabId = tabs && tabs.length > 0 && tabs[0]?.id;
+        const currentTabId = tabs && tabs.length > 0 && tabs[0]?.id
         if (currentTabId && res[NEWTABTIMERIDKEY] !== currentTabId) {
-          await setSessionStorage({[NEWTABTIMERIDKEY]: currentTabId})
-          res[NEWTABTIMERIDKEY] && chrome.tabs.remove(res[NEWTABTIMERIDKEY], async function() {
-            try {
-              if (chrome.runtime.lastError) {
-              console.warn("Failed to remove tab:", chrome.runtime.lastError);
+          await setSessionStorage({ [NEWTABTIMERIDKEY]: currentTabId })
+          res[NEWTABTIMERIDKEY] &&
+            chrome.tabs.remove(res[NEWTABTIMERIDKEY], async function () {
+              try {
+                if (chrome.runtime.lastError) {
+                  console.warn('Failed to remove tab:', chrome.runtime.lastError)
+                }
+              } catch (err) {
+                console.error('Error while removing tab:', err)
               }
-            } catch (err) {
-              console.error("Error while removing tab:", err);
-            }
-          });
+            })
         }
-      });
-    }
-    else if (chrome.runtime.lastError) {
-      await chrome.tabs.create({url:"src/newTab/over.html", active: true}, async function(tab){
-        await setSessionStorage({[NEWTABTIMERIDKEY]: tab.id})
-        if(notify) {
-          await chrome.storage.session.set({notificationTriggered:true})
+      })
+    } else if (chrome.runtime.lastError) {
+      await chrome.tabs.create({ url: 'src/newTab/over.html', active: true }, async function (tab) {
+        await setSessionStorage({ [NEWTABTIMERIDKEY]: tab.id })
+        if (notify) {
+          await chrome.storage.session.set({ notificationTriggered: true })
           try {
             await playNotificationSound(sound)
-          }catch (e) {
-    console.warn(e);
-  }
+          } catch (e) {
+            console.warn(e)
+          }
         }
       })
     } else {
       // Tab exists
-      await chrome.tabs.update(res[NEWTABTIMERIDKEY], {active: true}, async (tab) => { 
-        if(notify) {
-          try {
-              await playNotificationSound(sound)
-            }catch (e) {
-    console.warn(e);
-  }
-          }
-        })
-      }
-    } 
-    if(res[NEWTABTIMERIDKEY]) {
-      await chrome.tabs.get(res[NEWTABTIMERIDKEY],callback);
-    }else if(removeAllOthers) {
-      callback()
-    }
-    else {
-      await chrome.tabs.create({url:"src/newTab/over.html", active: true}, async function(tab){
-        await setSessionStorage({[NEWTABTIMERIDKEY]: tab.id})
-        if(notify) {
-          await chrome.storage.session.set({notificationTriggered:true})
+      await chrome.tabs.update(res[NEWTABTIMERIDKEY], { active: true }, async (tab) => {
+        if (notify) {
           try {
             await playNotificationSound(sound)
-          }catch (e) {
-    console.warn(e);
-  }
+          } catch (e) {
+            console.warn(e)
+          }
         }
       })
     }
+  }
+  if (res[NEWTABTIMERIDKEY]) {
+    await chrome.tabs.get(res[NEWTABTIMERIDKEY], callback)
+  } else if (removeAllOthers) {
+    callback()
+  } else {
+    await chrome.tabs.create({ url: 'src/newTab/over.html', active: true }, async function (tab) {
+      await setSessionStorage({ [NEWTABTIMERIDKEY]: tab.id })
+      if (notify) {
+        await chrome.storage.session.set({ notificationTriggered: true })
+        try {
+          await playNotificationSound(sound)
+        } catch (e) {
+          console.warn(e)
+        }
+      }
+    })
+  }
 }
 
 export async function createNewTabForSettings() {
   const res = await getSessionStorage(NEWTABSETTINGSIDKEY)
-  if(res[NEWTABSETTINGSIDKEY]) {
-    await chrome.tabs.get(res[NEWTABSETTINGSIDKEY],callback);
-  }else {
-    await chrome.tabs.create({url:"src/settings/settings.html", active: true}, async function(tab){
-      await setSessionStorage({[NEWTABSETTINGSIDKEY]: tab.id})
+  if (res[NEWTABSETTINGSIDKEY]) {
+    await chrome.tabs.get(res[NEWTABSETTINGSIDKEY], callback)
+  } else {
+    await chrome.tabs.create({ url: 'src/settings/settings.html', active: true }, async function (tab) {
+      await setSessionStorage({ [NEWTABSETTINGSIDKEY]: tab.id })
     })
   }
   async function callback() {
     if (chrome.runtime.lastError) {
-      await chrome.tabs.create({url:"src/settings/settings.html", active: true}, async function(tab){
-        await setSessionStorage({[NEWTABSETTINGSIDKEY]: tab.id})
+      await chrome.tabs.create({ url: 'src/settings/settings.html', active: true }, async function (tab) {
+        await setSessionStorage({ [NEWTABSETTINGSIDKEY]: tab.id })
       })
     } else {
       // Tab exists
-      await chrome.tabs.update(res[NEWTABSETTINGSIDKEY], {active: true}, async (tab) => {})
-      }
-    } 
+      await chrome.tabs.update(res[NEWTABSETTINGSIDKEY], { active: true }, async (tab) => {})
+    }
+  }
 }
 
 export async function createNewTabForHistory() {
   const res = await getSessionStorage(NEWTABHISTORYIDKEY)
-  if(res[NEWTABHISTORYIDKEY]) {
-    await chrome.tabs.get(res[NEWTABHISTORYIDKEY],callback);
-  }else {
-    await chrome.tabs.create({url:"src/history/history.html", active: true}, async function(tab){
-      await setSessionStorage({[NEWTABHISTORYIDKEY]: tab.id})
+  if (res[NEWTABHISTORYIDKEY]) {
+    await chrome.tabs.get(res[NEWTABHISTORYIDKEY], callback)
+  } else {
+    await chrome.tabs.create({ url: 'src/history/history.html', active: true }, async function (tab) {
+      await setSessionStorage({ [NEWTABHISTORYIDKEY]: tab.id })
     })
   }
   async function callback() {
     if (chrome.runtime.lastError) {
-      await chrome.tabs.create({url:"src/history/history.html", active: true}, async function(tab){
-        await setSessionStorage({[NEWTABHISTORYIDKEY]: tab.id})
+      await chrome.tabs.create({ url: 'src/history/history.html', active: true }, async function (tab) {
+        await setSessionStorage({ [NEWTABHISTORYIDKEY]: tab.id })
       })
     } else {
       // Tab exists
-      await chrome.tabs.update(res[NEWTABHISTORYIDKEY], {active: true}, async (tab) => {})
-      }
-    } 
+      await chrome.tabs.update(res[NEWTABHISTORYIDKEY], { active: true }, async (tab) => {})
+    }
+  }
 }
 
 export async function createNewTabForStreak() {
   const res = await getSessionStorage(NEWTABSTREAKIDKEY)
-  if(res[NEWTABSTREAKIDKEY]) {
-    await chrome.tabs.get(res[NEWTABSTREAKIDKEY],callback);
-  }else {
-    await chrome.tabs.create({url:"src/streak/streak.html", active: true}, async function(tab){
-      await setSessionStorage({[NEWTABSTREAKIDKEY]: tab.id})
+  if (res[NEWTABSTREAKIDKEY]) {
+    await chrome.tabs.get(res[NEWTABSTREAKIDKEY], callback)
+  } else {
+    await chrome.tabs.create({ url: 'src/streak/streak.html', active: true }, async function (tab) {
+      await setSessionStorage({ [NEWTABSTREAKIDKEY]: tab.id })
     })
   }
   async function callback() {
     if (chrome.runtime.lastError) {
-      await chrome.tabs.create({url:"src/streak/streak.html", active: true}, async function(tab){
-        await setSessionStorage({[NEWTABSTREAKIDKEY]: tab.id})
+      await chrome.tabs.create({ url: 'src/streak/streak.html', active: true }, async function (tab) {
+        await setSessionStorage({ [NEWTABSTREAKIDKEY]: tab.id })
       })
     } else {
       // Tab exists
-      await chrome.tabs.update(res[NEWTABSTREAKIDKEY], {active: true}, async (tab) => {})
-      }
-    } 
+      await chrome.tabs.update(res[NEWTABSTREAKIDKEY], { active: true }, async (tab) => {})
+    }
+  }
 }
 
 export async function resumeTimer(timer) {
-  chrome.action.setBadgeText({text: getTimeString(timer.time)})
-  if(timer?.type === FOCUS) {
-    chrome.action.setBadgeBackgroundColor({color: '#e19be7'})
+  chrome.action.setBadgeText({ text: getTimeString(timer.time) })
+  if (timer?.type === FOCUS) {
+    chrome.action.setBadgeBackgroundColor({ color: '#e19be7' })
+  } else {
+    chrome.action.setBadgeBackgroundColor({ color: '#9CCC65' })
   }
-  else {
-    chrome.action.setBadgeBackgroundColor({color: '#9CCC65'})
+  print.log('====> ▶')
+  const timerObj = {
+    time: timer.time,
+    status: PLAY,
+    type: timer.type,
+    counts: timer.counts,
+    startTime: timer.startTime,
+    task: getValidTask(timer?.task),
   }
-    print.log('====> ▶')
-    const timerObj = {
-        time:  timer.time,
-        status: PLAY,
-        type: timer.type,
-        counts: timer.counts,
-        startTime: timer.startTime,
-        task: getValidTask(timer?.task)
-    }
-    print.log('new timer -> ')
-    print.log(timerObj)
-    try {
-      await chrome.runtime.sendMessage({startTimer: true, timer: timerObj})
-    }catch (e) {
-    console.warn(e);
+  print.log('new timer -> ')
+  print.log(timerObj)
+  try {
+    await chrome.runtime.sendMessage({ startTimer: true, timer: timerObj })
+  } catch (e) {
+    console.warn(e)
   }
 }
 
+/**
+ * @param {string} type - Timer type (Focus, Short Break, Long Break)
+ * @param {object} settings - User settings object
+ * @returns {number} Duration in minutes
+ */
 export const timerDuration = (type, settings) => {
-  return type === SHORTBREAK ? settings.shortBreak.time
-          : type === LONGBREAK ? settings.longBreak.time
-          : settings.focus.time
+  return type === SHORTBREAK
+    ? settings.shortBreak.time
+    : type === LONGBREAK
+      ? settings.longBreak.time
+      : settings.focus.time
 }
 
-export function getTimeString(t, concise=true) {
+/**
+ * @param {number} t - Time in seconds
+ * @param {boolean} [concise=true] - If true returns "25m"/"09s", if false returns "25:00"
+ * @returns {string}
+ */
+export function getTimeString(t, concise = true) {
   // 00:00
   let minutes = Math.floor(t / 60)
   let seconds = t % 60
   let minutesString = (minutes < 10 ? '0' : '') + minutes
   let secondsString = (seconds < 10 ? '0' : '') + seconds
-  if(concise) return minutes > 0 ? minutesString + 'm' : secondsString + 's'
+  if (concise) return minutes > 0 ? minutesString + 'm' : secondsString + 's'
   let time = minutesString + ':' + secondsString
   return time
 }
 
+/** @returns {string} Current time as "HH:MM" */
 export function getCurrentTimeString() {
   const now = new Date()
   const hours = now.getHours().toString().padStart(2, '0')
@@ -472,37 +482,41 @@ export function getCurrentTimeString() {
 
 export const setNewSettings = async (formValues) => {
   const store = await getSyncStorage(SETTINGSKEY)
-  const isPomodoro = (formValues.timerModeSelect === modes.POMODORO) && (store.settings.mode === modes.POMODORO)
+  const isPomodoro = formValues.timerModeSelect === modes.POMODORO && store.settings.mode === modes.POMODORO
   return {
     settings: {
       focus: {
         time: parseInt(formValues.focusDuration ?? store.settings.focus.time),
         notifications: isPomodoro ? formValues.focusDesktopNotification === 'on' : store.settings.focus.notifications,
         autoStart: isPomodoro ? formValues.focusDesktopAutoStart === 'on' : store.settings.focus.autoStart,
-        sound: formValues.focusTimerSound ?? store.settings.focus.sound
+        sound: formValues.focusTimerSound ?? store.settings.focus.sound,
       },
       shortBreak: {
         time: parseInt(formValues.shortBreakDuration ?? store.settings.shortBreak.time),
-        notifications: isPomodoro ? formValues.shortBreakDesktopNotification === 'on' : store.settings.shortBreak.notifications,
+        notifications: isPomodoro
+          ? formValues.shortBreakDesktopNotification === 'on'
+          : store.settings.shortBreak.notifications,
         autoStart: isPomodoro ? formValues.shortBreakDesktopAutoStart === 'on' : store.settings.shortBreak.autoStart,
-        sound: formValues.shortBreakTimerSound ?? store.settings.shortBreak.sound
+        sound: formValues.shortBreakTimerSound ?? store.settings.shortBreak.sound,
       },
       longBreak: {
         time: parseInt(formValues.longBreakDuration ?? store.settings.longBreak.time),
         interval: parseInt(formValues.longBreakInterval ?? store.settings.longBreak.interval),
-        notifications: isPomodoro ? formValues.longBreakDesktopNotification === 'on' : store.settings.longBreak.notifications,
+        notifications: isPomodoro
+          ? formValues.longBreakDesktopNotification === 'on'
+          : store.settings.longBreak.notifications,
         autoStart: isPomodoro ? formValues.longBreakDesktopAutoStart === 'on' : store.settings.longBreak.autoStart,
-        sound: formValues.longBreakTimerSound ?? store.settings.longBreak.sound
+        sound: formValues.longBreakTimerSound ?? store.settings.longBreak.sound,
       },
       timerStyle: formValues.timerStyle,
       theme: formValues.theme === 'light' ? LIGHTTHEME : DARKTHEME,
-      musicPlayer:formValues.musicPlayer === 'on',
-      musicPlayerAutoStart:formValues.musicPlayerAutoStart === 'on',
-      openNewTab:formValues.openNewTabOnCompletion === 'on',
+      musicPlayer: formValues.musicPlayer === 'on',
+      musicPlayerAutoStart: formValues.musicPlayerAutoStart === 'on',
+      openNewTab: formValues.openNewTabOnCompletion === 'on',
       mode: formValues.timerModeSelect ?? modes.POMODORO,
       dailyJournal: formValues.dailyJournalListCheckbox === 'on',
-      blockSites: formValues.blockSites === 'on'
-    }
+      blockSites: formValues.blockSites === 'on',
+    },
   }
 }
 
@@ -521,8 +535,9 @@ export const setFormValues = (data) => {
   document.querySelector('#long-break-desktop-notification').checked = settings.longBreak.notifications
   document.querySelector('#long-break-desktop-auto-start').checked = settings.longBreak.autoStart
   document.querySelector('#long-break-timer-sound').value = settings.longBreak.sound
-  document.querySelector('#cat-walk-style').checked = settings.timerStyle === CATWALKTIMERSTYLE 
-  document.querySelector('#simple-style').checked = settings.timerStyle === SIMPLETIMERSTYLE || settings.timerStyle !== CATWALKTIMERSTYLE
+  document.querySelector('#cat-walk-style').checked = settings.timerStyle === CATWALKTIMERSTYLE
+  document.querySelector('#simple-style').checked =
+    settings.timerStyle === SIMPLETIMERSTYLE || settings.timerStyle !== CATWALKTIMERSTYLE
   document.querySelector('#app-theme-light').checked = settings.theme === LIGHTTHEME
   document.querySelector('#app-theme-dark').checked = settings.theme === DARKTHEME
   document.querySelector('#music-player').checked = settings.musicPlayer
@@ -534,51 +549,54 @@ export const setFormValues = (data) => {
 }
 
 export function changeTextTo(element, text) {
-  if(element.innerText.toString().toLowerCase() === text?.toString().toLowerCase()) return
+  if (element.innerText.toString().toLowerCase() === text?.toString().toLowerCase()) return
   const timerContainer = document.querySelector('.time-container')
-  if(typeof timer !== 'undefined' && element === timer) {
+  if (typeof timer !== 'undefined' && element === timer) {
     element.innerText = text
     timerContainer.classList.add('changingTimer')
-    setTimeout(() => {
-    }, 100)
+    setTimeout(() => {}, 100)
     setTimeout(() => {
       timerContainer.classList.remove('changingTimer')
     }, 200)
-  }else {
+  } else {
     element.innerText = text
     element.classList.add('changingText')
-    setTimeout(() => {
-    }, 100)
+    setTimeout(() => {}, 100)
     setTimeout(() => {
       element.classList.remove('changingText')
     }, 200)
   }
 }
 
+/**
+ * @param {object} timer - Timer state object
+ * @param {object} settings - User settings
+ * @returns {string} Button label text
+ */
 export const getFocusText = (timer, settings) => {
   const isPomodoro = settings.mode === modes.POMODORO
-  if(timer.status === STOP) {
+  if (timer.status === STOP) {
     return 'Start Focusing'
-  }else if(timer.status === PLAY && isPomodoro) {
+  } else if (timer.status === PLAY && isPomodoro) {
     return 'Pause'
-  }else if(timer.status === PLAY && !isPomodoro) {
+  } else if (timer.status === PLAY && !isPomodoro) {
     return 'Running...'
-  }else if(timer.status === PAUSE) {
-    if(timer.type === FOCUS && timer.time === settings.focus.time*60) return 'Start Focusing'
-    else if(timer.type === SHORTBREAK && timer.time === settings.shortBreak.time*60) return 'Start Short Break'
-    else if(timer.type === LONGBREAK && timer.time === settings.longBreak.time*60) return 'Start Long Break'
+  } else if (timer.status === PAUSE) {
+    if (timer.type === FOCUS && timer.time === settings.focus.time * 60) return 'Start Focusing'
+    else if (timer.type === SHORTBREAK && timer.time === settings.shortBreak.time * 60) return 'Start Short Break'
+    else if (timer.type === LONGBREAK && timer.time === settings.longBreak.time * 60) return 'Start Long Break'
     return 'Resume'
   }
 }
 
 export const getRandomBreakQuote = () => {
   const quotes = breakQuotes
-  return quotes[Math.floor(Math.random()*quotes.length)]
+  return quotes[Math.floor(Math.random() * quotes.length)]
 }
 
 export const getRandomFocusQuote = () => {
   const quotes = focusQuotes
-  return quotes[Math.floor(Math.random()*quotes.length)]
+  return quotes[Math.floor(Math.random() * quotes.length)]
 }
 
 export const setSampleHistory = async () => {
@@ -587,10 +605,10 @@ export const setSampleHistory = async () => {
   const currentMonth = currentFullDate.getMonth() + 1
   let sampleHistory = {}
   const monthData = {}
-  for(let m = 5; m >= 0; m--) {
-    const firstDayOfNextMonth = new Date(currentYear, currentMonth-m, 1)
+  for (let m = 5; m >= 0; m--) {
+    const firstDayOfNextMonth = new Date(currentYear, currentMonth - m, 1)
     const lastDateOfCurrentMonth = new Date(firstDayOfNextMonth - 1).getDate()
-    for(let i = 1; i <= lastDateOfCurrentMonth; i++) {
+    for (let i = 1; i <= lastDateOfCurrentMonth; i++) {
       const date = new Date(currentYear, currentMonth - m - 1, i)
       const currentDateWithMonth = date.getDate() + '-' + (date.getMonth() + 1)
 
@@ -598,13 +616,13 @@ export const setSampleHistory = async () => {
       let noOfFocusTimers = getRandomNumber(0, noOfTimers)
       let start = getRandomNumber(0, 720)
       const currentDayData = []
-      for(let j = 0; j < noOfTimers; j++) {
-        let type = FOCUS 
+      for (let j = 0; j < noOfTimers; j++) {
+        let type = FOCUS
         let duration = 0
-        let startTime = "00:00"
-        let endTime = "00:00"
+        let startTime = '00:00'
+        let endTime = '00:00'
         let task
-        if(noOfFocusTimers > 0 && getRandomNumber(0,3) !== 0) {
+        if (noOfFocusTimers > 0 && getRandomNumber(0, 3) !== 0) {
           noOfFocusTimers--
           duration = getRandomNumber(10, 180)
           const taskValues = Object.values(TASKS)
@@ -615,38 +633,50 @@ export const setSampleHistory = async () => {
           task = TASKS.REST
         }
         startTime = getTimeString(start, false)
-        endTime = getTimeString(start+duration, false)
-        start+= duration + getRandomNumber(0, 60)
-        currentDayData.push({startTime: startTime, endTime: endTime, duration: duration, type: type, task: task})
+        endTime = getTimeString(start + duration, false)
+        start += duration + getRandomNumber(0, 60)
+        currentDayData.push({ startTime: startTime, endTime: endTime, duration: duration, type: type, task: task })
       }
       monthData[currentDateWithMonth] = currentDayData
     }
   }
-  sampleHistory ={[currentYear] : monthData}
+  sampleHistory = { [currentYear]: monthData }
   await setSessionStorage(sampleHistory)
 }
 
 export async function clearHistory() {
   const currentFullDate = new Date()
   const currentYear = currentFullDate.getFullYear().toString()
-  await setLocalStorage({[currentYear]: null})
+  await setLocalStorage({ [currentYear]: null })
 }
 
-
+/**
+ * @param {number} min
+ * @param {number} max
+ * @returns {number} Random integer between min and max (inclusive)
+ */
 export function getRandomNumber(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return 'th'
   switch (day % 10) {
-      case 1: return 'st'
-      case 2: return 'nd'
-      case 3: return 'rd'
-      default: return 'th'
+    case 1:
+      return 'st'
+    case 2:
+      return 'nd'
+    case 3:
+      return 'rd'
+    default:
+      return 'th'
   }
 }
 
+/**
+ * @param {Date} date
+ * @returns {string} e.g. "January 1st, 2026"
+ */
 export function formatDateWithOrdinal(date) {
   const day = date.toLocaleString('default', { day: 'numeric' })
   const month = date.toLocaleString('default', { month: 'long' })
@@ -704,23 +734,26 @@ function mergeHistory(existingData, newData) {
   for (const key in newData) {
     if (!existingData[key]) {
       existingData[key] = newData[key]
-        } else if(isObject(existingData[key]) && !isNaN(Number(key))) {
-        for (const date in newData[key]) {
-          if (!existingData[key][date]) {
-            existingData[key][date] = newData[key][date]
-          } else {
-            for (const entry of newData[key][date]) {
-              if (!existingData[key][date].some(existingEntry =>
-                existingEntry.startTime === entry.startTime &&
-                existingEntry.endTime === entry.endTime &&
-                existingEntry.type === entry.type &&
-                existingEntry.duration === entry.duration
-              )) {
-                existingData[key][date].push(entry);
-              }
+    } else if (isObject(existingData[key]) && !isNaN(Number(key))) {
+      for (const date in newData[key]) {
+        if (!existingData[key][date]) {
+          existingData[key][date] = newData[key][date]
+        } else {
+          for (const entry of newData[key][date]) {
+            if (
+              !existingData[key][date].some(
+                (existingEntry) =>
+                  existingEntry.startTime === entry.startTime &&
+                  existingEntry.endTime === entry.endTime &&
+                  existingEntry.type === entry.type &&
+                  existingEntry.duration === entry.duration
+              )
+            ) {
+              existingData[key][date].push(entry)
             }
           }
         }
+      }
     } else {
       // For non-year keys (settings, tasksAlias, etc.), overwrite with imported data
       existingData[key] = newData[key]
@@ -730,373 +763,370 @@ function mergeHistory(existingData, newData) {
 }
 
 function isObject(value) {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+/**
+ * @param {string|null|undefined} time24 - Time in "HH:MM" format
+ * @returns {string} Formatted time with emoji label, e.g. "☀️ 8:30 AM"
+ */
 export function formatTimeWithLabel(time24) {
-  if(!time24) return ''
-  const [hours, minutes] = time24.split(":").map(Number);
+  if (!time24) return ''
+  const [hours, minutes] = time24.split(':').map(Number)
 
-  const period = hours >= 12 ? "PM" : "AM";
-  const hour12 = hours % 12 || 12;
+  const period = hours >= 12 ? 'PM' : 'AM'
+  const hour12 = hours % 12 || 12
 
-  let label = "";
+  let label = ''
   if (hours >= 5 && hours < 12) {
-    label = "☀️";
+    label = '☀️'
   } else if (hours >= 12 && hours < 17) {
-    label = "🌞";
+    label = '🌞'
   } else if (hours >= 17 && hours < 21) {
-    label = "🌅";
+    label = '🌅'
   } else {
-    label = "🌙";
+    label = '🌙'
   }
 
-  return `${label} ${hour12}:${minutes.toString().padStart(2, "0")} ${period}`;
+  return `${label} ${hour12}:${minutes.toString().padStart(2, '0')} ${period}`
 }
 
 async function getMusicData() {
-  let musicData = null;
+  let musicData = null
   await fetch(chrome.runtime.getURL('/music.json'))
-    .then(response => response.json())
-    .then(data => {
-      musicData = data;
+    .then((response) => response.json())
+    .then((data) => {
+      musicData = data
     })
-    .catch(err => console.error("Error loading music data:", err));
-  return musicData;
+    .catch((err) => console.error('Error loading music data:', err))
+  return musicData
 }
 
-export async function playMusic(category, index=null) {
-  const oldSlider = document.getElementById('volume-slider');
-  const newSlider = oldSlider.cloneNode(true); // clone without listeners
-  oldSlider.parentNode.replaceChild(newSlider, oldSlider);
+export async function playMusic(category, index = null) {
+  const oldSlider = document.getElementById('volume-slider')
+  const newSlider = oldSlider.cloneNode(true) // clone without listeners
+  oldSlider.parentNode.replaceChild(newSlider, oldSlider)
 
-  let base_path = 'https://kartikth40.github.io/music_collection/' + category + '/';
-  const musicData = await getMusicData();
-  const audioFiles = musicData[category];
-  if(index !== null) {
+  let base_path = 'https://kartikth40.github.io/music_collection/' + category + '/'
+  const musicData = await getMusicData()
+  const audioFiles = musicData[category]
+  if (index !== null) {
     const validIndex = (index + audioFiles.length) % audioFiles.length
-    const audio = new Audio(base_path + audioFiles[validIndex]);
+    const audio = new Audio(base_path + audioFiles[validIndex])
     newSlider.addEventListener('input', () => {
-      audio.volume = newSlider.value;
-    });
-    audio.volume = newSlider.value;
-    audio.play();
-    chrome.runtime.sendMessage({ type: 'MUSIC_PLAYING', track: base_path + audioFiles[validIndex]});
-    return {audio , index: validIndex, title: audioFiles[validIndex].split('.')[0]};
-  }
-  else if (audioFiles && audioFiles.length > 0) {
-    const randomIndex = Math.floor(Math.random() * audioFiles.length);
-    const randomFile = audioFiles[randomIndex];
-    const audio = new Audio(base_path + randomFile);
+      audio.volume = newSlider.value
+    })
+    audio.volume = newSlider.value
+    audio.play()
+    chrome.runtime.sendMessage({ type: 'MUSIC_PLAYING', track: base_path + audioFiles[validIndex] })
+    return { audio, index: validIndex, title: audioFiles[validIndex].split('.')[0] }
+  } else if (audioFiles && audioFiles.length > 0) {
+    const randomIndex = Math.floor(Math.random() * audioFiles.length)
+    const randomFile = audioFiles[randomIndex]
+    const audio = new Audio(base_path + randomFile)
     newSlider.addEventListener('input', () => {
-      audio.volume = newSlider.value;
-    });
-    audio.volume = newSlider.value;
-    audio.play();
-    return {audio, index: randomIndex, title: randomFile.split('.')[0]};
+      audio.volume = newSlider.value
+    })
+    audio.volume = newSlider.value
+    audio.play()
+    return { audio, index: randomIndex, title: randomFile.split('.')[0] }
   } else {
-    console.error("No files found for category:", category);
-    return {audio: null, index: -1, title: "No music found"};
+    console.error('No files found for category:', category)
+    return { audio: null, index: -1, title: 'No music found' }
   }
 }
 
 export async function checkUserActivity() {
-  const data = await getLocalStorage("lastActive")
-  const lastActive = data.lastActive || 0;
-  const now = Date.now();
+  const data = await getLocalStorage('lastActive')
+  const lastActive = data.lastActive || 0
+  const now = Date.now()
   if (now - lastActive > 3 * 24 * 60 * 60 * 1000) {
     await setLocalStorage({ lastActive: now })
-    showReminderNotification();
+    showReminderNotification()
   }
 }
 
 function showReminderNotification() {
-  chrome.notifications.create("userReminder", {
-    type: "basic",
-    iconUrl: "/cat.png",
-    title: "Purrfect Timing Awaits! 🐾",
+  chrome.notifications.create('userReminder', {
+    type: 'basic',
+    iconUrl: '/cat.png',
+    title: 'Purrfect Timing Awaits! 🐾',
     message: "Meow! It's been a while since we helped you manage your time. Let's paw-sitively get back on track!",
     priority: 2,
-    buttons: [
-      { title: "Open Timer" },
-      { title: "Check Your Progress" }
-    ]
-  });
+    buttons: [{ title: 'Open Timer' }, { title: 'Check Your Progress' }],
+  })
 }
 
 chrome?.notifications?.onButtonClicked?.addListener(async (notificationId, buttonIndex) => {
-  if (notificationId === "userReminder") {
+  if (notificationId === 'userReminder') {
     if (buttonIndex === 0) {
-      await chrome.tabs.create({url:"src/newTab/over.html", active: true}, async function(tab){
-        await setSessionStorage({[NEWTABHISTORYIDKEY]: tab.id})
+      await chrome.tabs.create({ url: 'src/newTab/over.html', active: true }, async function (tab) {
+        await setSessionStorage({ [NEWTABHISTORYIDKEY]: tab.id })
       })
     } else if (buttonIndex === 1) {
-      await chrome.tabs.create({url:"src/history/history.html", active: true}, async function(tab){
-        await setSessionStorage({[NEWTABHISTORYIDKEY]: tab.id})
+      await chrome.tabs.create({ url: 'src/history/history.html', active: true }, async function (tab) {
+        await setSessionStorage({ [NEWTABHISTORYIDKEY]: tab.id })
       })
     }
   }
-});
+})
 
 chrome?.notifications?.onClicked?.addListener(async (notificationId) => {
-  if (notificationId === "userReminder") {
-    await chrome.tabs.create({url:"src/newTab/over.html", active: true}, async function(tab){
-      await setSessionStorage({[NEWTABHISTORYIDKEY]: tab.id})
+  if (notificationId === 'userReminder') {
+    await chrome.tabs.create({ url: 'src/newTab/over.html', active: true }, async function (tab) {
+      await setSessionStorage({ [NEWTABHISTORYIDKEY]: tab.id })
     })
   }
-});
+})
 
-
-export function getValidTask(task, type=FOCUS) {
-  return Object.values(TASKS).includes(task) ? task : (type !== BREAK ? TASKS.WORK : TASKS.REST)
+/**
+ * @param {string} task - Task name to validate
+ * @param {string} [type='Focus'] - Timer type, determines default fallback
+ * @returns {string} Valid task name
+ */
+export function getValidTask(task, type = FOCUS) {
+  return Object.values(TASKS).includes(task) ? task : type !== BREAK ? TASKS.WORK : TASKS.REST
 }
 
 export async function updateOldHistoryDataToAccomodateLatestChanges(currentYear) {
-  const lastDataChangeObj = await getLocalStorage(LASTUPDATEKEY);
+  const lastDataChangeObj = await getLocalStorage(LASTUPDATEKEY)
   const lastUpdate = lastDataChangeObj[LASTUPDATEKEY]
-  if(lastUpdate && lastUpdate >= 1) return
-  const historyObj = await getLocalStorage(currentYear);
-  const history = historyObj[currentYear];
-  if (!history
-    || !isObject(history)
-    || Object.keys(history).length === 0) {
-    return;
+  if (lastUpdate && lastUpdate >= 1) return
+  const historyObj = await getLocalStorage(currentYear)
+  const history = historyObj[currentYear]
+  if (!history || !isObject(history) || Object.keys(history).length === 0) {
+    return
   }
   for (const date in history) {
     if (history[date].length > 0) {
       for (const index in history[date]) {
         const session = history[date][index]
-        if(session.type === 'focus') session.type = FOCUS
-        else if(session.type === 'break') session.type = BREAK
+        if (session.type === 'focus') session.type = FOCUS
+        else if (session.type === 'break') session.type = BREAK
       }
     }
   }
-  await setLocalStorage({[currentYear]: history});
-  await setLocalStorage({[LASTUPDATEKEY]: 1});
+  await setLocalStorage({ [currentYear]: history })
+  await setLocalStorage({ [LASTUPDATEKEY]: 1 })
 }
 
 export function isEdge() {
-  return navigator.userAgent.includes("Edg")
+  return navigator.userAgent.includes('Edg')
 }
 
-export async function handleNotificationTone(fromSession=false, sound='Alarm Clock Old') {
+export async function handleNotificationTone(fromSession = false, sound = 'Alarm Clock Old') {
   let stopHere = false
-  await chrome?.storage?.session?.get(['notificationTriggered', 'timer']).then( async res => {
-    if(fromSession) {
-      if(res.notificationTriggered) {
-        await chrome.storage.session.set({notificationTriggered:false})
-      }
-      else stopHere = true
+  await chrome?.storage?.session?.get(['notificationTriggered', 'timer']).then(async (res) => {
+    if (fromSession) {
+      if (res.notificationTriggered) {
+        await chrome.storage.session.set({ notificationTriggered: false })
+      } else stopHere = true
     }
   })
-  if(stopHere) return
-  
-  
-  if(stopHere || sound === 'None') return
+  if (stopHere) return
+
+  if (stopHere || sound === 'None') return
   const notificationTone = new Audio(`/audio/${sound}.mp3`)
   notificationTone.play()
   function handleFocusEvent() {
-    notificationTone.pause();
-    notificationTone.currentTime = 0;
-    window.removeEventListener(FOCUS, handleFocusEvent);
+    notificationTone.pause()
+    notificationTone.currentTime = 0
+    window.removeEventListener(FOCUS, handleFocusEvent)
   }
 
-  window.addEventListener(FOCUS, handleFocusEvent);
-
+  window.addEventListener(FOCUS, handleFocusEvent)
 }
 
-
 async function ensureOffscreen() {
-  if (await chrome.offscreen.hasDocument()) return;
+  if (await chrome.offscreen.hasDocument()) return
   try {
     await chrome.offscreen.createDocument({
       url: 'src/offScreen/offScreen.html',
       reasons: ['AUDIO_PLAYBACK'],
       justification: 'Play audio alert when timer ends',
-    });
+    })
   } catch (e) {
-    console.error('❌ Failed to create offscreen:', e);
+    console.error('❌ Failed to create offscreen:', e)
   }
 }
 
-async function playNotificationSound(sound='Alarm Clock Old') {
-  await ensureOffscreen();
-  await chrome.runtime.sendMessage({ playNotificationTone: true , sound:sound})
+async function playNotificationSound(sound = 'Alarm Clock Old') {
+  await ensureOffscreen()
+  await chrome.runtime.sendMessage({ playNotificationTone: true, sound: sound })
 }
 
-
-export function showCustomPrompt(title, message, value, callback, inputType = "text", warn = "", options=null) {
-  const modal = document.getElementById("customPrompt");
-  const promptMessage = document.getElementById("promptMessage");
-  const promptTitle = document.getElementById("promptTitle");
-  const promptInput = document.getElementById("promptInput");
-  const promptSelect = document.getElementById("promptSelect")
-  const promptOk = document.getElementById("promptOk");
-  const promptCancel = document.getElementById("promptCancel");
-  const promptWarning = document.getElementById("promptwarning");
-  modal.style.display = "flex";
-  if(warn && warn.length > 0 && promptWarning){
-    promptWarning.style.display = "block";
-    promptWarning.innerHTML = warn.replace(/\n/g, "<br>");
+export function showCustomPrompt(title, message, value, callback, inputType = 'text', warn = '', options = null) {
+  const modal = document.getElementById('customPrompt')
+  const promptMessage = document.getElementById('promptMessage')
+  const promptTitle = document.getElementById('promptTitle')
+  const promptInput = document.getElementById('promptInput')
+  const promptSelect = document.getElementById('promptSelect')
+  const promptOk = document.getElementById('promptOk')
+  const promptCancel = document.getElementById('promptCancel')
+  const promptWarning = document.getElementById('promptwarning')
+  modal.style.display = 'flex'
+  if (warn && warn.length > 0 && promptWarning) {
+    promptWarning.style.display = 'block'
+    promptWarning.innerHTML = warn.replace(/\n/g, '<br>')
   } else {
-    promptWarning.style.display = "none"
+    promptWarning.style.display = 'none'
     promptWarning.innerHTML = null
-  } 
+  }
 
-  if (!title) promptTitle.style.display = "none";
-  else promptTitle.innerHTML = title;
+  if (!title) promptTitle.style.display = 'none'
+  else promptTitle.innerHTML = title
 
-  promptMessage.innerHTML = message.replace(/\n/g, "<br>");
-  if (inputType === "select") {
-    promptSelect.style.display = "block"
-    promptInput.style.display = "none"
+  promptMessage.innerHTML = message.replace(/\n/g, '<br>')
+  if (inputType === 'select') {
+    promptSelect.style.display = 'block'
+    promptInput.style.display = 'none'
     promptSelect.innerHTML = options
   } else {
-    promptSelect.style.display = "none"
-    promptInput.style.display = "block"
+    promptSelect.style.display = 'none'
+    promptInput.style.display = 'block'
     setTimeout(() => {
-      promptInput.value = value;
-      promptInput.focus();
-      promptInput.select();
-    }, 0);
-    
-    promptInput.type = inputType;
+      promptInput.value = value
+      promptInput.focus()
+      promptInput.select()
+    }, 0)
+
+    promptInput.type = inputType
   }
 
   function handleKeyDown(event) {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      promptOk.click();
-    }else if (event.key === "Escape") {
-      event.preventDefault();
-      promptCancel.click();
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      promptOk.click()
+    } else if (event.key === 'Escape') {
+      event.preventDefault()
+      promptCancel.click()
     }
   }
 
-  promptInput.addEventListener("keydown", handleKeyDown);
+  promptInput.addEventListener('keydown', handleKeyDown)
 
   function closeModal() {
-    modal.style.display = "none";
-    promptInput.removeEventListener("keydown", handleKeyDown);
+    modal.style.display = 'none'
+    promptInput.removeEventListener('keydown', handleKeyDown)
   }
 
   promptOk.onclick = function () {
-    closeModal();
-    callback(inputType === 'select' ? promptSelect.value : promptInput.value);
-  };
+    closeModal()
+    callback(inputType === 'select' ? promptSelect.value : promptInput.value)
+  }
 
   promptCancel.onclick = function () {
-    closeModal();
-    callback(null);
-  };
+    closeModal()
+    callback(null)
+  }
 }
 
-
-export function showCustomAlert(title, message, callback, hideNoBtn=false) {
-  const modal = document.getElementById("customAlert");
-  const alertMessage = document.getElementById("alertMessage");
-  const alertTitle = document.getElementById("alertTitle");
-  const alertOk = document.getElementById("alertOk");
-  const alertNo = document.getElementById("alertNo");
+export function showCustomAlert(title, message, callback, hideNoBtn = false) {
+  const modal = document.getElementById('customAlert')
+  const alertMessage = document.getElementById('alertMessage')
+  const alertTitle = document.getElementById('alertTitle')
+  const alertOk = document.getElementById('alertOk')
+  const alertNo = document.getElementById('alertNo')
   if (hideNoBtn) alertNo.style.display = 'none'
 
-  if (!title) alertTitle.style.display = "none";
-  else alertTitle.innerHTML = title;
+  if (!title) alertTitle.style.display = 'none'
+  else alertTitle.innerHTML = title
 
-  alertMessage.innerHTML = message.replace(/\n/g, "<br>");
-  modal.style.display = "flex";
+  alertMessage.innerHTML = message.replace(/\n/g, '<br>')
+  modal.style.display = 'flex'
 
   function handleKeyDown(event) {
-    if (event.key === "Enter" || ( hideNoBtn && event.key === "Escape")) {
-      event.preventDefault();
-      alertOk?.click();
-    }
-    else if (event.key === "Escape") {
-      event.preventDefault();
-      alertNo?.click();
+    if (event.key === 'Enter' || (hideNoBtn && event.key === 'Escape')) {
+      event.preventDefault()
+      alertOk?.click()
+    } else if (event.key === 'Escape') {
+      event.preventDefault()
+      alertNo?.click()
     }
   }
 
   alertOk.onclick = function () {
-    modal.style.display = "none";
-    document.removeEventListener("keydown", handleKeyDown);
-    callback(true);
-  };
-  if(!hideNoBtn) {
-    alertNo.onclick = function () {
-      modal.style.display = "none";
-      document.removeEventListener("keydown", handleKeyDown);
-      callback(false);
-    };
+    modal.style.display = 'none'
+    document.removeEventListener('keydown', handleKeyDown)
+    callback(true)
   }
-  setTimeout(() => document.addEventListener("keydown", handleKeyDown), 100);
+  if (!hideNoBtn) {
+    alertNo.onclick = function () {
+      modal.style.display = 'none'
+      document.removeEventListener('keydown', handleKeyDown)
+      callback(false)
+    }
+  }
+  setTimeout(() => document.addEventListener('keydown', handleKeyDown), 100)
 }
 
-
+/**
+ * @param {object} tasksAlias - Map of task names to their aliases
+ * @returns {string} HTML option elements for focus task dropdown
+ */
 export function getFocusOptionsForTasks(tasksAlias) {
   return Object.keys(TASKS)
-  .filter(taskKey => TASKS[taskKey] !== TASKS.REST)
-  .map(taskKey => {
+    .filter((taskKey) => TASKS[taskKey] !== TASKS.REST)
+    .map((taskKey) => {
       const task = TASKS[taskKey]
       const alias = tasksAlias[task] || task
       return `<option value="${task}">${alias}</option>`
-  })
-  .join('')
+    })
+    .join('')
 }
 
-export function showToast(title, message, color = TOASTIFY.colors.purple, mini=false, shorter=false) {
-  const toastContainer = document.getElementById("toast-container");
+export function showToast(title, message, color = TOASTIFY.colors.purple, mini = false, shorter = false) {
+  const toastContainer = document.getElementById('toast-container')
 
   // Clear any existing toast before showing a new one
-  if (toastContainer.classList.contains("show-toast")) {
-    toastContainer.classList.remove("show-toast");
-    clearTimeout(toastContainer.hideTimeout);
-    clearTimeout(toastContainer.fadeOutTimeout);
-    toastContainer.removeEventListener("mouseenter", toastContainer.clearTimeouts);
-    toastContainer.removeEventListener("mouseleave", toastContainer.scheduleHide);
-
+  if (toastContainer.classList.contains('show-toast')) {
+    toastContainer.classList.remove('show-toast')
+    clearTimeout(toastContainer.hideTimeout)
+    clearTimeout(toastContainer.fadeOutTimeout)
+    toastContainer.removeEventListener('mouseenter', toastContainer.clearTimeouts)
+    toastContainer.removeEventListener('mouseleave', toastContainer.scheduleHide)
   }
 
-  const toastTitle = document.createElement("h3");
-  toastTitle.className = "toast-title";
-  toastTitle.textContent = title;
+  const toastTitle = document.createElement('h3')
+  toastTitle.className = 'toast-title'
+  toastTitle.textContent = title
 
-  const toastMessage = document.createElement("p");
-  toastMessage.className = "toast-message";
-  toastMessage.innerHTML = message;
+  const toastMessage = document.createElement('p')
+  toastMessage.className = 'toast-message'
+  toastMessage.innerHTML = message
 
-  toastContainer.className = "";
-  toastContainer.innerHTML = "";
+  toastContainer.className = ''
+  toastContainer.innerHTML = ''
 
-  toastContainer.classList.add(color);
-  toastContainer.appendChild(toastTitle);
-  toastContainer.appendChild(toastMessage);
-  toastContainer.classList.add("show-toast");
+  toastContainer.classList.add(color)
+  toastContainer.appendChild(toastTitle)
+  toastContainer.appendChild(toastMessage)
+  toastContainer.classList.add('show-toast')
 
-  const toastLife = shorter ? (TOASTIFY.life / 2) : TOASTIFY.life
+  const toastLife = shorter ? TOASTIFY.life / 2 : TOASTIFY.life
 
-  if(mini) toastContainer.classList.add("mini-toast")
+  if (mini) toastContainer.classList.add('mini-toast')
   toastContainer.scheduleHide = () => {
     toastContainer.hideTimeout = setTimeout(() => {
-      toastContainer.classList.remove("show-toast");
-      toastContainer.classList.add("hide-toast");
-    }, toastLife - 300);
+      toastContainer.classList.remove('show-toast')
+      toastContainer.classList.add('hide-toast')
+    }, toastLife - 300)
     toastContainer.fadeOutTimeout = setTimeout(() => {
-      toastContainer.classList.remove("hide-toast");
-    }, toastLife);
-  };
+      toastContainer.classList.remove('hide-toast')
+    }, toastLife)
+  }
 
   toastContainer.clearTimeouts = () => {
-    clearTimeout(toastContainer.hideTimeout);
-    clearTimeout(toastContainer.fadeOutTimeout);
-  };
+    clearTimeout(toastContainer.hideTimeout)
+    clearTimeout(toastContainer.fadeOutTimeout)
+  }
 
-  toastContainer.scheduleHide();
+  toastContainer.scheduleHide()
 }
 
-export async function setTimerInStore(timerToStore, timer=null) {
+export async function setTimerInStore(timerToStore, timer = null) {
   await setSessionStorage(timerToStore)
-  if( !timer || (timer && timer % 10 === 0)) {
+  if (!timer || (timer && timer % 10 === 0)) {
     await setLocalStorage(timerToStore)
   }
 }
@@ -1105,13 +1135,13 @@ export function getOrCreateAnonymousId() {
   return new Promise(async (resolve) => {
     const result = await getLocalStorage(['anonymousId'])
     if (result.anonymousId) {
-      resolve(result.anonymousId);
+      resolve(result.anonymousId)
     } else {
-      const newId = crypto.randomUUID();
-      await setLocalStorage({ anonymousId: newId });
-      resolve(newId);
+      const newId = crypto.randomUUID()
+      await setLocalStorage({ anonymousId: newId })
+      resolve(newId)
     }
-  });
+  })
 }
 
 function normalizeBlockedDomain(site) {
@@ -1136,31 +1166,28 @@ function normalizeBlockedDomain(site) {
   }
 }
 
-
 export async function setBlockRules() {
   const blockedWebsitesObj = await getSyncStorage([BLOCKEDLISTKEY])
   const blockedWebsites = blockedWebsitesObj[BLOCKEDLISTKEY]
-  const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
-  const idsToRemove = existingRules.map(rule => rule.id);
+  const existingRules = await chrome.declarativeNetRequest.getDynamicRules()
+  const idsToRemove = existingRules.map((rule) => rule.id)
 
-  if(!blockedWebsites || blockedWebsites.length <= 0) {
+  if (!blockedWebsites || blockedWebsites.length <= 0) {
     await chrome.declarativeNetRequest.updateDynamicRules({
       removeRuleIds: idsToRemove,
-      addRules: []
-    });
+      addRules: [],
+    })
     return
   }
 
-  const expandedDomains = blockedWebsites
-    .flatMap((site) => normalizeBlockedDomain(site))
-    .filter(Boolean)
+  const expandedDomains = blockedWebsites.flatMap((site) => normalizeBlockedDomain(site)).filter(Boolean)
 
   const uniqueDomains = [...new Set(expandedDomains)]
-  if(uniqueDomains.length <= 0) {
+  if (uniqueDomains.length <= 0) {
     await chrome.declarativeNetRequest.updateDynamicRules({
       removeRuleIds: idsToRemove,
-      addRules: []
-    });
+      addRules: [],
+    })
     return
   }
 
@@ -1168,27 +1195,27 @@ export async function setBlockRules() {
     id: index + 1000,
     priority: 1,
     action: {
-      "type": "redirect",
-      "redirect": {
-        "url": (chrome.runtime.getURL("src/newTab/over.html") + "?redirected=" + encodeURIComponent(domain))
-      }
+      type: 'redirect',
+      redirect: {
+        url: chrome.runtime.getURL('src/newTab/over.html') + '?redirected=' + encodeURIComponent(domain),
+      },
     },
     condition: {
       requestDomains: [domain],
-      resourceTypes: ["main_frame", "sub_frame"]
-    }
+      resourceTypes: ['main_frame', 'sub_frame'],
+    },
   }))
 
   await chrome.declarativeNetRequest.updateDynamicRules({
     removeRuleIds: idsToRemove,
-    addRules
-  });
+    addRules,
+  })
 }
 
 export async function unSetBlockRules() {
-  const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
-  const idsToRemove = existingRules.map(rule => rule.id);
+  const existingRules = await chrome.declarativeNetRequest.getDynamicRules()
+  const idsToRemove = existingRules.map((rule) => rule.id)
   await chrome.declarativeNetRequest.updateDynamicRules({
-    removeRuleIds: idsToRemove
-  });
+    removeRuleIds: idsToRemove,
+  })
 }

@@ -2,24 +2,31 @@
     "name": "Purrfect Pomodoro Timer: Productivity, Time Management & Daily Journal",
     "version": "1.5.4",
     "description": "Purrfect Pomodoro Timer",
-    "permissions": ["storage", "notifications", "alarms", "offscreen", "declarativeNetRequest", "declarativeNetRequestWithHostAccess"],
+    "permissions": [
+        "storage",
+        "notifications",
+        "alarms",
+        "offscreen",
+        "declarativeNetRequest",
+        "declarativeNetRequestWithHostAccess"
+    ],
     "host_permissions": [
-      "<all_urls>"
+        "<all_urls>"
     ],
     "background": {
-      "service_worker": "public/background.js",
-      "type": "module"
+        "service_worker": "public/background.js",
+        "type": "module"
     },
     "action": {
-      "default_icon": {
-        "16": "/cat.png",
-        "24": "/cat.png",
-        "32": "/cat.png",
-        "48": "/cat.png",
-        "128": "/cat.png"
-      },
-      "default_title": "Purrfect Pomodoro Timer",
-      "default_popup": "src/popup/popup.html"
+        "default_icon": {
+            "16": "/cat.png",
+            "24": "/cat.png",
+            "32": "/cat.png",
+            "48": "/cat.png",
+            "128": "/cat.png"
+        },
+        "default_title": "Purrfect Pomodoro Timer",
+        "default_popup": "src/popup/popup.html"
     },
     "icons": {
         "16": "/cat.png",

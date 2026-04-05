@@ -7,30 +7,83 @@ on:
     branches: [main]
 
 jobs:
-  test-and-build:
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
+      - run: npm ci
+      - name: Run ESLint
+        run: npm run lint
 
-      - name: Install dependencies
-        run: npm ci
-
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
       - name: Run tests
         run: npm test
 
-      - name: Verify build
-        run: npm run build
+  checks:
+    name: Pre-release Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Verify DEVELOPING flag is false
         run: |
           if grep -q "export const DEVELOPING = true" src/constants.js; then
-            echo "❌ DEVELOPING flag is set to true! Must be false for production."
+            echo "::error::DEVELOPING flag is set to true. Must be false for production."
             exit 1
           fi
           echo "✅ DEVELOPING flag is false"
+
+      - name: Verify version consistency
+        run: |
+          MANIFEST_VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('manifest.json','utf8')).version)")
+          PACKAGE_VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('package.json','utf8')).version)")
+          echo "manifest.json version: $MANIFEST_VERSION"
+          echo "package.json version:  $PACKAGE_VERSION"
+          if [ "$MANIFEST_VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "::error::Version mismatch! manifest.json ($MANIFEST_VERSION) != package.json ($PACKAGE_VERSION)"
+            exit 1
+          fi
+          echo "✅ Versions match"
+
+  build:
+    name: Build
+    needs: [lint, test, checks]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+
+      - name: Build extension
+        run: npm run build
+
+      - name: Check bundle size
+        run: |
+          TOTAL_SIZE=$(du -sb dist/ | cut -f1)
+          TOTAL_SIZE_MB=$(echo "scale=2; $TOTAL_SIZE / 1048576" | bc)
+          echo "📦 Total bundle size: ${TOTAL_SIZE_MB}MB (${TOTAL_SIZE} bytes)"
+
+          # Fail if bundle exceeds 5MB (Chrome Web Store has limits)
+          MAX_SIZE=5242880
+          if [ "$TOTAL_SIZE" -gt "$MAX_SIZE" ]; then
+            echo "::error::Bundle size ${TOTAL_SIZE_MB}MB exceeds 5MB limit!"
+            exit 1
+          fi
+          echo "✅ Bundle size within limits"

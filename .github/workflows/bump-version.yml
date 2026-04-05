@@ -1,0 +1,67 @@
+name: Bump Version & Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      type:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  bump:
+    name: Bump, Build & Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Bump version
+        id: bump
+        run: |
+          node scripts/bump-version.js ${{ inputs.type }}
+          VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('package.json','utf8')).version)")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+        env:
+          GIT_AUTHOR_NAME: github-actions
+          GIT_AUTHOR_EMAIL: github-actions@github.com
+          GIT_COMMITTER_NAME: github-actions
+          GIT_COMMITTER_EMAIL: github-actions@github.com
+
+      - name: Push commit and tag
+        run: |
+          git push
+          git push --tags
+
+      - name: Build extension
+        run: npm run build
+
+      - name: Zip dist
+        run: |
+          cd dist
+          zip -r ../purrfect-focus-v${{ steps.bump.outputs.version }}.zip .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.bump.outputs.version }}
+          name: v${{ steps.bump.outputs.version }}
+          body: |
+            ## Purrfect Focus v${{ steps.bump.outputs.version }}
+
+            **Version bump:** `${{ inputs.type }}`
+
+            Download `purrfect-focus-v${{ steps.bump.outputs.version }}.zip` below and upload to the Chrome Web Store.
+          files: purrfect-focus-v${{ steps.bump.outputs.version }}.zip
