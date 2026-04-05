@@ -19,12 +19,6 @@
   <a href="https://github.com/kartikth40/PurrfectFocus/releases/latest">
     <img src="https://img.shields.io/github/v/release/kartikth40/PurrfectFocus?label=version" alt="Version" />
   </a>
-  <a href="https://github.com/kartikth40/PurrfectFocus/issues">
-    <img src="https://img.shields.io/github/issues/kartikth40/PurrfectFocus" alt="Issues" />
-  </a>
-  <a href="https://github.com/kartikth40/PurrfectFocus/stargazers">
-    <img src="https://img.shields.io/github/stars/kartikth40/PurrfectFocus" alt="Stars" />
-  </a>
   <img src="https://img.shields.io/badge/license-MIT%20(Non--Commercial)-yellow" alt="License" />
 </p>
 
