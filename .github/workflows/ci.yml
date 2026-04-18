@@ -39,13 +39,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify DEVELOPING flag is false
+      - name: Verify DEVELOPING flag is auto-managed
         run: |
           if grep -q "export const DEVELOPING = true" src/constants.js; then
-            echo "::error::DEVELOPING flag is set to true. Must be false for production."
+            echo "::error::DEVELOPING flag is hardcoded to true. It should use import.meta.env.MODE."
             exit 1
           fi
-          echo "✅ DEVELOPING flag is false"
+          echo "✅ DEVELOPING flag is correctly using import.meta.env.MODE"
 
       - name: Verify version consistency
         run: |

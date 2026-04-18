@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "watch": "nodemon --watch src --watch public --ext js,ts,html,css --exec \"npm run build\"",
+    "watch": "nodemon --watch src --watch public --ext js,ts,html,css --exec \"vite build --mode development\"",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

@@ -30,6 +30,7 @@ import {
   TOASTIFY,
   BLOCKEDLISTKEY,
 } from './constants.js'
+import { CONFIG } from './config.js'
 
 const print = printer()
 
@@ -1218,4 +1219,117 @@ export async function unSetBlockRules() {
   await chrome.declarativeNetRequest.updateDynamicRules({
     removeRuleIds: idsToRemove,
   })
+}
+
+const REMOTE_CONFIG_URL = DEVELOPING
+  ? null // will use local file via chrome.runtime.getURL
+  : CONFIG.REMOTE_CONFIG_URL
+
+/**
+ * Fetches remote config from GitHub with 1-hour local cache.
+ * Falls back to defaults if fetch fails.
+ * @returns {Promise<object>} Remote config object
+ */
+export async function getRemoteConfig() {
+  const cached = await getLocalStorage(CONFIG.REMOTE_CONFIG_CACHE_KEY)
+  const entry = cached?.[CONFIG.REMOTE_CONFIG_CACHE_KEY]
+  if (!DEVELOPING && entry && Date.now() - entry.fetchedAt < CONFIG.REMOTE_CONFIG_TTL_MS) {
+    return entry.data
+  }
+  try {
+    const url = DEVELOPING ? chrome.runtime.getURL('/remote-config.json') : REMOTE_CONFIG_URL
+    const res = await fetch(url)
+    if (!res.ok) throw new Error('fetch failed')
+    const data = await res.json()
+    if (!DEVELOPING) {
+      await setLocalStorage({ [CONFIG.REMOTE_CONFIG_CACHE_KEY]: { data, fetchedAt: Date.now() } })
+    }
+    return data
+  } catch (e) {
+    return entry?.data ?? null
+  }
+}
+
+/**
+ * Applies the poll button config to the page.
+ * Modes: 'gradient' (animated), 'minimal' (plain), or disabled via enabled:false
+ * Text is capped at 40 characters.
+ * @param {HTMLElement} pollBtn
+ * @param {HTMLElement} votePoll
+ * @param {object} fallback - { text, url } from CONFIG
+ * @param {Function} openTab - function to open a chrome tab
+ */
+/**
+ * Applies the announcement banner config to the main page.
+ * Dismissed state is stored per announcement id in localStorage.
+ * Text is capped at 120 characters.
+ * @param {HTMLElement} banner
+ * @param {HTMLElement} textEl
+ * @param {HTMLElement} dismissBtn
+ * @param {Function} openTab - function to open a chrome tab
+ */
+export async function applyAnnouncementBanner(banner, textEl, dismissBtn, openTab) {
+  if (!banner || !textEl) return
+
+  const remoteConfig = await getRemoteConfig()
+  const ann = remoteConfig?.announcement
+
+  if (!ann?.enabled || !ann?.text) return
+
+  const id = ann.id ?? 'announcement-1'
+  const dismissed = await getLocalStorage(`ann_dismissed_${id}`)
+  if (dismissed[`ann_dismissed_${id}`]) return
+
+  const rawText = ann.text ?? ''
+  const text = rawText.length > 120 ? rawText.slice(0, 120) : rawText
+  const url = ann.url ?? ''
+
+  textEl.innerHTML = url ? `<a id="announcement-link" href="#">${text}</a>` : text
+
+  if (url) {
+    textEl.querySelector('#announcement-link')?.addEventListener('click', (e) => {
+      e.preventDefault()
+      openTab(url)
+    })
+  }
+
+  if (ann.dismissable !== false && dismissBtn) {
+    dismissBtn.style.display = 'block'
+    dismissBtn.addEventListener('click', async () => {
+      banner.classList.remove('show')
+      await setLocalStorage({ [`ann_dismissed_${id}`]: true })
+    })
+  } else if (dismissBtn) {
+    dismissBtn.style.display = 'none'
+  }
+
+  banner.classList.add('show')
+}
+
+export async function applyPollConfig(pollBtn, votePoll, fallback, openTab) {
+  if (!pollBtn || !votePoll) return
+
+  const remoteConfig = await getRemoteConfig()
+  const poll = remoteConfig?.poll
+
+  const enabled = poll?.enabled ?? true
+  const mode = poll?.mode ?? 'gradient'
+  const rawText = poll?.text ?? fallback.text
+  const url = poll?.url ?? fallback.url
+
+  // enforce 40 char limit
+  const text = rawText.length > 40 ? rawText.slice(0, 40) : rawText
+
+  if (!enabled || mode === 'hidden') {
+    pollBtn.classList.remove('active')
+    return
+  }
+
+  votePoll.innerText = text
+  votePoll.addEventListener('click', () => openTab(url))
+
+  // apply mode styles
+  pollBtn.classList.remove('poll-mode-gradient', 'poll-mode-minimal')
+  pollBtn.classList.add(`poll-mode-${mode}`)
+  pollBtn.classList.add('active')
 }

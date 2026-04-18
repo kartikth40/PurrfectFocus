@@ -4,8 +4,8 @@ export const STEPSLOGTYPE = false
 export const HELPERLOGTYPE = false
 export const STACKTRACELOGTYPE = false
 
-// env
-export const DEVELOPING = false
+// Automatically true in dev (npm run dev / npm run watch), false in production builds
+export const DEVELOPING = import.meta.env.MODE === 'development'
 
 // status
 export const STOP = 'Stop'
@@ -49,7 +49,7 @@ export const DAILYJOURNALLISTKEY = 'dailyJournalList'
 export const showSurvey = true
 export const modes = {
   POMODORO: 'Pomodoro',
-  STOPWATCH: 'Stopwatch'
+  STOPWATCH: 'Stopwatch',
 }
 
 export const defaultSettings = {
@@ -58,20 +58,20 @@ export const defaultSettings = {
       time: defaultFocusTime,
       notifications: true,
       autoStart: false,
-      sound: 'Dong'
+      sound: 'Dong',
     },
     shortBreak: {
       time: defaultShortBreakTime,
       notifications: true,
       autoStart: false,
-      sound: 'Ding Dong'
+      sound: 'Ding Dong',
     },
     longBreak: {
       time: defaultLongBreakTime,
       interval: defaultInterval.toString(),
       notifications: true,
       autoStart: false,
-      sound: 'Computer Magic'
+      sound: 'Computer Magic',
     },
     timerStyle: SIMPLETIMERSTYLE,
     theme: DARKTHEME,
@@ -80,18 +80,18 @@ export const defaultSettings = {
     openNewTab: true,
     mode: modes.POMODORO,
     todoList: true,
-    blockSites: true
-  }
+    blockSites: true,
+  },
 }
 
 export const DAYS = {
-  1: "Monday",
-  2: "Tuesday",
-  3: "Wednesday",
-  4: "Thursday",
-  5: "Friday",
-  6: "Saturday",
-  7: "Sunday"
+  1: 'Monday',
+  2: 'Tuesday',
+  3: 'Wednesday',
+  4: 'Thursday',
+  5: 'Friday',
+  6: 'Saturday',
+  7: 'Sunday',
 }
 
 export const TOASTIFY = {
@@ -101,7 +101,7 @@ export const TOASTIFY = {
     orange: 'orange',
     purple: 'purple',
   },
-  life: 10000
+  life: 10000,
 }
 
 export const chartColors = [
@@ -110,42 +110,34 @@ export const chartColors = [
   '#85A9FF', // Gentle Blue
   '#FF85C1', // Soft Pink
   '#FFD580', // Warm Yellow
-  '#B39CD0'  // Muted Purple
+  '#B39CD0', // Muted Purple
 ]
-export const chartBorderColors = [
-  '#ffffff10',
-  '#ffffff10',
-  '#ffffff10',
-  '#ffffff10',
-  '#ffffff10',
-  '#ffffff10'
-]
+export const chartBorderColors = ['#ffffff10', '#ffffff10', '#ffffff10', '#ffffff10', '#ffffff10', '#ffffff10']
 
 export const TASKS = {
-  WORK: "Work",
-  STUDY: "Study",
-  PERSONAL: "Personal",
-  CHORES: "Chores",
-  OTHER: "Other",
-  REST: "Rest"
+  WORK: 'Work',
+  STUDY: 'Study',
+  PERSONAL: 'Personal',
+  CHORES: 'Chores',
+  OTHER: 'Other',
+  REST: 'Rest',
 }
 export const TASKS_ALIAS = {
-  [TASKS.WORK]: "Work",
-  [TASKS.STUDY]: "Study",
-  [TASKS.PERSONAL]: "Personal",
-  [TASKS.CHORES]: "Chores",
-  [TASKS.OTHER]: "Other",
-  [TASKS.REST]: "Rest"
+  [TASKS.WORK]: 'Work',
+  [TASKS.STUDY]: 'Study',
+  [TASKS.PERSONAL]: 'Personal',
+  [TASKS.CHORES]: 'Chores',
+  [TASKS.OTHER]: 'Other',
+  [TASKS.REST]: 'Rest',
 }
 export const TASKS_COLORS = {
-  [TASKS.WORK]: "#b7d9ff",
-  [TASKS.STUDY]: "#ffda9f",
-  [TASKS.PERSONAL]: "#d5ffa9",
-  [TASKS.CHORES]: "#feffae",
-  [TASKS.OTHER]: "#c2c2c2",
-  [TASKS.REST]: "#ffbdc7"
+  [TASKS.WORK]: '#b7d9ff',
+  [TASKS.STUDY]: '#ffda9f',
+  [TASKS.PERSONAL]: '#d5ffa9',
+  [TASKS.CHORES]: '#feffae',
+  [TASKS.OTHER]: '#c2c2c2',
+  [TASKS.REST]: '#ffbdc7',
 }
-
 
 export const breakQuotes = [
   "Relax, Recharge and Reflect. Sometimes it's OK to do nothing.",

@@ -564,6 +564,7 @@ input:hover, select:hover {
   position: relative;
   color: var(--secondary-color-1);
   border-radius: 15px;
+  font-size: .5rem;
   &:hover::after, &:hover::before {
     inset: -5px;
     border-radius: 15px;
@@ -594,9 +595,53 @@ input:hover, select:hover {
 .poll-btn.active {
   display: block;
   position: absolute;
-  top: 10px;
-  right: 10px;
+  bottom: 5px;
+  right: 5px;
   z-index: 100;
+}
+
+/* gradient mode: default animated rotating border (existing style) */
+.poll-btn.poll-mode-gradient.active {
+  display: block;
+}
+
+/* minimal mode: plain small button, no animation */
+.poll-btn.poll-mode-minimal.active {
+  display: block;
+  font-size: 0.5rem;
+}
+.poll-btn.poll-mode-minimal::after,
+.poll-btn.poll-mode-minimal::before {
+  display: none;
+}
+.poll-btn.poll-mode-minimal button {
+  background: transparent;
+  border: none;
+  padding: 5px 14px;
+  color: var(--secondary-color-2);
+  font-family: "Poppins", sans-serif;
+  text-decoration: underline;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  box-shadow: none;
+  cursor: pointer;
+  transition: .2s all;
+  backdrop-filter: blur(4px);
+}
+.poll-btn.poll-mode-minimal button:hover {
+  background: var(--secondary-color-2);
+  color: var(--primary-color-1);
+  box-shadow: 0 0 10px var(--secondary-color-2);
+  transform: translateY(-1px);
+}
+.light .poll-btn.poll-mode-minimal button {
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+}
+.light .poll-btn.poll-mode-minimal button:hover {
+  background: var(--primary-color);
+  color: #fff;
+  box-shadow: 0 0 10px var(--primary-color-3);
 }
 .poll-btn.popup {
   top: 25px;
@@ -838,6 +883,75 @@ body.light .poll-btn button {
   }
 }
 
+
+.announcement-banner {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  width: 80%;
+  max-width: 600px;
+  padding: 10px 36px 10px 16px;
+  border-radius: 0 0 10px 10px;
+  background: linear-gradient(135deg, var(--primary-color-2), var(--primary-color-1));
+  border: 1px solid var(--secondary-color-2);
+  border-top: none;
+  box-shadow: 0 4px 16px var(--primary-color-2);
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--secondary-color-1);
+  animation: bannerSlideIn 0.3s ease forwards;
+  z-index: 50;
+}
+.announcement-banner.show {
+  display: block;
+}
+.announcement-banner a {
+  color: var(--secondary-color-1);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.announcement-dismiss {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--secondary-color-2);
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: .15s all;
+}
+.announcement-dismiss:hover {
+  color: var(--secondary-color-1);
+  background: rgba(255,255,255,0.1);
+}
+.light .announcement-banner {
+  background: linear-gradient(135deg, var(--primary-color-4), var(--secondary-color-1));
+  border: 1px solid var(--primary-color);
+  box-shadow: 0 0 10px var(--primary-color-3);
+  color: #000;
+}
+.light .announcement-banner a {
+  color: var(--primary-color-1);
+}
+.light .announcement-dismiss {
+  color: var(--primary-color);
+}
+.light .announcement-dismiss:hover {
+  background: rgba(0,0,0,0.08);
+}
+@keyframes bannerSlideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
 .loading-screen {
   position: fixed;

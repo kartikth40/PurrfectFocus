@@ -6,7 +6,7 @@ import {
   getSessionStorage,
   getSyncStorage,
   getFocusText,
-  resumeTimer, 
+  resumeTimer,
   createNewTabForTimers,
   createNewTabForSettings,
   createNewTabForHistory,
@@ -18,7 +18,8 @@ import {
   setSyncStorage,
   showCustomPrompt,
   showToast,
-  unSetBlockRules} from "../utils.js"
+  unSetBlockRules,
+} from '../utils.js'
 import {
   PLAY,
   PAUSE,
@@ -34,9 +35,8 @@ import {
   showSurvey,
   SHORTBREAK,
   modes,
-  TOASTIFY
- } from "../constants.js"
-import { CONFIG } from "../config.js"
+  TOASTIFY,
+} from '../constants.js'
 
 const container = document.querySelector('.container')
 const timerEle = document.querySelector('.timer')
@@ -50,8 +50,6 @@ const nextBtn = document.querySelector('.focus-btn-next')
 const doneBtn = document.querySelector('.focus-btn-done')
 const timerTag = document.querySelector('.timer-tag')
 const timerEdit = document.querySelector('.timer-edit')
-const pollBtn = document?.querySelector(".poll-btn")
-
 
 const settingsBtn = document.querySelector('.settings-tab-btn')
 const historyBtn = document.querySelector('.history-tab-btn')
@@ -77,7 +75,6 @@ function applyTimerModeControls(isPomodoro) {
   }
 }
 
-
 const print = printer()
 
 const sendRuntimeMessageSafely = async (message) => {
@@ -89,17 +86,17 @@ const sendRuntimeMessageSafely = async (message) => {
 }
 
 // listening messages
-chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(async function (request, sender, sendResponse) {
   // tick with timer
   if (request.time) {
     changeTextTo(timerEle, request.time)
     print.log('UI --> ' + request.time)
   }
 
-  if(request.updateNextTimer) {
+  if (request.updateNextTimer) {
     await updateNextTimer()
   }
-  if(request.timerReset){
+  if (request.timerReset) {
     const store = await getSyncStorage(SETTINGSKEY)
     const timerObj = await getSessionStorage(TIMERKEY)
     const timer = timerObj[TIMERKEY]
@@ -118,37 +115,34 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
       changeTextTo(focusTitle, 'Long Break')
       changeTextTo(timerEle, getTimeString(store.settings.longBreak.time * 60, false))
     }
-    if(!isPomodoro) changeTextTo(timerEle, getTimeString(0, false))
-    if(!timer) {
+    if (!isPomodoro) changeTextTo(timerEle, getTimeString(0, false))
+    if (!timer) {
       stopBtn.classList.remove('active')
       nextBtn.classList.remove('active')
       doneBtn.classList.remove('active')
     }
-  }
-  else if(request.saveSettings) {
+  } else if (request.saveSettings) {
     const store = await getSyncStorage(SETTINGSKEY)
     const isPomodoro = store?.settings?.mode === modes.POMODORO
-    if(store?.settings?.theme === LIGHTTHEME) {
+    if (store?.settings?.theme === LIGHTTHEME) {
       document.body.classList.add('light')
-    }else document.body.classList.remove('light')
-    if(store?.settings?.timerStyle === SIMPLETIMERSTYLE) {
+    } else document.body.classList.remove('light')
+    if (store?.settings?.timerStyle === SIMPLETIMERSTYLE) {
       timerTag.classList.remove('cat-walk')
       timerTag.classList.add('simple')
-    }else {
+    } else {
       timerTag.classList.remove('simple')
       timerTag.classList.add('cat-walk')
     }
     applyTimerModeControls(isPomodoro)
-  }
-  else if(request.taskChange) {
+  } else if (request.taskChange) {
     taskSelect.value = request.taskChange
-  }
-  else if(request.taskAliasUpdated) {
+  } else if (request.taskAliasUpdated) {
     const timerObj = await getSessionStorage(TIMERKEY)
     const timer = timerObj[TIMERKEY]
     timer.type === FOCUS ? await setFocusOptionForTasks() : await setRestOptionForTasks()
   }
-  if(request.invalidSession) {
+  if (request.invalidSession) {
     showToast('Session Not Saved!', 'Session duration must be at least one minute.', TOASTIFY.colors.orange, true)
   }
 })
@@ -161,9 +155,10 @@ const updateNextTimer = async () => {
   const settingsObj = await getSyncStorage(SETTINGSKEY)
   const isPomodoro = settingsObj.settings.mode === modes.POMODORO
   await handleUntilLongBreakCount(settingsObj.settings, result.timer)
-  if(isPomodoro) changeTextTo(timerEle, getTimeString(timerDuration(result.timer.type, settingsObj?.settings)*60, false))
+  if (isPomodoro)
+    changeTextTo(timerEle, getTimeString(timerDuration(result.timer.type, settingsObj?.settings) * 60, false))
   else changeTextTo(timerEle, getTimeString(0, false))
-  if(!result?.timer || result?.timer?.type === FOCUS) {
+  if (!result?.timer || result?.timer?.type === FOCUS) {
     await setFocusOptionForTasks(result?.timer)
     return
   }
@@ -172,17 +167,16 @@ const updateNextTimer = async () => {
   changeTextTo(focusTitle, result.timer.type)
 }
 
-async function handleUntilLongBreakCount(settings, timer, tryOnce=false) {
-  if(parseInt(settings.longBreak.interval) !== 0 && timer?.type !== LONGBREAK){
+async function handleUntilLongBreakCount(settings, timer, tryOnce = false) {
+  if (parseInt(settings.longBreak.interval) !== 0 && timer?.type !== LONGBREAK) {
     changeTextTo(untilLongBreakCount, parseInt(settings.longBreak.interval) - (timer ? timer.counts : 0) + 1)
     untilLongBreak.style.visibility = 'visible'
-  }else{
+  } else {
     untilLongBreak.style.visibility = 'hidden'
   }
-  if(!timer && !tryOnce) {
+  if (!timer && !tryOnce) {
     const sessionStore = await getSessionStorage(TIMERKEY)
-    if(sessionStore.timer)
-    await handleUntilLongBreakCount(settings, sessionStore.timer, true)
+    if (sessionStore.timer) await handleUntilLongBreakCount(settings, sessionStore.timer, true)
   }
 }
 
@@ -192,69 +186,69 @@ document.addEventListener('DOMContentLoaded', async () => {
   let settings = store.settings
   const isPomodoro = settings.mode === modes.POMODORO
   applyTimerModeControls(isPomodoro)
-  if(settings?.theme === LIGHTTHEME) {
+  if (settings?.theme === LIGHTTHEME) {
     document.body.classList.add('light')
-  }else document.body.classList.remove('light')
-  if(settings?.timerStyle === SIMPLETIMERSTYLE) {
+  } else document.body.classList.remove('light')
+  if (settings?.timerStyle === SIMPLETIMERSTYLE) {
     timerTag.classList.remove('cat-walk')
     timerTag.classList.add('simple')
     mode.classList.remove('cat-walk')
-  }else {
+  } else {
     timerTag.classList.remove('simple')
     timerTag.classList.add('cat-walk')
     mode.classList.add('cat-walk')
   }
   const sessionStore = await getSessionStorage(TIMERKEY)
-  if(isPomodoro) changeTextTo(timerEle, getTimeString(timerDuration(sessionStore?.timer?.type, settings)*60, false))
+  if (isPomodoro) changeTextTo(timerEle, getTimeString(timerDuration(sessionStore?.timer?.type, settings) * 60, false))
   else changeTextTo(timerEle, getTimeString(0, false))
   await handleUntilLongBreakCount(settings, sessionStore.timer)
-  if(!sessionStore?.timer || sessionStore?.timer?.type === FOCUS) await setFocusOptionForTasks(sessionStore.timer)
+  if (!sessionStore?.timer || sessionStore?.timer?.type === FOCUS) await setFocusOptionForTasks(sessionStore.timer)
   else await setRestOptionForTasks()
-  if(sessionStore?.timer?.type === LONGBREAK) changeTextTo( untilLongBreak, '')
-  if(sessionStore?.timer && (sessionStore?.timer?.status === PLAY || sessionStore?.timer?.status === PAUSE)) {
+  if (sessionStore?.timer?.type === LONGBREAK) changeTextTo(untilLongBreak, '')
+  if (sessionStore?.timer && (sessionStore?.timer?.status === PLAY || sessionStore?.timer?.status === PAUSE)) {
     changeTextTo(timerEle, getTimeString(sessionStore.timer.time, false))
     changeTextTo(focusBtnText, getFocusText(sessionStore.timer, settings))
     changeTextTo(focusTitle, sessionStore.timer.type)
     stopBtn.classList.add('active')
     nextBtn.classList.add('active')
-    if(isPomodoro) doneBtn.classList.add('active')
+    if (isPomodoro) doneBtn.classList.add('active')
   }
-  if(sessionStore?.timer && sessionStore?.timer?.status === PAUSE) {
-    chrome.action.setBadgeText({text: getTimeString(sessionStore.timer.time)})
-    chrome.action.setBadgeBackgroundColor({color: 'rgb(255, 202, 118)'})
+  if (sessionStore?.timer && sessionStore?.timer?.status === PAUSE) {
+    chrome.action.setBadgeText({ text: getTimeString(sessionStore.timer.time) })
+    chrome.action.setBadgeBackgroundColor({ color: 'rgb(255, 202, 118)' })
   }
   focusBtn.addEventListener('click', async () => {
     const store = await getSyncStorage(SETTINGSKEY)
     const isPomodoro = store?.settings?.mode === modes.POMODORO
     const timer = await getSessionStorage(TIMERKEY)
-    if(!isPomodoro && timer?.timer?.status === PLAY){
-      showToast('Reminder!', "Pause is not allowed in Stopwatch mode.", TOASTIFY.colors.orange, true, true)
+    if (!isPomodoro && timer?.timer?.status === PLAY) {
+      showToast('Reminder!', 'Pause is not allowed in Stopwatch mode.', TOASTIFY.colors.orange, true, true)
       return
-    } 
+    }
     // if started already
-    if(timer?.timer) {
+    if (timer?.timer) {
       print.log('Start -> ' + timer)
-      if(timer.timer.status !== PAUSE) {
-          // pause
-          await pause(timer.timer)
-        }else {
-          // resume
-          await resume(timer.timer)
-          if(isPomodoro) {
-            changeTextTo(focusBtnText, 'Pause')
-          }else {
-            changeTextTo(focusBtnText, 'Running...')
-          }
+      if (timer.timer.status !== PAUSE) {
+        // pause
+        await pause(timer.timer)
+      } else {
+        // resume
+        await resume(timer.timer)
+        if (isPomodoro) {
+          changeTextTo(focusBtnText, 'Pause')
+        } else {
+          changeTextTo(focusBtnText, 'Running...')
         }
-    }else {
+      }
+    } else {
       // initiate
       await initiateTimer()
     }
   })
-  stopBtn.addEventListener('click',async () => {
+  stopBtn.addEventListener('click', async () => {
     stopTimer(store.settings)
   })
-  
+
   nextBtn.addEventListener('click', async () => {
     await nextTimer()
   })
@@ -267,20 +261,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     await createNewTabForTimers(false, true)
   })
 
-  settingsBtn.addEventListener('click',async () => {
+  settingsBtn.addEventListener('click', async () => {
     await createNewTabForSettings()
   })
-  historyBtn.addEventListener('click',async () => {
+  historyBtn.addEventListener('click', async () => {
     await createNewTabForHistory()
   })
-  streakBtn?.addEventListener('click',async () => {
+  streakBtn?.addEventListener('click', async () => {
     await createNewTabForStreak()
   })
-  supportBtn.addEventListener('click',async function(event){
+  supportBtn.addEventListener('click', async function (event) {
     event.preventDefault()
     chrome.tabs.create({ url: this.href, active: true })
   })
-  rateBtn.addEventListener('click',async function(event){
+  rateBtn.addEventListener('click', async function (event) {
     event.preventDefault()
     chrome.tabs.create({ url: this.href, active: true })
   })
@@ -288,124 +282,127 @@ document.addEventListener('DOMContentLoaded', async () => {
   taskSelect.addEventListener('change', async (event) => {
     const selectedTask = event.target.value
     const timer = await getSessionStorage(TIMERKEY)
-    if(timer.timer) {
+    if (timer.timer) {
       timer.timer.task = getValidTask(selectedTask, timer?.timer?.type)
-      await setTimerInStore({[TIMERKEY]: timer.timer})
-      await chrome.runtime.sendMessage({taskChange: timer.timer.task})
-      await setLocalStorage({[CURRENTTASKKEY]: timer.timer.task})
-    }
-    else {
+      await setTimerInStore({ [TIMERKEY]: timer.timer })
+      await chrome.runtime.sendMessage({ taskChange: timer.timer.task })
+      await setLocalStorage({ [CURRENTTASKKEY]: timer.timer.task })
+    } else {
       const timerObj = {
         time: null,
         status: PAUSE,
         type: FOCUS,
         counts: 0,
-        task: getValidTask(selectedTask)
-      };
-      await setTimerInStore({ [TIMERKEY]: timerObj });
-      await chrome.runtime.sendMessage({ taskChange: timerObj.task });
-      await setLocalStorage({ [CURRENTTASKKEY]: timerObj.task });
+        task: getValidTask(selectedTask),
+      }
+      await setTimerInStore({ [TIMERKEY]: timerObj })
+      await chrome.runtime.sendMessage({ taskChange: timerObj.task })
+      await setLocalStorage({ [CURRENTTASKKEY]: timerObj.task })
     }
   })
 
   taskEdit.addEventListener('click', async (event) => {
-      const tasksAliasObj = await getLocalStorage(TASKSALIASKEY)
-      const tasksAlias = tasksAliasObj[TASKSALIASKEY] || {}
-      const oldSelectedTask = taskSelect.value
-      const oldTaskAlias = tasksAlias[oldSelectedTask] || oldSelectedTask
-      showCustomPrompt(
-        "🌱 Heads up! 🌱",
-        "Renaming this task will update it everywhere, including history.\n\nEnter the new task name:", 
-        oldTaskAlias,
-        async (response) => {
-          if (response !== null && response.length <= 20) {
-            tasksAlias[oldSelectedTask] = response
-            await chrome.runtime.sendMessage({taskAliasUpdated: true})
-            await setLocalStorage({[TASKSALIASKEY]: tasksAlias})
-            oldSelectedTask === TASKS.REST ? setRestOptionForTasks() : setFocusOptionForTasks()
-          } else if (response !== null && response.length > 20) {
-            showToast("Oops! 😋", "Task name should be less than 20 characters.", TOASTIFY.colors.red)
-          }
-      });
-    })
-
-    timerEdit.addEventListener('click', async (event) => {
-        const settingsObj = await getSyncStorage(SETTINGSKEY)
-        const settings = settingsObj[SETTINGSKEY] || {}
-        const timerObj = await getSessionStorage(TIMERKEY)
-        const timer = timerObj[TIMERKEY]
-        let time;
-        if (!timer || timer.type === FOCUS) {
-            time = settings?.focus?.time;
-        } else if (timer.type === SHORTBREAK) {
-            time = settings?.shortBreak?.time;
-        } else {
-            time = settings?.longBreak?.time;
+    const tasksAliasObj = await getLocalStorage(TASKSALIASKEY)
+    const tasksAlias = tasksAliasObj[TASKSALIASKEY] || {}
+    const oldSelectedTask = taskSelect.value
+    const oldTaskAlias = tasksAlias[oldSelectedTask] || oldSelectedTask
+    showCustomPrompt(
+      '🌱 Heads up! 🌱',
+      'Renaming this task will update it everywhere, including history.\n\nEnter the new task name:',
+      oldTaskAlias,
+      async (response) => {
+        if (response !== null && response.length <= 20) {
+          tasksAlias[oldSelectedTask] = response
+          await chrome.runtime.sendMessage({ taskAliasUpdated: true })
+          await setLocalStorage({ [TASKSALIASKEY]: tasksAlias })
+          oldSelectedTask === TASKS.REST ? setRestOptionForTasks() : setFocusOptionForTasks()
+        } else if (response !== null && response.length > 20) {
+          showToast('Oops! 😋', 'Task name should be less than 20 characters.', TOASTIFY.colors.red)
         }
-        let [min, max] = [1, 180]
-    
-         showCustomPrompt(
-              "⏱ Adjust Timer Duration",
-              `Please enter a new time in minutes (between ${min} and ${max})`,
-              time,
-              async (response) => {
-              const parsedTime = parseInt(response, 10);
-              if (response !== null && !isNaN(parsedTime) && parsedTime >= min && parsedTime <= max) {
-                chrome.action.setBadgeText({ text: '' });
-                chrome.action.setBadgeBackgroundColor({ color: [190, 190, 190, 230] });
-                try {
-                  if (!timer || timer.type === FOCUS) {
-                    settingsObj.settings.focus.time = parseInt(response)
-                  } else if (timer.type === SHORTBREAK) {
-                      settingsObj.settings.shortBreak.time = parseInt(response)
-                  } else {
-                      settingsObj.settings.longBreak.time = parseInt(response)
-                  }
-                  await setSyncStorage(settingsObj)
-                  await chrome.runtime.sendMessage({
-                    newSettings: settingsObj,
-                    saveSettings: true,
-                    reload: true,
-                    resetCurrentTimer: true
-                  })  
-                } catch (e) {
-                console.warn(e);
-                }
-              } else if (response !== null) {
-                let errorMessage = "Please enter a valid numeric value for the time.";
-                if (parsedTime < min) {
-                errorMessage = `The time must be at least ${min} minute(s). Please try again.`;
-                } else if (parsedTime > max) {
-                errorMessage = `The time must not exceed ${max} minute(s). Please try again.`;
-                }
-                showToast("Invalid Input!", errorMessage, TOASTIFY.colors.red, true, true)
-              }
-              },
-              "number",
-              "*It will reset the current timer.\nIf any."
-            );
-      })
-      if(!settings?.blockSites) {
-        await unSetBlockRules()
       }
-      await sendRuntimeMessageSafely({ type: 'START_SESSION' })
-      await sendRuntimeMessageSafely({ type: 'PAGE_VIEW', properties: {
-        currentUrl: window.location.href,
-        pathName: 'popup',
-        screenWidth: window?.screen?.width,
-        screenHeight: window?.screen?.height
-      } })
+    )
+  })
+
+  timerEdit.addEventListener('click', async (event) => {
+    const settingsObj = await getSyncStorage(SETTINGSKEY)
+    const settings = settingsObj[SETTINGSKEY] || {}
+    const timerObj = await getSessionStorage(TIMERKEY)
+    const timer = timerObj[TIMERKEY]
+    let time
+    if (!timer || timer.type === FOCUS) {
+      time = settings?.focus?.time
+    } else if (timer.type === SHORTBREAK) {
+      time = settings?.shortBreak?.time
+    } else {
+      time = settings?.longBreak?.time
+    }
+    let [min, max] = [1, 180]
+
+    showCustomPrompt(
+      '⏱ Adjust Timer Duration',
+      `Please enter a new time in minutes (between ${min} and ${max})`,
+      time,
+      async (response) => {
+        const parsedTime = parseInt(response, 10)
+        if (response !== null && !isNaN(parsedTime) && parsedTime >= min && parsedTime <= max) {
+          chrome.action.setBadgeText({ text: '' })
+          chrome.action.setBadgeBackgroundColor({ color: [190, 190, 190, 230] })
+          try {
+            if (!timer || timer.type === FOCUS) {
+              settingsObj.settings.focus.time = parseInt(response)
+            } else if (timer.type === SHORTBREAK) {
+              settingsObj.settings.shortBreak.time = parseInt(response)
+            } else {
+              settingsObj.settings.longBreak.time = parseInt(response)
+            }
+            await setSyncStorage(settingsObj)
+            await chrome.runtime.sendMessage({
+              newSettings: settingsObj,
+              saveSettings: true,
+              reload: true,
+              resetCurrentTimer: true,
+            })
+          } catch (e) {
+            console.warn(e)
+          }
+        } else if (response !== null) {
+          let errorMessage = 'Please enter a valid numeric value for the time.'
+          if (parsedTime < min) {
+            errorMessage = `The time must be at least ${min} minute(s). Please try again.`
+          } else if (parsedTime > max) {
+            errorMessage = `The time must not exceed ${max} minute(s). Please try again.`
+          }
+          showToast('Invalid Input!', errorMessage, TOASTIFY.colors.red, true, true)
+        }
+      },
+      'number',
+      '*It will reset the current timer.\nIf any.'
+    )
+  })
+  if (!settings?.blockSites) {
+    await unSetBlockRules()
+  }
+  await sendRuntimeMessageSafely({ type: 'START_SESSION' })
+  await sendRuntimeMessageSafely({
+    type: 'PAGE_VIEW',
+    properties: {
+      currentUrl: window.location.href,
+      pathName: 'popup',
+      screenWidth: window?.screen?.width,
+      screenHeight: window?.screen?.height,
+    },
+  })
 })
 
 async function nextTimer() {
-  try{
+  try {
     const settingsObj = await getSyncStorage(SETTINGSKEY)
     const settings = settingsObj[SETTINGSKEY]
-    if(settings?.mode === modes.STOPWATCH) {
-      await chrome.runtime.sendMessage({stopwatchNextTimer: true})
-    }else await chrome.runtime.sendMessage({nextTimer: true})
+    if (settings?.mode === modes.STOPWATCH) {
+      await chrome.runtime.sendMessage({ stopwatchNextTimer: true })
+    } else await chrome.runtime.sendMessage({ nextTimer: true })
   } catch (e) {
-    console.warn(e);
+    console.warn(e)
   }
 }
 
@@ -417,30 +414,30 @@ const stopTimer = async (settings) => {
   nextBtn.classList.remove('active')
   doneBtn.classList.remove('active')
   const isPomodoro = settings.mode === modes.POMODORO
-  if(isPomodoro) changeTextTo(timerEle, getTimeString(settings.focus.time * 60, false))
+  if (isPomodoro) changeTextTo(timerEle, getTimeString(settings.focus.time * 60, false))
   else changeTextTo(timerEle, getTimeString(0, false))
-  chrome.action.setBadgeText({text: ''})
-  chrome.action.setBadgeBackgroundColor({color: [190, 190, 190, 230]})
+  chrome.action.setBadgeText({ text: '' })
+  chrome.action.setBadgeBackgroundColor({ color: [190, 190, 190, 230] })
   await handleUntilLongBreakCount(settings, null)
   await setFocusOptionForTasks()
-  try{
-    await chrome.runtime.sendMessage({stopTimer: true})
+  try {
+    await chrome.runtime.sendMessage({ stopTimer: true })
   } catch (e) {
-    console.warn(e);
+    console.warn(e)
   }
 }
 
 const pause = async (timer) => {
   print.log('pause timer')
   const timerObj = await getSessionStorage(TIMERKEY)
-  try{
-    await chrome.runtime.sendMessage({pauseTimer: true, timer: timerObj.timer})
-  }catch (e) {
-    console.warn(e);
+  try {
+    await chrome.runtime.sendMessage({ pauseTimer: true, timer: timerObj.timer })
+  } catch (e) {
+    console.warn(e)
   }
   changeTextTo(focusBtnText, 'Resume')
   changeTextTo(focusTitle, timer.type)
-  chrome.action.setBadgeBackgroundColor({color: 'rgb(255, 202, 118)'})
+  chrome.action.setBadgeBackgroundColor({ color: 'rgb(255, 202, 118)' })
 }
 
 const resume = async (timer) => {
@@ -457,82 +454,69 @@ const initiateTimer = async () => {
   const selectedTask = taskSelect.value
 
   const isPomodoro = settings.mode === modes.POMODORO
-  const time = isPomodoro ? timerDuration(FOCUS, settings)*60 : 0
+  const time = isPomodoro ? timerDuration(FOCUS, settings) * 60 : 0
 
-  chrome.tabs.query({active: true, currentWindow: true}, async (tabs) => {
+  chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
     const timerObj = {
       time: time,
       status: PLAY,
       type: FOCUS,
       counts: 0,
-      task: getValidTask(selectedTask)
+      task: getValidTask(selectedTask),
     }
-    try{
-      await chrome.runtime.sendMessage({startTimer: true, timer: timerObj})
-    }catch (e) {
-      console.warn(e);
+    try {
+      await chrome.runtime.sendMessage({ startTimer: true, timer: timerObj })
+    } catch (e) {
+      console.warn(e)
     }
   })
-  if(isPomodoro) {
+  if (isPomodoro) {
     changeTextTo(focusBtnText, 'Pause')
-  }else {
+  } else {
     changeTextTo(focusBtnText, 'Running...')
   }
   changeTextTo(focusTitle, timerEle?.type ?? FOCUS)
   stopBtn.classList.add('active')
   nextBtn.classList.add('active')
-  if(isPomodoro) doneBtn.classList.add('active')
-}
-
-if(showSurvey) {
-  pollBtn?.classList?.add('active')
-  const votePoll = document?.getElementById("votePoll")
-  if(votePoll) {
-      votePoll.innerText = CONFIG.LINK_TITLE
-      votePoll.addEventListener("click", function() {
-      chrome.tabs.create({ url: CONFIG.LINK_URL });
-    });
-  }
-}else {
-  pollBtn?.classList?.remove('active')
+  if (isPomodoro) doneBtn.classList.add('active')
 }
 
 async function setRestOptionForTasks() {
   const tasksAliasObj = await getLocalStorage(TASKSALIASKEY)
   const tasksAlias = tasksAliasObj[TASKSALIASKEY] || {}
   taskSelect.innerHTML = Object.keys(TASKS)
-                          .map(taskKey => {
-                              const task = TASKS[taskKey]
-                              const alias = tasksAlias[task] || task
-                              return `<option value="${task}">${alias}</option>`
-                          })
-                          .join('')
+    .map((taskKey) => {
+      const task = TASKS[taskKey]
+      const alias = tasksAlias[task] || task
+      return `<option value="${task}">${alias}</option>`
+    })
+    .join('')
   taskSelect.value = TASKS.REST
   taskSelect.disabled = true
 }
 
 async function setFocusOptionForTasks(timer) {
-  if(!timer) {
+  if (!timer) {
     const result = await getSessionStorage(TIMERKEY)
     timer = result[TIMERKEY]
   }
   const tasksAliasObj = await getLocalStorage(TASKSALIASKEY)
   const tasksAlias = tasksAliasObj[TASKSALIASKEY] || {}
   taskSelect.innerHTML = Object.keys(TASKS)
-                          .filter(taskKey => TASKS[taskKey] !== TASKS.REST)
-                          .map(taskKey => {
-                              const task = TASKS[taskKey]
-                              const alias = tasksAlias[task] || task
-                              return `<option value="${task}">${alias}</option>`
-                          })
-                          .join('')
+    .filter((taskKey) => TASKS[taskKey] !== TASKS.REST)
+    .map((taskKey) => {
+      const task = TASKS[taskKey]
+      const alias = tasksAlias[task] || task
+      return `<option value="${task}">${alias}</option>`
+    })
+    .join('')
   taskSelect.value = getValidTask(timer?.task)
   taskSelect.disabled = false
 }
 
 async function finishTimer() {
   try {
-    await chrome.runtime.sendMessage({finishTimer: true})
+    await chrome.runtime.sendMessage({ finishTimer: true })
   } catch (e) {
     console.warn(e)
   }

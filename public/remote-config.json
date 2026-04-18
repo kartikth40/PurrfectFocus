@@ -1,0 +1,28 @@
+{
+  "poll": {
+    "_options": {
+      "enabled": [true, false],
+      "mode": ["gradient", "minimal", "hidden"],
+      "text_max_chars": 40,
+      "url": "any valid URL string"
+    },
+    "enabled": true,
+    "mode": "minimal",
+    "text": "> Got any issues/feedback/suggestions? <",
+    "url": "https://forms.gle/BeJDanLfkPPnFKca7"
+  },
+  "announcement": {
+    "_options": {
+      "enabled": [true, false],
+      "text_max_chars": 120,
+      "dismissable": [true, false],
+      "id": "unique string - change this to re-show the banner to users who dismissed it",
+      "url": "optional - must include https:// to open as external link, e.g. https://example.com otherwise it will be treated as a relative link"
+    },
+    "enabled": false,
+    "id": "ann-1",
+    "text": "",
+    "dismissable": true,
+    "url": ""
+  }
+}
