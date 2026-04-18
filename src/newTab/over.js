@@ -44,6 +44,7 @@ import {
   unSetBlockRules,
   applyPollConfig,
   applyAnnouncementBanner,
+  applyFeatureHighlight,
 } from '../utils.js'
 
 const container = document.querySelector('.container')
@@ -125,6 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadingScreen.classList.add('fade-out')
     setTimeout(() => {
       loadingScreen.remove()
+      maybeFireSessionConfetti()
     }, 500)
   }, 200)
 })
@@ -186,6 +188,7 @@ async function init() {
     document.getElementById('announcement-dismiss'),
     (url) => chrome.tabs.create({ url })
   )
+  await applyFeatureHighlight()
   if (settings.musicPlayer) {
     if (!musicPlayerInitialized) setupMusicPlayer()
   } else removeMusicPlayer()
@@ -1070,4 +1073,32 @@ async function showFocusModal(url) {
     TOASTIFY.colors.orange
   )
   await createNewTabForTimers(false, true, true)
+}
+
+async function maybeFireSessionConfetti() {
+  /* global confetti */
+  if (typeof confetti === 'undefined') return
+  const result = await getSessionStorage('notificationTriggered')
+  if (!result?.notificationTriggered) return
+  // clear the flag so it doesn't fire again on reload
+  await chrome.storage.session.set({ notificationTriggered: false })
+
+  const myConfetti = confetti.create(null, { resize: true, useWorker: true })
+  // cannon from both sides
+  myConfetti({
+    particleCount: 60,
+    angle: 60,
+    spread: 55,
+    origin: { x: 0, y: 0.65 },
+    colors: ['#c084fc', '#a855f7', '#e879f9', '#fff', '#818cf8'],
+    zIndex: 9999,
+  })
+  myConfetti({
+    particleCount: 60,
+    angle: 120,
+    spread: 55,
+    origin: { x: 1, y: 0.65 },
+    colors: ['#c084fc', '#a855f7', '#e879f9', '#fff', '#818cf8'],
+    zIndex: 9999,
+  })
 }

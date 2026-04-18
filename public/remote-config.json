@@ -16,13 +16,27 @@
       "enabled": [true, false],
       "text_max_chars": 120,
       "dismissable": [true, false],
-      "id": "unique string - change this to re-show the banner to users who dismissed it",
-      "url": "optional - must include https:// to open as external link, e.g. https://example.com otherwise it will be treated as a relative link"
+      "id": "unique string - IMPORTANT: changing this id clears the dismissed state for all users and re-shows the banner. Storage key: ann_dismissed_<id>",
+      "url": "optional - must include https:// to open as external link, e.g. https://example.com"
     },
     "enabled": false,
     "id": "ann-1",
     "text": "",
     "dismissable": true,
     "url": ""
+  },
+  "featureHighlight": {
+    "_options": {
+      "enabled": [true, false],
+      "id": "unique string - IMPORTANT: changing this id clears the dismissed state for all users and re-shows the highlight. Storage key: hl_dismissed_<id>",
+      "target": "CSS selector of element to highlight e.g. .streak-tab-btn, #tasks-select, .focus-btn",
+      "message": "tooltip text shown next to the highlight, max 60 chars",
+      "position": ["top", "bottom", "left", "right"]
+    },
+    "enabled": true,
+    "id": "highlight-streak-btn-v1",
+    "target": ".streak-tab-btn",
+    "message": "New! Check your streak",
+    "position": "bottom"
   }
 }

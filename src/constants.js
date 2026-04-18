@@ -7,6 +7,11 @@ export const STACKTRACELOGTYPE = false
 // Automatically true in dev (npm run dev / npm run watch), false in production builds
 export const DEVELOPING = import.meta.env.MODE === 'development'
 
+// When DEVELOPING is true, focus sessions complete after this many seconds
+// but save to history as DEV_SESSION_DURATION_MINS minutes
+export const DEV_TIMER_SECONDS = 5
+export const DEV_SESSION_DURATION_MINS = 20
+
 // status
 export const STOP = 'Stop'
 export const PLAY = 'Play'

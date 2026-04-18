@@ -646,9 +646,15 @@ export const setSampleHistory = async () => {
 }
 
 export async function clearHistory() {
-  const currentFullDate = new Date()
-  const currentYear = currentFullDate.getFullYear().toString()
-  await setLocalStorage({ [currentYear]: null })
+  try {
+    const allData = await chrome.storage.local.get(null)
+    const yearKeys = Object.keys(allData).filter((key) => /^\d{4}$/.test(key))
+    if (yearKeys.length > 0) {
+      await chrome.storage.local.remove(yearKeys)
+    }
+  } catch (error) {
+    console.error('Error clearing history: ', error)
+  }
 }
 
 /**
@@ -956,16 +962,48 @@ async function playNotificationSound(sound = 'Alarm Clock Old') {
   await chrome.runtime.sendMessage({ playNotificationTone: true, sound: sound })
 }
 
-export function showCustomPrompt(title, message, value, callback, inputType = 'text', warn = '', options = null) {
+/**
+ * Shows the custom prompt modal.
+ *
+ * Existing single-input usage (unchanged):
+ *   showCustomPrompt(title, message, value, callback, inputType, warn, options)
+ *
+ * Multi-field usage (new):
+ *   showCustomPrompt(title, message, null, callback, 'fields', '', null, [
+ *     { id: 'myField', label: 'Label', type: 'text'|'number'|'time'|'select', value: '', options: '<option>...' }
+ *   ])
+ *   callback receives an object: { myField: value, ... }
+ *
+ * @param {string} title
+ * @param {string} message
+ * @param {*} value - used for single-input mode
+ * @param {Function} callback
+ * @param {string} [inputType='text'] - 'text'|'number'|'time'|'select'|'fields'
+ * @param {string} [warn='']
+ * @param {string|null} [options=null] - HTML string for select options (single-input mode)
+ * @param {Array|null} [fields=null] - array of field descriptors for multi-field mode
+ */
+export function showCustomPrompt(
+  title,
+  message,
+  value,
+  callback,
+  inputType = 'text',
+  warn = '',
+  options = null,
+  fields = null
+) {
   const modal = document.getElementById('customPrompt')
   const promptMessage = document.getElementById('promptMessage')
   const promptTitle = document.getElementById('promptTitle')
   const promptInput = document.getElementById('promptInput')
   const promptSelect = document.getElementById('promptSelect')
+  const promptFields = document.getElementById('promptFields')
   const promptOk = document.getElementById('promptOk')
   const promptCancel = document.getElementById('promptCancel')
   const promptWarning = document.getElementById('promptwarning')
   modal.style.display = 'flex'
+
   if (warn && warn.length > 0 && promptWarning) {
     promptWarning.style.display = 'block'
     promptWarning.innerHTML = warn.replace(/\n/g, '<br>')
@@ -975,9 +1013,79 @@ export function showCustomPrompt(title, message, value, callback, inputType = 't
   }
 
   if (!title) promptTitle.style.display = 'none'
-  else promptTitle.innerHTML = title
+  else {
+    promptTitle.style.display = ''
+    promptTitle.innerHTML = title
+  }
 
   promptMessage.innerHTML = message.replace(/\n/g, '<br>')
+
+  // ── multi-field mode ──
+  if (inputType === 'fields' && Array.isArray(fields)) {
+    promptInput.style.display = 'none'
+    promptSelect.style.display = 'none'
+    promptFields.innerHTML = ''
+    promptFields.classList.add('active')
+
+    fields.forEach((field) => {
+      const row = document.createElement('div')
+      row.className = 'prompt-field-row'
+      const label = document.createElement('label')
+      label.htmlFor = `pf-${field.id}`
+      label.textContent = field.label
+      let el
+      if (field.type === 'select') {
+        el = document.createElement('select')
+        el.innerHTML = field.options ?? ''
+        if (field.value !== undefined) el.value = field.value
+        el.title = el.options[el.selectedIndex]?.text ?? ''
+        el.addEventListener('change', (e) => {
+          el.title = el.options[el.selectedIndex]?.text ?? ''
+          if (field.onChange) field.onChange(e, fields, promptFields)
+        })
+      } else {
+        el = document.createElement('input')
+        el.type = field.type ?? 'text'
+        el.value = field.value ?? ''
+        if (field.min !== undefined) el.min = field.min
+        if (field.max !== undefined) el.max = field.max
+      }
+      el.id = `pf-${field.id}`
+      row.appendChild(label)
+      row.appendChild(el)
+      promptFields.appendChild(row)
+    })
+
+    function closeModal() {
+      modal.style.display = 'none'
+      promptFields.classList.remove('active')
+      modal.onclick = null
+    }
+
+    promptOk.onclick = () => {
+      const result = {}
+      fields.forEach((field) => {
+        const el = promptFields.querySelector(`#pf-${field.id}`)
+        result[field.id] = el ? el.value : null
+      })
+      closeModal()
+      callback(result)
+    }
+    promptCancel.onclick = () => {
+      closeModal()
+      callback(null)
+    }
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        closeModal()
+        callback(null)
+      }
+    }
+    return
+  }
+
+  // ── existing single-input mode (unchanged) ──
+  promptFields.classList.remove('active')
   if (inputType === 'select') {
     promptSelect.style.display = 'block'
     promptInput.style.display = 'none'
@@ -990,7 +1098,6 @@ export function showCustomPrompt(title, message, value, callback, inputType = 't
       promptInput.focus()
       promptInput.select()
     }, 0)
-
     promptInput.type = inputType
   }
 
@@ -1003,22 +1110,27 @@ export function showCustomPrompt(title, message, value, callback, inputType = 't
       promptCancel.click()
     }
   }
-
   promptInput.addEventListener('keydown', handleKeyDown)
 
   function closeModal() {
     modal.style.display = 'none'
     promptInput.removeEventListener('keydown', handleKeyDown)
+    modal.onclick = null
   }
 
-  promptOk.onclick = function () {
+  promptOk.onclick = () => {
     closeModal()
     callback(inputType === 'select' ? promptSelect.value : promptInput.value)
   }
-
-  promptCancel.onclick = function () {
+  promptCancel.onclick = () => {
     closeModal()
     callback(null)
+  }
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      closeModal()
+      callback(null)
+    }
   }
 }
 
@@ -1046,17 +1158,19 @@ export function showCustomAlert(title, message, callback, hideNoBtn = false) {
     }
   }
 
-  alertOk.onclick = function () {
+  function closeModal(result) {
     modal.style.display = 'none'
+    modal.onclick = null
     document.removeEventListener('keydown', handleKeyDown)
-    callback(true)
+    callback(result)
   }
+
+  alertOk.onclick = () => closeModal(true)
   if (!hideNoBtn) {
-    alertNo.onclick = function () {
-      modal.style.display = 'none'
-      document.removeEventListener('keydown', handleKeyDown)
-      callback(false)
-    }
+    alertNo.onclick = () => closeModal(false)
+  }
+  modal.onclick = (e) => {
+    if (e.target === modal) closeModal(false)
   }
   setTimeout(() => document.addEventListener('keydown', handleKeyDown), 100)
 }
@@ -1244,6 +1358,7 @@ export async function getRemoteConfig() {
     if (!DEVELOPING) {
       await setLocalStorage({ [CONFIG.REMOTE_CONFIG_CACHE_KEY]: { data, fetchedAt: Date.now() } })
     }
+    await cleanupDismissedKeys(data)
     return data
   } catch (e) {
     return entry?.data ?? null
@@ -1251,7 +1366,93 @@ export async function getRemoteConfig() {
 }
 
 /**
- * Applies the poll button config to the page.
+ * Highlights a UI element with a pulsing ring and tooltip.
+ * Dismissed state stored per id. Positions tooltip based on config.
+ * Message capped at 60 characters.
+ * @param {Function} openTab - function to open a chrome tab (unused but kept for consistency)
+ */
+export async function applyFeatureHighlight() {
+  const remoteConfig = await getRemoteConfig()
+  const hl = remoteConfig?.featureHighlight
+  if (!hl?.enabled || !hl?.target || !hl?.message) return
+
+  const id = hl.id ?? 'highlight-1'
+  const dismissed = await getLocalStorage(`hl_dismissed_${id}`)
+  if (dismissed[`hl_dismissed_${id}`]) return
+
+  const target = document.querySelector(hl.target)
+  if (!target) return
+
+  const message = (hl.message ?? '').slice(0, 60)
+  const position = hl.position ?? 'bottom'
+  const GAP = 8
+
+  // create elements first so updatePosition can reference them
+  const ring = document.createElement('div')
+  ring.className = 'feature-highlight-ring'
+
+  const tooltip = document.createElement('div')
+  tooltip.className = 'feature-highlight-tooltip'
+  tooltip.innerHTML = `<span>${message}</span><button class="feature-highlight-dismiss" aria-label="Dismiss">✕</button>`
+
+  let tw = 0,
+    th = 0
+
+  const updatePosition = () => {
+    const r = target.getBoundingClientRect()
+    const size = Math.max(r.width, r.height) + 12
+    ring.style.width = `${size}px`
+    ring.style.height = `${size}px`
+    ring.style.top = `${r.top + r.height / 2 - size / 2}px`
+    ring.style.left = `${r.left + r.width / 2 - size / 2}px`
+
+    let top, left
+    if (position === 'bottom') {
+      top = r.bottom + GAP
+      left = r.left + r.width / 2 - tw / 2
+    } else if (position === 'top') {
+      top = r.top - th - GAP
+      left = r.left + r.width / 2 - tw / 2
+    } else if (position === 'left') {
+      top = r.top + r.height / 2 - th / 2
+      left = r.left - tw - GAP
+    } else {
+      top = r.top + r.height / 2 - th / 2
+      left = r.right + GAP
+    }
+    left = Math.max(8, Math.min(left, window.innerWidth - tw - 8))
+    top = Math.max(8, Math.min(top, window.innerHeight - th - 8))
+    tooltip.style.top = `${top}px`
+    tooltip.style.left = `${left}px`
+  }
+
+  document.body.appendChild(ring)
+  document.body.appendChild(tooltip)
+
+  // measure tooltip once after DOM insertion, then start tracking
+  requestAnimationFrame(() => {
+    tw = tooltip.offsetWidth
+    th = tooltip.offsetHeight
+    updatePosition()
+  })
+
+  window.addEventListener('scroll', updatePosition, { passive: true })
+  window.addEventListener('resize', updatePosition, { passive: true })
+
+  const dismiss = async () => {
+    ring.remove()
+    tooltip.remove()
+    window.removeEventListener('scroll', updatePosition)
+    window.removeEventListener('resize', updatePosition)
+    await setLocalStorage({ [`hl_dismissed_${id}`]: true })
+  }
+
+  tooltip.querySelector('.feature-highlight-dismiss').addEventListener('click', dismiss)
+  // also dismiss on clicking the target element itself
+  target.addEventListener('click', dismiss, { once: true })
+}
+
+/**
  * Modes: 'gradient' (animated), 'minimal' (plain), or disabled via enabled:false
  * Text is capped at 40 characters.
  * @param {HTMLElement} pollBtn
@@ -1259,6 +1460,45 @@ export async function getRemoteConfig() {
  * @param {object} fallback - { text, url } from CONFIG
  * @param {Function} openTab - function to open a chrome tab
  */
+/**
+ * Cleans up stale dismissed keys from localStorage for announcements and highlights.
+ * Removes keys that no longer match the active ids in remote config.
+ */
+/**
+ * Cleans up stale keys from localStorage.
+ * Runs on every remote config fetch (once per hour in prod, every load in dev).
+ *
+ * Key patterns managed:
+ * - ann_dismissed_<id>       — keep only the active announcement id
+ * - hl_dismissed_<id>        — keep only the active highlight id
+ * - badge_celebrated_<label> — kept until streak breaks (managed in streak.js)
+ * - personal_best_celebrated_<n> — keep only the current max streak value (managed in streak.js)
+ * - purrfect_remote_cfg      — the remote config cache itself (never deleted here)
+ */
+async function cleanupDismissedKeys(remoteConfig) {
+  const allStorage = await getLocalStorage(null)
+  if (!allStorage) return
+
+  const activeAnnId = remoteConfig?.announcement?.id
+  const activeHlId = remoteConfig?.featureHighlight?.id
+
+  const keysToRemove = Object.keys(allStorage).filter((key) => {
+    // stale announcement dismissed keys
+    if (key.startsWith('ann_dismissed_')) {
+      return activeAnnId ? key !== `ann_dismissed_${activeAnnId}` : true
+    }
+    // stale highlight dismissed keys
+    if (key.startsWith('hl_dismissed_')) {
+      return activeHlId ? key !== `hl_dismissed_${activeHlId}` : true
+    }
+    return false
+  })
+
+  if (keysToRemove.length > 0) {
+    await chrome.storage.local.remove(keysToRemove)
+  }
+}
+
 /**
  * Applies the announcement banner config to the main page.
  * Dismissed state is stored per announcement id in localStorage.

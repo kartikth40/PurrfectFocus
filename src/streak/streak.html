@@ -7,68 +7,120 @@
   <link rel="shortcut icon" href="/cat.png">
   <link rel="stylesheet" href="../global.css">
   <link rel="stylesheet" href="./streak.css">
+  <div id="badge-overlay" class="badge-overlay" style="display:none">
+    <div class="badge-overlay-content">
+      <div class="badge-overlay-icon" id="badge-overlay-icon"></div>
+      <h2 class="badge-overlay-title">Achievement Unlocked!</h2>
+      <p class="badge-overlay-name" id="badge-overlay-name"></p>
+      <p class="badge-overlay-sub">You've maintained a focus streak 🔥</p>
+      <button class="badge-overlay-close" id="badge-overlay-close">Awesome! 🎉</button>
+    </div>
+  </div>
+  <script src="/scripts/confetti.min.js"></script>
   <script type="module" defer src="./streak.js"></script>
 </head>
 <body>
-  <div class="container">
+  <div class="loading-screen">
+    <div class="spinner"></div>
+  </div>
   <div id="toast-container"></div>
+  <div class="tab-btns floating-btns">
+    <button class="tab-btn timer-tab-btn">
+      <span class="tooltip">timer</span>
+      <img src="/icons/clock.png" alt="clock icon">
+    </button>
+    <button class="tab-btn history-tab-btn">
+      <span class="tooltip">history</span>
+      <img src="/icons/history.png" alt="history icon">
+    </button>
+    <button class="tab-btn settings-tab-btn">
+      <span class="tooltip">settings</span>
+      <img src="/icons/settings.png" alt="settings icon">
+    </button>
+    <a target="_blank" href="https://chromewebstore.google.com/detail/purrfect-focus/aobapnhgpjlldncjopmbbfeoomombhel/support" class="tab-btn support-tab-btn">
+      <span class="tooltip">help</span>
+      <img src="/icons/help.png" alt="help icon">
+    </a>
+    <a target="_blank" href="https://chromewebstore.google.com/detail/purrfect-focus/aobapnhgpjlldncjopmbbfeoomombhel/reviews" class="tab-btn rate-tab-btn">
+      <span class="tooltip">rate us</span>
+      <img src="/icons/rate.png" alt="rate icon">
+    </a>
+  </div>
+  <div class="container">
     <div class="sub-container">
       <div class="main-streak-top">
         <div class="main-left">
-          <div class="icon fire-icon">
+          <div class="icon fire-icon" id="fire-icon" style="opacity:0">
             <img src="/icons/fire_3d.png" alt="fire icon">
           </div>
-          <div class="main-left-title">
-            <p> <span class="current-streak">0</span> days</p>
-            <p>focus streak</p>
+          <div class="main-left-title anim-target">
+            <p><span class="current-streak">0</span> days</p>
+            <p id="streak-status-label">focus streak</p>
           </div>
         </div>
         <div class="main-right">
-          <div class="top-metric">
+          <div class="top-metric anim-target">
             <p>Highest: <span id="max-streak">0</span> days</p>
             <p><span id="pomos-today">0</span> Pomodoros today</p>
           </div>
-          <div class="weekly-streak-container">
+          <div class="weekly-streak-container anim-target">
+            <div class="weekly-label" id="weekly-label"></div>
             <div class="day-container">
-              <span class="streak-check"></span>
+              <span class="streak-check" data-day="0"></span>
               <span class="day-name">Mon</span>
             </div>
             <div class="day-container">
-              <span class="streak-check"></span>
+              <span class="streak-check" data-day="1"></span>
               <span class="day-name">Tue</span>
             </div>
             <div class="day-container">
-              <span class="streak-check check"></span>
+              <span class="streak-check" data-day="2"></span>
               <span class="day-name">Wed</span>
             </div>
             <div class="day-container">
-              <span class="streak-check check"></span>
+              <span class="streak-check" data-day="3"></span>
               <span class="day-name">Thu</span>
             </div>
             <div class="day-container">
-              <span class="streak-check current"></span>
+              <span class="streak-check" data-day="4"></span>
               <span class="day-name">Fri</span>
             </div>
             <div class="day-container">
-              <span class="streak-check"></span>
+              <span class="streak-check" data-day="5"></span>
               <span class="day-name">Sat</span>
             </div>
             <div class="day-container">
-              <span class="streak-check"></span>
+              <span class="streak-check" data-day="6"></span>
               <span class="day-name">Sun</span>
             </div>
           </div>
         </div>
       </div>
     </div>
-    <p class="monthly-streaks">Monthly Streaks soon...</p>
+    <div class="bottom-section anim-target">
+      <div id="empty-state" class="empty-state" style="display:none">
+        <span class="empty-state-icon">🐾</span>
+        <p class="empty-state-title">No focus sessions yet</p>
+        <p class="empty-state-sub">Start your first focus session to begin your streak!</p>
+      </div>
+      <div class="monthly-section">
+        <div class="monthly-nav">
+          <button id="months-prev" class="months-nav-btn" aria-label="Previous">&#8592;</button>
+          <h3 class="monthly-title">Recent Months</h3>
+          <button id="months-next" class="months-nav-btn" aria-label="Next">&#8594;</button>
+        </div>
+        <div class="months-container" id="months-container"></div>
+        <div class="monthly-legend">
+          <span class="legend-dot legend-empty"></span><span>No session</span>
+          <span class="legend-dot legend-done"></span><span>Focus day</span>
+          <span class="legend-dot legend-today"></span><span>Today</span>
+        </div>
+      </div>
+      <div class="right-panel">
+        <div class="milestone-section" id="milestone-section"></div>
+        <div class="best-stats-section" id="best-stats-section"></div>
+      </div>
+    </div>
   </div>
-  <div class="coming-soon">
-    <span>
-      COMING SOON...
-    </span>
-    <p>stay tuned!</p>
-  </div>
-</div>
 </body>
 </html>

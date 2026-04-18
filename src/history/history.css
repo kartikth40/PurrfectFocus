@@ -544,6 +544,13 @@ footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+}
+.top-row .right-col {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 .top-row .title {
   font-weight: bold;
@@ -566,6 +573,28 @@ footer {
   ,  -5px 5px 100px var(--primary-color), 0 2px 0 var(--primary-color);
   transform: translate(0,-2px);
 }
+.top-row .add-session-btn {
+  border-radius: 5px;
+  font-size: 12px;
+  padding: 3px 8px;
+  font-family: "Poppins", sans-serif;
+  background-color: var(--primary-color-2);
+  color: var(--secondary-color-1);
+  cursor: pointer;
+  border: 1px solid var(--primary-color-4);
+  transition: .15s all;
+  transform: translate(0,-2px);
+  box-shadow: 0 2px 0 var(--primary-color-4);
+}
+.top-row .add-session-btn:hover {
+  background-color: var(--primary-color-3);
+  box-shadow: 0 0 8px var(--primary-color-4);
+}
+.top-row .add-session-btn:active {
+  transform: translate(0, 0);
+  box-shadow: none;
+}
+
 .top-row .delete-some-btn:hover:not(:disabled) {
   box-shadow: inset 5px 10px 70px var(--primary-color), inset -5px 5px 90px var(--secondary-color-1)
   ,  -5px 5px 100px var(--primary-color), 0 2px 5px var(--primary-color);
