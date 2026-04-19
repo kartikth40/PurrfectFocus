@@ -65,5 +65,4 @@ jobs:
 
             **Version bump:** `${{ inputs.type }}`
 
-            Download `purrfect-focus-v${{ steps.bump.outputs.version }}.zip` below and upload to the Chrome Web Store.
           files: purrfect-focus-v${{ steps.bump.outputs.version }}.zip
