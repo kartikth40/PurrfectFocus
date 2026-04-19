@@ -237,20 +237,6 @@ async function findMilestoneEarnedDate(targetDays) {
   return null
 }
 
-/** Restore missing badge celebration keys from history — no overlay/confetti, just silent re-seed */
-async function restoreMissingBadgeCelebrations(streak) {
-  const allData = await getLocalStorage(null)
-  const existingKeys = Object.keys(allData ?? {}).filter((k) => k.startsWith('badge_celebrated_'))
-
-  for (const m of MILESTONES) {
-    if (streak < m.days) continue // not earned
-    const celebKey = `badge_celebrated_${m.label}`
-    if (!existingKeys.includes(celebKey)) {
-      // key missing — restore silently
-      await setLocalStorage({ [celebKey]: true })
-    }
-  }
-}
 function showBadgeOverlay(icon, label, sub = "You've maintained a focus streak 🔥", type = 'badge') {
   const overlay = document.getElementById('badge-overlay')
   const content = overlay?.querySelector('.badge-overlay-content')
@@ -620,16 +606,23 @@ function runPageAnimations() {
           setTimeout(async () => {
             el.classList.remove('locked')
             el.classList.add('earned')
+            // always mark lower earned badges as celebrated silently
+            const thisLabel = el.querySelector('.badge-label')?.textContent
+            if (el !== earnedBadges[earnedBadges.length - 1]) {
+              const stored = await getLocalStorage(`badge_celebrated_${thisLabel}`)
+              if (!stored[`badge_celebrated_${thisLabel}`]) {
+                await setLocalStorage({ [`badge_celebrated_${thisLabel}`]: true })
+              }
+            }
             if (el === earnedBadges[earnedBadges.length - 1] && !isPersonalBest) {
-              const milestoneDay = el.querySelector('.badge-label')?.textContent
               const phrase = el.dataset.phrase ?? "You've maintained a focus streak 🔥"
-              const celebKey = `badge_celebrated_${milestoneDay}`
+              const celebKey = `badge_celebrated_${thisLabel}`
               const stored = await getLocalStorage(celebKey)
               if (!stored[celebKey]) {
                 await setLocalStorage({ [celebKey]: true })
                 const icon = el.querySelector('.badge-icon')?.textContent ?? '🏅'
                 setTimeout(() => {
-                  showBadgeOverlay(icon, milestoneDay, phrase)
+                  showBadgeOverlay(icon, thisLabel, phrase)
                   celebrateConfetti('badge')
                 }, 300)
               }
@@ -707,9 +700,6 @@ async function init() {
   currentStreakEl.textContent = streak
   _streak = streak
 
-  // restore any missing badge celebration keys silently (no overlay/confetti)
-  await restoreMissingBadgeCelebrations(streak)
-
   // streak broken indicator — check if yesterday had no session
   const yesterday = new Date(today)
   yesterday.setDate(today.getDate() - 1)
@@ -731,6 +721,11 @@ async function init() {
     streakStatusLabel.innerHTML = `focus streak <span class="streak-at-risk">⚡ do a session today to keep it going!</span>`
     fireIcon.classList.remove('dull', 'active-streak')
   } else if (streak === 0) {
+    // streak is broken — clear badge celebration keys so they re-fire on the next streak
+    const allData = await getLocalStorage(null)
+    const badgeKeys = Object.keys(allData ?? {}).filter((k) => k.startsWith('badge_celebrated_'))
+    if (badgeKeys.length > 0) await chrome.storage.local.remove(badgeKeys)
+
     const { days: lastDays, endDate } = await calcLastStreak(today)
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     const endLabel = endDate ? `${monthNames[endDate.getMonth()]} ${endDate.getDate()}` : null
@@ -763,6 +758,11 @@ async function init() {
       const oldKeys = Object.keys(allData ?? {}).filter((k) => k.startsWith('personal_best_celebrated_') && k !== pbKey)
       if (oldKeys.length > 0) await chrome.storage.local.remove(oldKeys)
       await setLocalStorage({ [pbKey]: true })
+      // mark all earned milestone badges as celebrated — personal best overlay covers them,
+      // so they shouldn't fire their own overlay on a future (lower) streak
+      for (const m of MILESTONES) {
+        if (streak >= m.days) await setLocalStorage({ [`badge_celebrated_${m.label}`]: true })
+      }
       setTimeout(() => {
         showBadgeOverlay(
           '🏆',
