@@ -29,6 +29,7 @@ import {
   modes,
   TOASTIFY,
   BLOCKEDLISTKEY,
+  DISTRACTIONINBOXKEY,
 } from './constants.js'
 import { CONFIG } from './config.js'
 
@@ -175,6 +176,74 @@ export async function setLocalStorage(obj) {
     console.error('Error storing in local storage: ', error)
     return null
   }
+}
+
+export async function getInbox() {
+  const store = await getLocalStorage(DISTRACTIONINBOXKEY)
+  const items = store?.[DISTRACTIONINBOXKEY]
+  return Array.isArray(items) ? items : []
+}
+
+export async function addInboxItem({ text, url, title, priority }) {
+  const trimmed = text?.trim()
+  if (!trimmed) return null
+  const items = await getInbox()
+  const validPriority = ['high', 'normal', 'low'].includes(priority) ? priority : 'normal'
+  const now = Date.now()
+  const item = {
+    id: now + Math.random().toString(36),
+    text: trimmed,
+    createdAt: now,
+    order: now,
+    status: 'inbox',
+    priority: validPriority,
+    url: url ?? null,
+    title: title ?? null,
+  }
+  items.push(item)
+  await setLocalStorage({ [DISTRACTIONINBOXKEY]: items })
+  return item
+}
+
+export async function updateInboxItem(id, patch) {
+  const items = await getInbox()
+  const updated = items.map((item) => (item.id === id ? { ...item, ...patch } : item))
+  await setLocalStorage({ [DISTRACTIONINBOXKEY]: updated })
+}
+
+export async function deleteInboxItem(id) {
+  const items = await getInbox()
+  const updated = items.filter((item) => item.id !== id)
+  await setLocalStorage({ [DISTRACTIONINBOXKEY]: updated })
+}
+
+export async function restoreInboxItem(item) {
+  if (!item?.id) return
+  const items = await getInbox()
+  if (items.some((i) => i.id === item.id)) return
+  items.push(item)
+  await setLocalStorage({ [DISTRACTIONINBOXKEY]: items })
+}
+
+export async function setInbox(items) {
+  await setLocalStorage({ [DISTRACTIONINBOXKEY]: Array.isArray(items) ? items : [] })
+}
+
+// Move any snoozed inbox item whose snoozeUntil has passed back to 'inbox'.
+// Returns true if anything changed. Safe to call from background or pages.
+export async function wakeDueInboxSnoozes() {
+  const items = await getInbox()
+  const now = Date.now()
+  let changed = false
+  items.forEach((item) => {
+    if (item.status === 'postponed' && item.snoozeUntil && item.snoozeUntil <= now) {
+      item.status = 'inbox'
+      item.snoozeUntil = null
+      changed = true
+    }
+  })
+  if (changed) await setInbox(items)
+  return changed
 }
 
 export async function createNotification(prevTimer = FOCUS, nextTimer = FOCUS) {
@@ -325,8 +394,9 @@ export async function createNewTabForTimers(notify = true, openNewTab = true, re
         }
       })
     } else {
-      // Tab exists
-      await chrome.tabs.update(res[NEWTABTIMERIDKEY], { active: true }, async (tab) => {
+      // Tab exists - make sure it shows the timer/over page even if the user
+      // navigated it elsewhere via same-tab navigation.
+      await chrome.tabs.update(res[NEWTABTIMERIDKEY], { active: true, url: 'src/newTab/over.html' }, async (tab) => {
         if (notify) {
           try {
             await playNotificationSound(sound)
@@ -371,8 +441,13 @@ export async function createNewTabForSettings() {
         await setSessionStorage({ [NEWTABSETTINGSIDKEY]: tab.id })
       })
     } else {
-      // Tab exists
-      await chrome.tabs.update(res[NEWTABSETTINGSIDKEY], { active: true }, async (tab) => {})
+      // Tab exists - ensure it shows the settings page even if it was
+      // navigated elsewhere via same-tab navigation.
+      await chrome.tabs.update(
+        res[NEWTABSETTINGSIDKEY],
+        { active: true, url: 'src/settings/settings.html' },
+        async (tab) => {}
+      )
     }
   }
 }
@@ -392,8 +467,13 @@ export async function createNewTabForHistory() {
         await setSessionStorage({ [NEWTABHISTORYIDKEY]: tab.id })
       })
     } else {
-      // Tab exists
-      await chrome.tabs.update(res[NEWTABHISTORYIDKEY], { active: true }, async (tab) => {})
+      // Tab exists - ensure it shows the history page even if it was
+      // navigated elsewhere via same-tab navigation.
+      await chrome.tabs.update(
+        res[NEWTABHISTORYIDKEY],
+        { active: true, url: 'src/history/history.html' },
+        async (tab) => {}
+      )
     }
   }
 }
@@ -413,10 +493,38 @@ export async function createNewTabForStreak() {
         await setSessionStorage({ [NEWTABSTREAKIDKEY]: tab.id })
       })
     } else {
-      // Tab exists
-      await chrome.tabs.update(res[NEWTABSTREAKIDKEY], { active: true }, async (tab) => {})
+      // Tab exists - ensure it shows the streak page even if it was
+      // navigated elsewhere via same-tab navigation.
+      await chrome.tabs.update(
+        res[NEWTABSTREAKIDKEY],
+        { active: true, url: 'src/streak/streak.html' },
+        async (tab) => {}
+      )
     }
   }
+}
+
+// Navigate the current tab (same-tab navigation) to a sibling extension page.
+// Used by the full-page views (timer/over, settings, history, streak) so their
+// nav buttons replace the current page instead of opening a new tab.
+function navigateCurrentTab(path) {
+  window.location.href = chrome.runtime.getURL(path)
+}
+
+export function openTimerInCurrentTab() {
+  navigateCurrentTab('src/newTab/over.html')
+}
+
+export function openSettingsInCurrentTab() {
+  navigateCurrentTab('src/settings/settings.html')
+}
+
+export function openHistoryInCurrentTab(tab = null) {
+  navigateCurrentTab('src/history/history.html' + (tab ? `?tab=${tab}` : ''))
+}
+
+export function openStreakInCurrentTab() {
+  navigateCurrentTab('src/streak/streak.html')
 }
 
 export async function resumeTimer(timer) {
@@ -1056,9 +1164,21 @@ export function showCustomPrompt(
       promptFields.appendChild(row)
     })
 
+    // keyboard: Enter saves (except inside a textarea), Esc cancels
+    function handleFieldsKeyDown(event) {
+      if (event.key === 'Enter' && event.target.tagName !== 'TEXTAREA') {
+        event.preventDefault()
+        promptOk.click()
+      } else if (event.key === 'Escape') {
+        event.preventDefault()
+        promptCancel.click()
+      }
+    }
+
     function closeModal() {
       modal.style.display = 'none'
       promptFields.classList.remove('active')
+      promptFields.removeEventListener('keydown', handleFieldsKeyDown)
       modal.onclick = null
     }
 
@@ -1081,6 +1201,13 @@ export function showCustomPrompt(
         callback(null)
       }
     }
+    promptFields.addEventListener('keydown', handleFieldsKeyDown)
+
+    // focus the first field so the user can type immediately
+    setTimeout(() => {
+      const first = promptFields.querySelector('input, select, textarea')
+      if (first) first.focus()
+    }, 0)
     return
   }
 
@@ -1469,11 +1596,11 @@ export async function applyFeatureHighlight() {
  * Runs on every remote config fetch (once per hour in prod, every load in dev).
  *
  * Key patterns managed:
- * - ann_dismissed_<id>       — keep only the active announcement id
- * - hl_dismissed_<id>        — keep only the active highlight id
- * - badge_celebrated_<label> — kept until streak breaks (managed in streak.js)
- * - personal_best_celebrated_<n> — keep only the current max streak value (managed in streak.js)
- * - purrfect_remote_cfg      — the remote config cache itself (never deleted here)
+ * - ann_dismissed_<id>       - keep only the active announcement id
+ * - hl_dismissed_<id>        - keep only the active highlight id
+ * - badge_celebrated_<label> - kept until streak breaks (managed in streak.js)
+ * - personal_best_celebrated_<n> - keep only the current max streak value (managed in streak.js)
+ * - purrfect_remote_cfg      - the remote config cache itself (never deleted here)
  */
 async function cleanupDismissedKeys(remoteConfig) {
   const allStorage = await getLocalStorage(null)

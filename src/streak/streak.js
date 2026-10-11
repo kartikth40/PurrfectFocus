@@ -3,9 +3,9 @@ import {
   getLocalStorage,
   setLocalStorage,
   getSyncStorage,
-  createNewTabForHistory,
-  createNewTabForSettings,
-  createNewTabForTimers,
+  openHistoryInCurrentTab,
+  openSettingsInCurrentTab,
+  openTimerInCurrentTab,
 } from '../utils.js'
 
 const currentStreakEl = document.querySelector('.current-streak')
@@ -48,9 +48,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       runPageAnimations()
     }, 500)
   }, 200)
-  document.querySelector('.history-tab-btn')?.addEventListener('click', () => createNewTabForHistory())
-  document.querySelector('.settings-tab-btn')?.addEventListener('click', () => createNewTabForSettings())
-  document.querySelector('.timer-tab-btn')?.addEventListener('click', () => createNewTabForTimers(false, true))
+  document.querySelector('.history-tab-btn')?.addEventListener('click', () => openHistoryInCurrentTab())
+  document.querySelector('.settings-tab-btn')?.addEventListener('click', () => openSettingsInCurrentTab())
+  document.querySelector('.timer-tab-btn')?.addEventListener('click', () => openTimerInCurrentTab())
 
   const today = new Date()
   const currentYear = today.getFullYear().toString()
@@ -114,13 +114,13 @@ async function calcCurrentStreak(today) {
   let histObj = await getLocalStorage(year)
   let history = histObj?.[year] ?? {}
 
-  // if today has no session yet, start from yesterday — streak is still alive
+  // if today has no session yet, start from yesterday - streak is still alive
   if (!hasFocusSession(history, cursor)) {
     cursor.setDate(cursor.getDate() - 1)
     year = cursor.getFullYear().toString()
     histObj = await getLocalStorage(year)
     history = histObj?.[year] ?? {}
-    // if yesterday also has no session, streak is broken — return 0
+    // if yesterday also has no session, streak is broken - return 0
     if (!hasFocusSession(history, cursor)) return 0
   }
 
@@ -181,7 +181,7 @@ async function calcMaxStreak() {
   return maxStreak
 }
 
-/** Find the most recent completed streak before today — returns { days, endDate } */
+/** Find the most recent completed streak before today - returns { days, endDate } */
 async function calcLastStreak(today) {
   const allData = await getLocalStorage(null)
   let run = 0
@@ -208,7 +208,7 @@ async function calcLastStreak(today) {
   return { days: run, endDate: lastEndDate }
 }
 
-/** Find the most recent date when a streak of targetDays was achieved — walks backwards from today */
+/** Find the most recent date when a streak of targetDays was achieved - walks backwards from today */
 async function findMilestoneEarnedDate(targetDays) {
   const allData = await getLocalStorage(null)
   const today = new Date()
@@ -312,9 +312,9 @@ async function calcBestStats() {
     .sort()
 
   let bestWeekDays = 0,
-    bestWeekLabel = '—'
+    bestWeekLabel = '-'
   let bestMonthDays = 0,
-    bestMonthLabel = '—'
+    bestMonthLabel = '-'
   let totalFocusDays = 0
   let totalSessions = 0
   let totalFocusMinutes = 0
@@ -328,7 +328,7 @@ async function calcBestStats() {
     const history = allData[year]
     if (!history || typeof history !== 'object') continue
 
-    // best week — iterate all weeks
+    // best week - iterate all weeks
     const allDates = Object.keys(history)
       .filter((k) => Array.isArray(history[k]) && history[k].some((s) => s.type === FOCUS))
       .map((k) => {
@@ -387,7 +387,7 @@ async function calcBestStats() {
   }
 
   const bestDowIdx = daySessionCount.indexOf(Math.max(...daySessionCount))
-  const bestDayOfWeek = totalSessions > 0 ? dayNames7[bestDowIdx] : '—'
+  const bestDayOfWeek = totalSessions > 0 ? dayNames7[bestDowIdx] : '-'
 
   return {
     bestWeekDays,
@@ -528,7 +528,7 @@ function runPageAnimations() {
   const streak = _streak
   const max = _max
 
-  // fire icon — pop in, then glow if active streak
+  // fire icon - pop in, then glow if active streak
   const fire = document.getElementById('fire-icon')
   if (fire) {
     setTimeout(() => {
@@ -542,11 +542,11 @@ function runPageAnimations() {
     }, BASE + 50)
   }
 
-  // main-left-title — slide up
+  // main-left-title - slide up
   const leftTitle = document.querySelector('.main-left-title')
   if (leftTitle) setTimeout(() => leftTitle.classList.add('anim-fade-up'), BASE + 200)
 
-  // top metric — slide up
+  // top metric - slide up
   const topMetric = document.querySelector('.top-metric')
   if (topMetric) setTimeout(() => topMetric.classList.add('anim-fade-up'), BASE + 150)
 
@@ -563,15 +563,15 @@ function runPageAnimations() {
     countUp(pomosToday, pomosVal, 600)
   }, BASE + 300)
 
-  // weekly container — slide right
+  // weekly container - slide right
   const weeklyContainer = document.querySelector('.weekly-streak-container')
   if (weeklyContainer) setTimeout(() => weeklyContainer.classList.add('anim-fade-right'), BASE + 250)
 
-  // bottom section (monthly + badges + stats) — fade up as one block
+  // bottom section (monthly + badges + stats) - fade up as one block
   const bottomSection = document.querySelector('.bottom-section')
   if (bottomSection) setTimeout(() => bottomSection.classList.add('anim-fade-up'), BASE + 300)
 
-  // monthly — all cells appear instantly, only done cells animate in
+  // monthly - all cells appear instantly, only done cells animate in
   const allCells = Array.from(document.querySelectorAll('.monthly-day'))
   allCells.forEach((el) => el.classList.remove('anim-target')) // show all immediately
   const doneCells = allCells.filter((el) => el.dataset.done === 'true')
@@ -579,7 +579,7 @@ function runPageAnimations() {
     setTimeout(() => el.classList.add('done'), BASE + 400 + i * 30)
   })
 
-  // weekly checkboxes — appear empty, then fill one by one
+  // weekly checkboxes - appear empty, then fill one by one
   document.querySelectorAll('.streak-check').forEach((el, i) => {
     setTimeout(
       () => {
@@ -592,7 +592,7 @@ function runPageAnimations() {
     )
   })
 
-  // milestone badges — appear locked, then earned ones flip one by one
+  // milestone badges - appear locked, then earned ones flip one by one
   // confetti only for the highest earned badge, and only if no personal best confetti
   const allBadges = Array.from(document.querySelectorAll('.milestone-badge'))
   const earnedBadges = allBadges.filter((el) => el.dataset.earned === 'true')
@@ -634,7 +634,7 @@ function runPageAnimations() {
     )
   })
 
-  // progress bar + info — fade up, then animate bar width
+  // progress bar + info - fade up, then animate bar width
   document.querySelectorAll('.milestone-next, .best-stat-card').forEach((el, i) => {
     setTimeout(() => el.classList.add('anim-fade-up'), BASE + 600 + i * 80)
   })
@@ -668,7 +668,7 @@ async function init() {
   const focusToday = focusSessionCount(history, today)
   pomosToday.textContent = focusToday
 
-  // check for empty state — no history at all
+  // check for empty state - no history at all
   const allData = await getLocalStorage(null)
   const hasAnyHistory = Object.keys(allData ?? {})
     .filter((k) => !isNaN(Number(k)))
@@ -700,7 +700,7 @@ async function init() {
   currentStreakEl.textContent = streak
   _streak = streak
 
-  // streak broken indicator — check if yesterday had no session
+  // streak broken indicator - check if yesterday had no session
   const yesterday = new Date(today)
   yesterday.setDate(today.getDate() - 1)
   const yesterdayYear = yesterday.getFullYear().toString()
@@ -721,7 +721,7 @@ async function init() {
     streakStatusLabel.innerHTML = `focus streak <span class="streak-at-risk">⚡ do a session today to keep it going!</span>`
     fireIcon.classList.remove('dull', 'active-streak')
   } else if (streak === 0) {
-    // streak is broken — clear badge celebration keys so they re-fire on the next streak
+    // streak is broken - clear badge celebration keys so they re-fire on the next streak
     const allData = await getLocalStorage(null)
     const badgeKeys = Object.keys(allData ?? {}).filter((k) => k.startsWith('badge_celebrated_'))
     if (badgeKeys.length > 0) await chrome.storage.local.remove(badgeKeys)
@@ -746,7 +746,7 @@ async function init() {
   maxStreakEl.textContent = max
   _max = max
 
-  // personal best — current streak matches or beats all-time high
+  // personal best - current streak matches or beats all-time high
   const maxMetricEl = maxStreakEl.closest('p')
   if (streak > 0 && streak >= max && maxMetricEl) {
     maxMetricEl.innerHTML = `Highest: <span id="max-streak">${max}</span> days &nbsp;<span class="personal-best-badge">🏆 Personal Best!</span>`
@@ -758,7 +758,7 @@ async function init() {
       const oldKeys = Object.keys(allData ?? {}).filter((k) => k.startsWith('personal_best_celebrated_') && k !== pbKey)
       if (oldKeys.length > 0) await chrome.storage.local.remove(oldKeys)
       await setLocalStorage({ [pbKey]: true })
-      // mark all earned milestone badges as celebrated — personal best overlay covers them,
+      // mark all earned milestone badges as celebrated - personal best overlay covers them,
       // so they shouldn't fire their own overlay on a future (lower) streak
       for (const m of MILESTONES) {
         if (streak >= m.days) await setLocalStorage({ [`badge_celebrated_${m.label}`]: true })
@@ -804,7 +804,7 @@ async function init() {
   // weekly checkboxes
   const todayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1
 
-  // weekly label — "This week (Apr 14–20)"
+  // weekly label - "This week (Apr 14–20)"
   const weeklyLabel = document.getElementById('weekly-label')
   if (weeklyLabel) {
     const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -943,7 +943,7 @@ async function renderMonthlyGrid(today, history, currentYear, viewOffset = 0) {
       }
       if (isToday) cell.classList.add('today')
 
-      // hover tooltip — update text on enter only
+      // hover tooltip - update text on enter only
       if (!isFuture) {
         const tipText = `${fullMonthNames[month]} ${day} · ${count} focus session${count !== 1 ? 's' : ''}`
         cell.addEventListener('mouseenter', (e) => showDayTooltip(e, tipText))

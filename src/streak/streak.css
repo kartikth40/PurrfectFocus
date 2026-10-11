@@ -311,7 +311,7 @@
   z-index: 1;
   transition: background 0.2s ease, box-shadow 0.2s ease;
 }
-/* streak run — flatten connecting sides for a chain effect */
+/* streak run - flatten connecting sides for a chain effect */
 .monthly-day.today {
   outline: 2px solid var(--secondary-color-1);
   outline-offset: 1px;
@@ -1002,7 +1002,7 @@
   color: #fff;
 }
 
-/* personal best overlay — golden in light mode too */
+/* personal best overlay - golden in light mode too */
 .light .badge-overlay-personal-best {
   background: linear-gradient(135deg, #7a4f00, #c8860a, #f5c842);
   border-color: #ffd700;
@@ -1012,7 +1012,7 @@
 .light .badge-overlay-personal-best .badge-overlay-name,
 .light .badge-overlay-personal-best .badge-overlay-sub { color: #fff; }
 
-/* ── Today pending (no session yet) — pulsing inner glow ── */
+/* ── Today pending (no session yet) - pulsing inner glow ── */
 .streak-check.current:not(.check) {
   border: 2px solid var(--secondary-color-1);
   animation: todayPulse 2.5s ease-in-out infinite;

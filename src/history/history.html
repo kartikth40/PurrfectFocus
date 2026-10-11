@@ -15,6 +15,11 @@
     <div class="spinner"></div>
   </div>
   <div id="toast-container"></div>
+  <div class="brain-dump-undo" id="brain-dump-undo">
+    <span class="brain-dump-undo-text">Thought deleted</span>
+    <button type="button" class="brain-dump-undo-btn" id="brain-dump-undo-btn">Undo</button>
+    <span class="brain-dump-undo-bar"></span>
+  </div>
   <div class="tab-btns floating-btns">
     <button class="tab-btn timer-tab-btn">
       <span class="tooltip">timer</span>
@@ -38,6 +43,11 @@
     </a>
   </div>
   <div class="container">
+    <div class="history-page-tabs">
+      <button class="history-page-tab active" data-tab="history">History</button>
+      <button class="history-page-tab" data-tab="brain-dump">Brain Dump</button>
+    </div>
+    <div id="history-tab-panel" class="history-tab-panel active">
     <div class="metrics-container">
       <div class="data-btns">
         <button class="sample-history-btn active">Show Sample Data</button>
@@ -207,12 +217,69 @@
             <p>Or feel free to email me at <a href="mailto:kartik.pomodoro@gmail.com">kartik.pomodoro@gmail.com</a></p>
           </div>
           <div class="made-by">
-            <a target="_blank" rel="noopener noreferrer" href="https://kartikthakur-me.web.app/">Made with ❤️ by <strong>Kartik Thakur</strong></a>
+            <a target="_blank" rel="noopener noreferrer" href="https://kartikthakur.dev/">Made with ❤ by <strong>Kartik Thakur</strong></a>
           </div>
           <div class="privacy-policy-container">
             <a href="https://kartikth40.github.io/purrfect-pomodoro-privacy/" target="_blank">🔒 Privacy Policy</a>
           </div>
         </footer>
+    </div>
+    </div>
+    <div id="brain-dump-tab-panel" class="history-tab-panel">
+      <div class="brain-dump-manager">
+        <div class="brain-dump-header">
+          <h1 class="brain-dump-heading">Brain Dump</h1>
+          <p class="brain-dump-subheading">A calm place for stray thoughts. Capture now, decide later - nothing here is a commitment to act.</p>
+        </div>
+        <div class="brain-dump-summary">
+          <div class="brain-dump-stat brain-dump-stat-inbox">
+            <span class="brain-dump-stat-count brain-dump-count-inbox">0</span>
+            <span class="brain-dump-stat-label">Inbox</span>
+          </div>
+          <div class="brain-dump-stat brain-dump-stat-snoozed">
+            <span class="brain-dump-stat-count brain-dump-count-snoozed">0</span>
+            <span class="brain-dump-stat-label">Snoozed</span>
+          </div>
+          <div class="brain-dump-stat brain-dump-stat-done">
+            <span class="brain-dump-stat-count brain-dump-count-done">0</span>
+            <span class="brain-dump-stat-label">Done</span>
+          </div>
+        </div>
+        <div class="brain-dump-toolbar">
+          <input type="text" id="brain-dump-search" class="brain-dump-search" placeholder="Search your thoughts…" />
+          <button type="button" class="brain-dump-clear-done" id="brain-dump-clear-done">Clear Done</button>
+        </div>
+        <div class="brain-dump-empty">
+          <div class="brain-dump-empty-art"></div>
+          <h2 class="brain-dump-empty-title">Your mind is clear</h2>
+          <p class="brain-dump-empty-text">Nothing captured yet. Hit <b>Alt+Shift+I</b> on any page, or use the Brain Dump button on the timer, to drop a thought here.</p>
+        </div>
+        <div class="brain-dump-no-results">No thoughts match your search.</div>
+        <div class="brain-dump-section brain-dump-inbox-section">
+          <div class="brain-dump-section-head">
+            <h2 class="brain-dump-section-title">Inbox</h2>
+            <span class="brain-dump-section-count brain-dump-count-inbox">0</span>
+          </div>
+          <p class="brain-dump-section-hint">Fresh captures, newest first. Decide what each one deserves.</p>
+          <ul class="brain-dump-list brain-dump-inbox-list"></ul>
+        </div>
+        <div class="brain-dump-section brain-dump-snoozed-section">
+          <div class="brain-dump-section-head">
+            <h2 class="brain-dump-section-title">Snoozed</h2>
+            <span class="brain-dump-section-count brain-dump-count-snoozed">0</span>
+          </div>
+          <p class="brain-dump-section-hint">Set aside for later - still here when you're ready.</p>
+          <ul class="brain-dump-list brain-dump-snoozed-list"></ul>
+        </div>
+        <div class="brain-dump-section brain-dump-done-section">
+          <div class="brain-dump-section-head">
+            <h2 class="brain-dump-section-title">Done</h2>
+            <span class="brain-dump-section-count brain-dump-count-done">0</span>
+          </div>
+          <p class="brain-dump-section-hint">Handled or let go. Clear them out whenever you like.</p>
+          <ul class="brain-dump-list brain-dump-done-list"></ul>
+        </div>
+      </div>
     </div>
   </div>
   <div id="customPrompt" class="modal">

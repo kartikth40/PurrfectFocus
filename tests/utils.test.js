@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import {
   getTimeString,
   getValidTask,
@@ -9,18 +9,13 @@ import {
   createState,
   getFocusText,
   getFocusOptionsForTasks,
+  getInbox,
+  addInboxItem,
+  updateInboxItem,
+  deleteInboxItem,
 } from '../src/utils.js'
-import {
-  FOCUS,
-  BREAK,
-  SHORTBREAK,
-  LONGBREAK,
-  TASKS,
-  STOP,
-  PLAY,
-  PAUSE,
-  modes,
-} from '../src/constants.js'
+import { DISTRACTIONINBOXKEY } from '../src/constants.js'
+import { FOCUS, BREAK, SHORTBREAK, LONGBREAK, TASKS, STOP, PLAY, PAUSE, modes } from '../src/constants.js'
 
 // ─── getTimeString ───
 
@@ -109,7 +104,6 @@ describe('timerDuration', () => {
     expect(timerDuration('Unknown', settings)).toBe(25)
   })
 })
-
 
 // ─── formatDateWithOrdinal ───
 
@@ -321,5 +315,69 @@ describe('getFocusOptionsForTasks', () => {
     const optionCount = (html.match(/<option/g) || []).length
     // 5 tasks (all except REST)
     expect(optionCount).toBe(5)
+  })
+})
+
+// ─── Brain Dump inbox helpers ───
+
+describe('inbox helpers', () => {
+  let store
+
+  beforeEach(() => {
+    store = {}
+    chrome.storage.local.get = async (key) => (key in store ? { [key]: store[key] } : {})
+    chrome.storage.local.set = async (obj) => {
+      Object.assign(store, obj)
+    }
+  })
+
+  it('getInbox returns an empty array when storage is empty', async () => {
+    expect(await getInbox()).toEqual([])
+  })
+
+  it('addInboxItem ignores empty or whitespace-only text', async () => {
+    expect(await addInboxItem({ text: '' })).toBe(null)
+    expect(await addInboxItem({ text: '   ' })).toBe(null)
+    expect(await getInbox()).toEqual([])
+  })
+
+  it('addInboxItem creates an inbox item with defaults', async () => {
+    const item = await addInboxItem({ text: '  hello  ' })
+    expect(item.text).toBe('hello')
+    expect(item.status).toBe('inbox')
+    expect(item.priority).toBe('normal')
+    expect(typeof item.createdAt).toBe('number')
+    expect(item.url).toBe(null)
+    expect(item.title).toBe(null)
+    expect(await getInbox()).toHaveLength(1)
+  })
+
+  it('addInboxItem keeps provided url and title', async () => {
+    const item = await addInboxItem({ text: 'note', url: 'https://a.com', title: 'A' })
+    expect(item.url).toBe('https://a.com')
+    expect(item.title).toBe('A')
+  })
+
+  it('updateInboxItem merges a patch into the matching item', async () => {
+    const item = await addInboxItem({ text: 'note' })
+    await updateInboxItem(item.id, { status: 'done' })
+    const items = await getInbox()
+    expect(items[0].status).toBe('done')
+    expect(items[0].text).toBe('note')
+  })
+
+  it('deleteInboxItem removes the item by id', async () => {
+    const a = await addInboxItem({ text: 'a' })
+    await addInboxItem({ text: 'b' })
+    await deleteInboxItem(a.id)
+    const items = await getInbox()
+    expect(items).toHaveLength(1)
+    expect(items[0].text).toBe('b')
+  })
+
+  it('reads from the DISTRACTIONINBOXKEY storage key', async () => {
+    await addInboxItem({ text: 'persisted' })
+    expect(Array.isArray(store[DISTRACTIONINBOXKEY])).toBe(true)
+    expect(store[DISTRACTIONINBOXKEY][0].text).toBe('persisted')
   })
 })

@@ -14,10 +14,15 @@ import {
   updateOldHistoryDataToAccomodateLatestChanges,
   showCustomPrompt,
   getFocusOptionsForTasks,
-  createNewTabForSettings,
-  createNewTabForTimers,
-  createNewTabForStreak,
+  openSettingsInCurrentTab,
+  openTimerInCurrentTab,
+  openStreakInCurrentTab,
   showCustomAlert,
+  getInbox,
+  updateInboxItem,
+  deleteInboxItem,
+  restoreInboxItem,
+  setInbox,
 } from '../utils.js'
 import {
   SETTINGSKEY,
@@ -141,7 +146,7 @@ deleteHistoryBtn.addEventListener('click', async () => {
   })
 })
 userGuideBtn.addEventListener('click', async () => {
-  await chrome.tabs.create({ url: 'src/userGuide/userGuide.html', active: true })
+  window.location.href = chrome.runtime.getURL('src/userGuide/userGuide.html')
 })
 deleteDateInput.addEventListener('change', async () => {
   await generateSessionsToDelete()
@@ -297,6 +302,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   })
 
   await init()
+  await setupBrainDumpTabs()
   setTimeout(() => {
     loadingScreen.classList.add('fade-out')
     setTimeout(() => {
@@ -304,6 +310,537 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 500)
   }, 200)
 })
+
+async function setupBrainDumpTabs() {
+  const tabs = document.querySelectorAll('.history-page-tab')
+  const panels = document.querySelectorAll('.history-tab-panel')
+  const valid = Array.from(tabs).map((t) => t.dataset.tab)
+
+  async function activateTab(target, updateUrl = true) {
+    if (!valid.includes(target)) target = 'history'
+    tabs.forEach((t) => t.classList.toggle('active', t.dataset.tab === target))
+    panels.forEach((panel) => {
+      panel.classList.toggle('active', panel.id === `${target}-tab-panel`)
+    })
+    if (updateUrl) {
+      const url = new URL(window.location.href)
+      if (target === 'history') url.searchParams.delete('tab')
+      else url.searchParams.set('tab', target)
+      window.history.replaceState({}, '', url)
+    }
+    if (target === 'brain-dump') await renderBrainDump()
+  }
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => activateTab(tab.dataset.tab))
+  })
+
+  const searchInput = document.getElementById('brain-dump-search')
+  searchInput.addEventListener('input', async () => {
+    brainDumpSearch = searchInput.value
+    await renderBrainDump()
+  })
+
+  document.getElementById('brain-dump-clear-done').addEventListener('click', clearDoneWithUndo)
+
+  const initialTab = new URL(window.location.href).searchParams.get('tab')
+  if (initialTab) await activateTab(initialTab, false)
+}
+
+function shortenUrl(url) {
+  try {
+    return new URL(url).host
+  } catch (e) {
+    return url
+  }
+}
+
+function timeAgo(timestamp) {
+  if (!timestamp) return ''
+  const diff = Date.now() - timestamp
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs} hour${hrs === 1 ? '' : 's'} ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 7) return `${days} day${days === 1 ? '' : 's'} ago`
+  const weeks = Math.floor(days / 7)
+  if (days < 30) return `${weeks} week${weeks === 1 ? '' : 's'} ago`
+  return new Date(timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+}
+
+function setCount(selector, value) {
+  document.querySelectorAll(selector).forEach((el) => {
+    el.textContent = value
+  })
+}
+
+function formatSnoozeUntil(ts) {
+  const d = new Date(ts)
+  const now = new Date()
+  const sameDay = d.toDateString() === now.toDateString()
+  const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+  if (sameDay) return `today ${time}`
+  return `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} ${time}`
+}
+
+// Snooze picker - choose when the item should return to the Inbox.
+function promptSnooze(item) {
+  const options =
+    '<option value="later-today">Later today (+3 hrs)</option>' +
+    '<option value="tomorrow">Tomorrow morning</option>' +
+    '<option value="next-week">Next week</option>' +
+    '<option value="indefinite">Until I bring it back</option>'
+  showCustomPrompt(
+    'Snooze thought',
+    'When should this come back to your Inbox?',
+    'tomorrow',
+    async (choice) => {
+      if (choice === null) return
+      const patch = { status: 'postponed', snoozeUntil: null }
+      const now = new Date()
+      if (choice === 'later-today') {
+        patch.snoozeUntil = Date.now() + 3 * 60 * 60 * 1000
+      } else if (choice === 'tomorrow') {
+        const d = new Date(now)
+        d.setDate(d.getDate() + 1)
+        d.setHours(9, 0, 0, 0)
+        patch.snoozeUntil = d.getTime()
+      } else if (choice === 'next-week') {
+        const d = new Date(now)
+        d.setDate(d.getDate() + 7)
+        d.setHours(9, 0, 0, 0)
+        patch.snoozeUntil = d.getTime()
+      }
+      await updateInboxItem(item.id, patch)
+      await renderBrainDump()
+      notifyInboxChanged()
+    },
+    'select',
+    '',
+    options
+  )
+}
+
+// Tell the background to recompute the snooze wake alarm after any change.
+function notifyInboxChanged() {
+  sendRuntimeMessageSafely({ type: 'BRAIN_DUMP_CHANGED' })
+}
+
+const PRIORITY_RANK = { high: 0, normal: 1, low: 2 }
+function getPriority(item) {
+  return PRIORITY_RANK[item.priority] !== undefined ? item.priority : 'normal'
+}
+
+let brainDumpSearch = ''
+
+// Any snoozed item whose snoozeUntil has passed returns to the Inbox.
+async function wakeDueSnoozes(items) {
+  const now = Date.now()
+  let changed = false
+  items.forEach((item) => {
+    if (item.status === 'postponed' && item.snoozeUntil && item.snoozeUntil <= now) {
+      item.status = 'inbox'
+      delete item.snoozeUntil
+      changed = true
+    }
+  })
+  if (changed) await setInbox(items)
+  return changed
+}
+
+async function renderBrainDump() {
+  const items = await getInbox()
+  await wakeDueSnoozes(items)
+
+  // FLIP: capture current positions of items before re-render
+  const beforeRects = new Map()
+  document.querySelectorAll('.brain-dump-item').forEach((el) => {
+    beforeRects.set(el.dataset.id, el.getBoundingClientRect())
+  })
+
+  const empty = document.querySelector('.brain-dump-empty')
+  const noResults = document.querySelector('.brain-dump-no-results')
+  const inboxSection = document.querySelector('.brain-dump-inbox-section')
+  const snoozedSection = document.querySelector('.brain-dump-snoozed-section')
+  const doneSection = document.querySelector('.brain-dump-done-section')
+  const summary = document.querySelector('.brain-dump-summary')
+  const toolbar = document.querySelector('.brain-dump-toolbar')
+  const inboxList = document.querySelector('.brain-dump-inbox-list')
+  const snoozedList = document.querySelector('.brain-dump-snoozed-list')
+  const doneList = document.querySelector('.brain-dump-done-list')
+
+  const q = brainDumpSearch.trim().toLowerCase()
+  const matches = (item) => !q || item.text.toLowerCase().includes(q) || (item.title || '').toLowerCase().includes(q)
+
+  // Inbox: grouped by priority (High→Low), newest/most-recently-moved on top.
+  const orderOf = (item) => item.order ?? item.createdAt ?? 0
+  const inboxItems = items
+    .filter((item) => item.status === 'inbox' && matches(item))
+    .sort((a, b) => PRIORITY_RANK[getPriority(a)] - PRIORITY_RANK[getPriority(b)] || orderOf(b) - orderOf(a))
+  const snoozedItems = items
+    .filter((item) => item.status === 'postponed' && matches(item))
+    .sort((a, b) => (a.snoozeUntil || a.createdAt) - (b.snoozeUntil || b.createdAt))
+  const doneItems = items
+    .filter((item) => item.status === 'done' && matches(item))
+    .sort((a, b) => b.createdAt - a.createdAt)
+
+  // counts reflect totals (ignore search) so the user keeps the full picture
+  setCount('.brain-dump-count-inbox', items.filter((i) => i.status === 'inbox').length)
+  setCount('.brain-dump-count-snoozed', items.filter((i) => i.status === 'postponed').length)
+  setCount('.brain-dump-count-done', items.filter((i) => i.status === 'done').length)
+
+  const hasAny = items.length > 0
+  const hasVisible = inboxItems.length + snoozedItems.length + doneItems.length > 0
+  empty.classList.toggle('active', !hasAny)
+  summary.classList.toggle('active', hasAny)
+  toolbar.classList.toggle('active', hasAny)
+  noResults.classList.toggle('active', hasAny && !hasVisible)
+  inboxSection.classList.toggle('active', inboxItems.length > 0)
+  snoozedSection.classList.toggle('active', snoozedItems.length > 0)
+  doneSection.classList.toggle('active', doneItems.length > 0)
+
+  const clearDoneBtn = document.querySelector('.brain-dump-clear-done')
+  if (clearDoneBtn) clearDoneBtn.classList.toggle('active', doneItems.length > 0)
+
+  renderBrainDumpList(inboxList, inboxItems, 'inbox')
+  renderBrainDumpList(snoozedList, snoozedItems, 'postponed')
+  renderBrainDumpList(doneList, doneItems, 'done')
+
+  playBrainDumpFlip(beforeRects)
+}
+
+// FLIP animation: move items from their previous positions to the new ones,
+// and gently fade/scale in items that just appeared.
+function playBrainDumpFlip(beforeRects) {
+  document.querySelectorAll('.brain-dump-item').forEach((el) => {
+    const before = beforeRects.get(el.dataset.id)
+    const after = el.getBoundingClientRect()
+    if (before) {
+      const dx = before.left - after.left
+      const dy = before.top - after.top
+      if (dx || dy) {
+        el.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'translate(0, 0)' }], {
+          duration: 320,
+          easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        })
+      }
+    } else {
+      el.animate(
+        [
+          { opacity: 0, transform: 'translateY(-6px) scale(0.97)' },
+          { opacity: 1, transform: 'translateY(0) scale(1)' },
+        ],
+        { duration: 280, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
+      )
+    }
+  })
+}
+
+let undoTimer = null
+
+// Floating top banner offering a 5s window to undo a destructive action.
+function showUndoBanner(label, onUndo) {
+  const banner = document.getElementById('brain-dump-undo')
+  const bar = banner.querySelector('.brain-dump-undo-bar')
+  const text = banner.querySelector('.brain-dump-undo-text')
+  const undoBtn = document.getElementById('brain-dump-undo-btn')
+
+  text.textContent = label
+  if (undoTimer) clearTimeout(undoTimer)
+  banner.classList.add('active')
+  // restart the shrinking bar animation
+  bar.style.animation = 'none'
+  void bar.offsetWidth
+  bar.style.animation = 'brain-dump-undo-countdown 5s linear forwards'
+  bar.style.animationPlayState = 'running'
+
+  let remaining = 5000
+  let startedAt = Date.now()
+  const close = () => {
+    banner.classList.remove('active')
+    banner.onmouseenter = null
+    banner.onmouseleave = null
+    undoBtn.onclick = null
+    if (undoTimer) clearTimeout(undoTimer)
+    undoTimer = null
+  }
+  undoBtn.onclick = async () => {
+    close()
+    await onUndo()
+    await renderBrainDump()
+  }
+  // Hovering pauses the countdown so the user has time to decide.
+  banner.onmouseenter = () => {
+    if (undoTimer) clearTimeout(undoTimer)
+    remaining -= Date.now() - startedAt
+    bar.style.animationPlayState = 'paused'
+  }
+  banner.onmouseleave = () => {
+    startedAt = Date.now()
+    bar.style.animationPlayState = 'running'
+    undoTimer = setTimeout(close, Math.max(0, remaining))
+  }
+  undoTimer = setTimeout(close, remaining)
+}
+
+// Delete immediately, then offer a 5s window to undo.
+async function deleteWithUndo(item) {
+  await deleteInboxItem(item.id)
+  await renderBrainDump()
+  notifyInboxChanged()
+  showUndoBanner('Thought deleted', async () => {
+    await restoreInboxItem(item)
+    notifyInboxChanged()
+  })
+}
+
+// Clear all done items at once, with a 5s undo.
+async function clearDoneWithUndo() {
+  const items = await getInbox()
+  const removed = items.filter((it) => it.status === 'done')
+  if (removed.length === 0) return
+  await setInbox(items.filter((it) => it.status !== 'done'))
+  await renderBrainDump()
+  showUndoBanner(`Cleared ${removed.length} done`, async () => {
+    for (const it of removed) await restoreInboxItem(it)
+    notifyInboxChanged()
+  })
+}
+
+function makeIconButton(variant, iconSrc, tooltip, onClick) {
+  const btn = document.createElement('button')
+  btn.className = `brain-dump-action brain-dump-action-${variant}`
+  btn.type = 'button'
+  btn.title = tooltip
+  btn.setAttribute('aria-label', tooltip)
+  const img = document.createElement('img')
+  img.src = iconSrc
+  img.alt = ''
+  btn.appendChild(img)
+  btn.addEventListener('click', onClick)
+  return btn
+}
+
+const PRIORITY_ORDER = ['high', 'normal', 'low']
+const PRIORITY_LABEL = { high: 'High', normal: 'Normal', low: 'Low' }
+
+// Move an inbox item one position by swapping order with its visible neighbor
+// (stays within its priority group, since sorting is priority-then-order).
+async function moveInboxItem(id, direction) {
+  const items = await getInbox()
+  const orderOf = (item) => item.order ?? item.createdAt ?? 0
+  const sorted = items
+    .filter((it) => it.status === 'inbox')
+    .sort((a, b) => PRIORITY_RANK[getPriority(a)] - PRIORITY_RANK[getPriority(b)] || orderOf(b) - orderOf(a))
+  const at = sorted.findIndex((it) => it.id === id)
+  const swapAt = at + direction
+  if (swapAt < 0 || swapAt >= sorted.length) return
+  const a = items.find((it) => it.id === sorted[at].id)
+  const b = items.find((it) => it.id === sorted[swapAt].id)
+  // only swap within the same priority group
+  if (getPriority(a) !== getPriority(b)) return
+  const ao = orderOf(a)
+  a.order = orderOf(b)
+  b.order = ao
+  await setInbox(items)
+  await renderBrainDump()
+}
+
+function renderBrainDumpList(listEle, items, section) {
+  listEle.innerHTML = ''
+  items.forEach((item, index) => {
+    const li = document.createElement('li')
+    li.className = `brain-dump-item brain-dump-priority-${getPriority(item)}`
+    li.dataset.id = item.id
+
+    const content = document.createElement('div')
+    content.className = 'brain-dump-item-content'
+
+    const textBlock = document.createElement('div')
+    textBlock.className = 'brain-dump-item-textblock'
+
+    const textEle = document.createElement('span')
+    textEle.className = 'brain-dump-item-text'
+    textEle.title = 'Click to edit'
+    textEle.textContent = item.text
+
+    textBlock.appendChild(textEle)
+    content.appendChild(textBlock)
+
+    const startEditing = () => {
+      if (textBlock.querySelector('.brain-dump-item-edit')) return
+      const input = document.createElement('textarea')
+      input.className = 'brain-dump-item-edit'
+      input.rows = 1
+      input.value = item.text
+      textEle.replaceWith(input)
+      const autoGrow = () => {
+        input.style.height = 'auto'
+        input.style.height = `${input.scrollHeight}px`
+      }
+      input.focus()
+      input.setSelectionRange(input.value.length, input.value.length)
+      autoGrow()
+      input.addEventListener('input', autoGrow)
+
+      let committed = false
+      const commit = async (save) => {
+        if (committed) return
+        committed = true
+        const next = input.value.trim()
+        if (save && next !== '' && next !== item.text) {
+          await updateInboxItem(item.id, { text: next })
+        }
+        await renderBrainDump()
+      }
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault()
+          commit(true)
+        } else if (e.key === 'Escape') {
+          e.preventDefault()
+          commit(false)
+        }
+      })
+      input.addEventListener('blur', () => commit(true))
+    }
+    textEle.addEventListener('click', startEditing)
+
+    const priority = getPriority(item)
+    const prioWrap = document.createElement('div')
+    prioWrap.className = `brain-dump-priority brain-dump-priority-${priority}`
+
+    // Current level (always visible); other levels reveal on hover to pick directly.
+    const current = document.createElement('span')
+    current.className = `brain-dump-priority-chip brain-dump-priority-chip-${priority} brain-dump-priority-current`
+    current.innerHTML = `<span class="brain-dump-priority-dot"></span>${PRIORITY_LABEL[priority]}`
+    prioWrap.appendChild(current)
+
+    PRIORITY_ORDER.filter((p) => p !== priority).forEach((p) => {
+      const opt = document.createElement('button')
+      opt.type = 'button'
+      opt.className = `brain-dump-priority-chip brain-dump-priority-chip-${p} brain-dump-priority-opt`
+      opt.innerHTML = `<span class="brain-dump-priority-dot"></span>${PRIORITY_LABEL[p]}`
+      opt.title = `Set priority to ${PRIORITY_LABEL[p]}`
+      opt.setAttribute('aria-label', `Set priority to ${PRIORITY_LABEL[p]}`)
+      opt.addEventListener('click', async () => {
+        await updateInboxItem(item.id, { priority: p, order: Date.now() })
+        await renderBrainDump()
+      })
+      prioWrap.appendChild(opt)
+    })
+    li.appendChild(prioWrap)
+
+    const meta = document.createElement('div')
+    meta.className = 'brain-dump-item-meta'
+
+    const time = document.createElement('span')
+    time.className = 'brain-dump-item-time'
+    if (section === 'postponed' && item.snoozeUntil) {
+      time.textContent = `Snoozed until ${formatSnoozeUntil(item.snoozeUntil)}`
+    } else {
+      time.textContent = `Captured ${timeAgo(item.createdAt)}`
+    }
+    time.title = item.createdAt ? new Date(item.createdAt).toLocaleString() : ''
+    meta.appendChild(time)
+
+    if (item.url || item.title) {
+      const context = document.createElement('a')
+      context.className = 'brain-dump-item-context'
+      context.textContent = item.title || shortenUrl(item.url)
+      if (item.url) {
+        context.href = item.url
+        context.title = item.url
+        context.addEventListener('click', (e) => {
+          e.preventDefault()
+          chrome.tabs.create({ url: item.url })
+        })
+      }
+      meta.appendChild(context)
+    } else {
+      const noCtx = document.createElement('span')
+      noCtx.className = 'brain-dump-item-context brain-dump-item-context-none'
+      noCtx.textContent = 'Captured in app'
+      meta.appendChild(noCtx)
+    }
+    content.appendChild(meta)
+    li.appendChild(content)
+
+    const actions = document.createElement('div')
+    actions.className = 'brain-dump-item-actions'
+
+    if (item.status !== 'done') {
+      actions.appendChild(
+        makeIconButton('complete', '/icons/done.png', 'Mark as done (moves to Done)', async () => {
+          await updateInboxItem(item.id, { status: 'done' })
+          await renderBrainDump()
+          notifyInboxChanged()
+        })
+      )
+    }
+    if (item.status === 'inbox') {
+      actions.appendChild(
+        makeIconButton('snooze', '/icons/clock.png', 'Snooze - set aside for later', () => {
+          promptSnooze(item)
+        })
+      )
+    }
+    if (item.status === 'postponed') {
+      actions.appendChild(
+        makeIconButton('restore', '/icons/bell.png', 'Unsnooze - move back to Inbox', async () => {
+          await updateInboxItem(item.id, { status: 'inbox', snoozeUntil: null })
+          await renderBrainDump()
+          notifyInboxChanged()
+        })
+      )
+    }
+    if (item.status === 'done') {
+      actions.appendChild(
+        makeIconButton('restore', '/icons/undo.png', 'Restore - move back to Inbox', async () => {
+          await updateInboxItem(item.id, { status: 'inbox' })
+          await renderBrainDump()
+          notifyInboxChanged()
+        })
+      )
+    }
+    actions.appendChild(
+      makeIconButton('delete', '/icons/trash.png', 'Delete (you can undo for 5s)', async () => {
+        await deleteWithUndo(item)
+      })
+    )
+
+    li.appendChild(actions)
+
+    // Reorder controls (inbox only) - move one position at a time, shown on hover.
+    if (section === 'inbox' && items.length > 1) {
+      const reorder = document.createElement('div')
+      reorder.className = 'brain-dump-reorder'
+      const upBtn = document.createElement('button')
+      upBtn.type = 'button'
+      upBtn.className = 'brain-dump-reorder-btn'
+      upBtn.title = 'Move up'
+      upBtn.setAttribute('aria-label', 'Move up')
+      upBtn.textContent = '▲'
+      upBtn.disabled = index === 0
+      upBtn.addEventListener('click', () => moveInboxItem(item.id, -1))
+      const downBtn = document.createElement('button')
+      downBtn.type = 'button'
+      downBtn.className = 'brain-dump-reorder-btn'
+      downBtn.title = 'Move down'
+      downBtn.setAttribute('aria-label', 'Move down')
+      downBtn.textContent = '▼'
+      downBtn.disabled = index === items.length - 1
+      downBtn.addEventListener('click', () => moveInboxItem(item.id, 1))
+      reorder.appendChild(upBtn)
+      reorder.appendChild(downBtn)
+      li.appendChild(reorder)
+    }
+
+    listEle.appendChild(li)
+  })
+}
 
 async function init() {
   maxValueOfGraph = 0
@@ -483,13 +1020,13 @@ async function init() {
   if (!sessions?.length) deleteSomeHistoryBtn.disabled = true
 
   settingsBtn.addEventListener('click', async () => {
-    await createNewTabForSettings()
+    openSettingsInCurrentTab()
   })
   timerBtn.addEventListener('click', async () => {
-    await createNewTabForTimers(false, true)
+    openTimerInCurrentTab()
   })
   streakBtn?.addEventListener('click', async () => {
-    await createNewTabForStreak()
+    openStreakInCurrentTab()
   })
   await sendRuntimeMessageSafely({ type: 'START_SESSION' })
   await sendRuntimeMessageSafely({

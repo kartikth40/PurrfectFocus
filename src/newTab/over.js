@@ -19,9 +19,9 @@ import {
 } from '../constants.js'
 import {
   changeTextTo,
-  createNewTabForHistory,
-  createNewTabForSettings,
-  createNewTabForStreak,
+  openHistoryInCurrentTab,
+  openSettingsInCurrentTab,
+  openStreakInCurrentTab,
   getFocusText,
   getLocalStorage,
   getRandomBreakQuote,
@@ -42,6 +42,8 @@ import {
   showToast,
   createNewTabForTimers,
   unSetBlockRules,
+  addInboxItem,
+  getInbox,
   applyPollConfig,
   applyAnnouncementBanner,
   applyFeatureHighlight,
@@ -72,6 +74,10 @@ const mode = document.querySelector('.mode')
 const dailyJournalListCotainer = document.querySelector('#daily-journal-list-container')
 const dailyJournalListSubContainer = document.querySelector('.daily-journal-list')
 const dailyJournalAddBtn = document.querySelector('.add-btn')
+const brainDumpControls = document.querySelector('#brain-dump-controls')
+const brainDumpCaptureBtn = document.querySelector('#brain-dump-capture-btn')
+const brainDumpViewBtn = document.querySelector('#brain-dump-view-btn')
+const brainDumpViewBadge = document.querySelector('#brain-dump-view-badge')
 const supportBtn = document.querySelector('.support-tab-btn')
 
 supportBtn.href = CONFIG.SUPPORT_URL
@@ -127,9 +133,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => {
       loadingScreen.remove()
       maybeFireSessionConfetti()
+      maybeShowCapturePrompt()
     }, 500)
   }, 200)
 })
+
+// Opened by the global shortcut when the active page can't be injected into
+// (chrome://, Web Store, other extension pages). Shows the capture prompt here.
+function maybeShowCapturePrompt() {
+  if (getQueryParams().get('capture') !== 'brain-dump') return
+  // clean the param so a refresh doesn't reopen the prompt
+  window.history.replaceState({}, '', chrome.runtime.getURL('src/newTab/over.html'))
+  captureBrainDump()
+}
 
 async function init() {
   const timer = await getSessionStorage(TIMERKEY)
@@ -247,7 +263,10 @@ async function initDailyJournal() {
       )
     })
   })
+  positionBrainDumpButton()
 }
+
+window.addEventListener('resize', positionBrainDumpButton)
 
 dailyJournalListSubContainer.addEventListener('change', async (event) => {
   if (event.target.tagName === 'INPUT' && event.target.type === 'checkbox') {
@@ -671,13 +690,13 @@ function addEventListeners() {
   })
 
   settingsBtn.addEventListener('click', async () => {
-    await createNewTabForSettings()
+    openSettingsInCurrentTab()
   })
   historyBtn.addEventListener('click', async () => {
-    await createNewTabForHistory()
+    openHistoryInCurrentTab()
   })
   streakBtn?.addEventListener('click', async () => {
-    await createNewTabForStreak()
+    openStreakInCurrentTab()
   })
 
   taskSelect.addEventListener('change', async (event) => {
@@ -804,6 +823,70 @@ function addEventListeners() {
       }
     )
   })
+
+  brainDumpCaptureBtn.addEventListener('click', captureBrainDump)
+  brainDumpViewBtn.addEventListener('click', () => openHistoryInCurrentTab('brain-dump'))
+}
+
+function captureBrainDump() {
+  const priorityOptions =
+    '<option value="normal">Normal (Alt+2)</option><option value="high">High (Alt+1)</option><option value="low">Low (Alt+3)</option>'
+  showCustomPrompt(
+    'Brain Dump',
+    'Capture now, decide later. This is just a thought, not a task.',
+    null,
+    async (result) => {
+      if (!result) return
+      const text = (result.text || '').trim()
+      if (text === '') return
+      await addInboxItem({ text, url: null, title: null, priority: result.priority })
+      await sendRuntimeMessageSafely({ type: 'BRAIN_DUMP_ADDED', response: text, source: 'over_page' })
+      await updateBrainDumpBadge()
+      showToast('Added to Brain Dump', 'Captured. Decide on it later.', TOASTIFY.colors.purple, false, true)
+    },
+    'fields',
+    '',
+    null,
+    [
+      { id: 'text', label: 'Thought', type: 'text', value: '' },
+      { id: 'priority', label: 'Priority', type: 'select', value: 'normal', options: priorityOptions },
+    ]
+  )
+  bindCapturePriorityKeys()
+}
+
+// Alt+1/2/3 set priority in the capture prompt without hijacking number typing.
+function bindCapturePriorityKeys() {
+  const modal = document.getElementById('customPrompt')
+  const handler = (e) => {
+    if (modal.style.display === 'none') {
+      modal.removeEventListener('keydown', handler)
+      return
+    }
+    if (!e.altKey) return
+    const map = { 1: 'high', 2: 'normal', 3: 'low' }
+    if (!map[e.key]) return
+    const select = document.getElementById('pf-priority')
+    if (!select) return
+    e.preventDefault()
+    select.value = map[e.key]
+    select.dispatchEvent(new Event('change'))
+  }
+  modal.addEventListener('keydown', handler)
+}
+
+// Show the active (inbox) capture count on the view button.
+async function updateBrainDumpBadge() {
+  if (!brainDumpViewBadge) return
+  const items = await getInbox()
+  const count = items.filter((item) => (item.status || 'inbox') === 'inbox').length
+  if (count > 0) {
+    brainDumpViewBadge.textContent = count > 99 ? '99+' : count
+    brainDumpViewBadge.classList.add('show')
+  } else {
+    brainDumpViewBadge.textContent = ''
+    brainDumpViewBadge.classList.remove('show')
+  }
 }
 
 async function getDailyJournalState(currentDate = new Date()) {
@@ -862,10 +945,24 @@ async function loadSettings(settings) {
   } else removeMusicPlayer()
   if (settings.dailyJournal) {
     dailyJournalListCotainer.classList.add('show')
+    brainDumpControls.classList.add('show', 'below-journal')
     await initDailyJournal()
+    positionBrainDumpButton()
   } else {
     dailyJournalListCotainer.classList.remove('show')
+    brainDumpControls.classList.add('show')
+    brainDumpControls.classList.remove('below-journal')
+    brainDumpControls.style.top = ''
   }
+  await updateBrainDumpBadge()
+}
+
+// The journal is an absolutely-positioned box of variable height, so anchor the
+// Brain Dump controls just beneath its rendered bottom edge.
+function positionBrainDumpButton() {
+  if (!brainDumpControls.classList.contains('below-journal')) return
+  const rect = dailyJournalListCotainer.getBoundingClientRect()
+  brainDumpControls.style.top = `${rect.bottom + 8}px`
 }
 const initiateTimer = async () => {
   const store = await getSyncStorage(SETTINGSKEY)

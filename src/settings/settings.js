@@ -2,9 +2,9 @@ import { CONFIG } from '../config.js'
 import { BLOCKEDLISTKEY, LIGHTTHEME, modes, SETTINGSKEY, TOASTIFY } from '../constants.js'
 import {
   changeTextTo,
-  createNewTabForHistory,
-  createNewTabForTimers,
-  createNewTabForStreak,
+  openHistoryInCurrentTab,
+  openTimerInCurrentTab,
+  openStreakInCurrentTab,
   getSyncStorage,
   setFormValues,
   setNewSettings,
@@ -207,13 +207,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }, 200)
 
   historyBtn.addEventListener('click', async () => {
-    await createNewTabForHistory()
+    openHistoryInCurrentTab()
   })
   streakBtn?.addEventListener('click', async () => {
-    await createNewTabForStreak()
+    openStreakInCurrentTab()
   })
   timerBtn.addEventListener('click', async () => {
-    await createNewTabForTimers(false, true)
+    openTimerInCurrentTab()
   })
 
   const manifestData = chrome.runtime.getManifest()

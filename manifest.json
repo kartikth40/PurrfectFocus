@@ -8,11 +8,24 @@
         "alarms",
         "offscreen",
         "declarativeNetRequest",
-        "declarativeNetRequestWithHostAccess"
+        "declarativeNetRequestWithHostAccess",
+        "tabs",
+        "scripting"
     ],
     "host_permissions": [
         "<all_urls>"
     ],
+    "commands": {
+        "capture_brain_dump": {
+            "suggested_key": {
+                "default": "Alt+Shift+I",
+                "windows": "Alt+Shift+I",
+                "linux": "Alt+Shift+I",
+                "mac": "Alt+Shift+I"
+            },
+            "description": "Quickly capture a thought to your Brain Dump"
+        }
+    },
     "background": {
         "service_worker": "public/background.js",
         "type": "module"

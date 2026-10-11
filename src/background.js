@@ -18,6 +18,9 @@ import {
   getOrCreateAnonymousId,
   setBlockRules,
   unSetBlockRules,
+  addInboxItem,
+  getInbox,
+  wakeDueInboxSnoozes,
 } from './utils.js'
 import {
   PLAY,
@@ -111,6 +114,8 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   if (!alarms.some((alarm) => alarm.name === 'checkActivity')) {
     chrome.alarms.create('checkActivity', { periodInMinutes: 180 })
   }
+  await wakeDueInboxSnoozes()
+  await scheduleNextSnoozeWake()
   chrome.runtime.setUninstallURL(CONFIG.UNINSTALL_SURVEY_URL)
 })
 
@@ -122,12 +127,293 @@ chrome.runtime.onStartup.addListener(async () => {
       await setSessionStorage(localTimerObj)
     }
   }
+  await wakeDueInboxSnoozes()
   await unSetBlockRules()
 })
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'checkActivity') {
     await checkUserActivity()
+  } else if (alarm.name === 'wakeSnoozes') {
+    await scheduleNextSnoozeWake()
+  }
+})
+
+// Schedule a single one-shot alarm for the earliest pending snooze, instead of
+// polling. The SW only wakes when something is actually due (cheap for MV3).
+// Always clears the alarm first, so an item removed/unsnoozed/deleted leaves no
+// stale alarm; and wakes anything already overdue before (re)scheduling.
+async function scheduleNextSnoozeWake() {
+  await chrome.alarms.clear('wakeSnoozes')
+  await wakeDueInboxSnoozes()
+  const items = await getInbox()
+  const pending = items
+    .filter((it) => it.status === 'postponed' && typeof it.snoozeUntil === 'number' && it.snoozeUntil > Date.now())
+    .map((it) => it.snoozeUntil)
+  if (pending.length === 0) return
+  const next = Math.min(...pending)
+  // chrome.alarms minimum granularity is ~1 min; clamp to the near future
+  chrome.alarms.create('wakeSnoozes', { when: Math.max(Date.now() + 1000, next) })
+}
+
+// Self-contained prompt injected into the active tab's page context. The service
+// worker cannot render DOM itself, so we inject a branded overlay (textarea +
+// a "include this page as context" toggle checked by default, showing the page
+// it will attach) and resolve with what the user entered. Must not reference any
+// background-script variables; styles are inlined and reset so host page CSS
+// can't bleed in.
+function injectedCapturePrompt() {
+  return new Promise((resolve) => {
+    const reset = 'all:revert;box-sizing:border-box;font-family:"Poppins",system-ui,sans-serif;'
+    const pageTitle = (document.title || '').trim()
+    let pageHost = ''
+    try {
+      pageHost = location.host
+    } catch (e) {
+      pageHost = ''
+    }
+    const pageLabel = pageTitle || pageHost || 'this page'
+
+    const overlay = document.createElement('div')
+    overlay.setAttribute('data-brain-dump-overlay', '')
+    overlay.style.cssText =
+      reset +
+      'position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;' +
+      'background:rgba(10,6,18,0.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);'
+
+    const box = document.createElement('div')
+    box.style.cssText =
+      reset +
+      'width:360px;max-width:92vw;padding:22px;border-radius:16px;color:#f3eeff;' +
+      'background:linear-gradient(160deg,#2b2140,#1c1530);border:1px solid rgba(190,150,255,0.25);' +
+      'box-shadow:0 20px 60px rgba(0,0,0,0.55),0 0 0 1px rgba(0,0,0,0.3);' +
+      'opacity:0;transform:translateY(8px) scale(0.98);transition:0.18s ease;'
+
+    const header = document.createElement('div')
+    header.style.cssText = reset + 'display:flex;align-items:center;gap:10px;margin-bottom:4px;'
+    const dot = document.createElement('span')
+    dot.style.cssText =
+      reset +
+      'width:26px;height:26px;border-radius:8px;flex:none;display:inline-block;' +
+      'background:linear-gradient(135deg,#c966f8,#8a4fd0);box-shadow:0 0 12px rgba(201,102,248,0.6);'
+    const title = document.createElement('div')
+    title.textContent = 'Brain Dump'
+    title.style.cssText = reset + 'font-size:17px;font-weight:700;letter-spacing:0.3px;color:#f3eeff;'
+    header.appendChild(dot)
+    header.appendChild(title)
+
+    const subtitle = document.createElement('div')
+    subtitle.textContent = 'Capture now, decide later - this is just a thought, not a task.'
+    subtitle.style.cssText = reset + 'font-size:12px;line-height:1.5;color:#b9a8d8;margin-bottom:14px;'
+
+    const input = document.createElement('textarea')
+    input.rows = 3
+    input.placeholder = 'What popped into your head?'
+    input.style.cssText =
+      reset +
+      'width:100%;resize:none;padding:11px 12px;border-radius:10px;font-size:14px;line-height:1.4;' +
+      'color:#f3eeff;background:rgba(255,255,255,0.06);border:1px solid rgba(190,150,255,0.3);' +
+      'outline:none;margin-bottom:14px;'
+    input.addEventListener('focus', () => {
+      input.style.borderColor = 'rgba(201,102,248,0.8)'
+      input.style.boxShadow = '0 0 0 3px rgba(201,102,248,0.2)'
+    })
+    input.addEventListener('blur', () => {
+      input.style.borderColor = 'rgba(190,150,255,0.3)'
+      input.style.boxShadow = 'none'
+    })
+
+    // Context toggle - shows the page it will attach, removable before saving.
+    const ctx = document.createElement('button')
+    ctx.type = 'button'
+    let includeContext = true
+    const renderCtx = () => {
+      ctx.style.cssText =
+        reset +
+        'width:100%;display:flex;align-items:center;gap:10px;text-align:left;cursor:pointer;' +
+        'padding:10px 12px;border-radius:10px;margin-bottom:16px;transition:0.15s ease;' +
+        (includeContext
+          ? 'background:rgba(201,102,248,0.12);border:1px solid rgba(201,102,248,0.5);'
+          : 'background:rgba(255,255,255,0.04);border:1px solid rgba(190,150,255,0.18);')
+      ctx.innerHTML = ''
+      const check = document.createElement('span')
+      check.style.cssText =
+        reset +
+        'width:18px;height:18px;flex:none;border-radius:5px;display:flex;align-items:center;justify-content:center;' +
+        'font-size:12px;font-weight:700;color:#1c1530;' +
+        (includeContext
+          ? 'background:linear-gradient(135deg,#c966f8,#8a4fd0);'
+          : 'background:transparent;border:1px solid rgba(190,150,255,0.4);')
+      check.textContent = includeContext ? '✓' : ''
+      const textWrap = document.createElement('span')
+      textWrap.style.cssText = reset + 'display:flex;flex-direction:column;gap:1px;min-width:0;flex:1;'
+      const line1 = document.createElement('span')
+      line1.textContent = includeContext ? 'Attaching this page' : 'Page context off'
+      line1.style.cssText = reset + 'font-size:12px;font-weight:600;color:#f3eeff;'
+      const line2 = document.createElement('span')
+      line2.textContent = includeContext ? pageLabel : 'Tap to attach the current page'
+      line2.style.cssText =
+        reset +
+        'font-size:11px;color:#b9a8d8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;'
+      textWrap.appendChild(line1)
+      textWrap.appendChild(line2)
+      ctx.appendChild(check)
+      ctx.appendChild(textWrap)
+    }
+    ctx.addEventListener('click', () => {
+      includeContext = !includeContext
+      renderCtx()
+    })
+    renderCtx()
+
+    // Priority selector - three chips, default Normal.
+    let priority = 'normal'
+    const prioColors = { high: '#d14343', normal: '#8577a8', low: '#4a7fb0' }
+    const prioRow = document.createElement('div')
+    prioRow.style.cssText = reset + 'display:flex;align-items:center;gap:8px;margin-bottom:16px;'
+    const prioLabel = document.createElement('span')
+    prioLabel.textContent = 'Priority'
+    prioLabel.title = 'Alt+1 High · Alt+2 Normal · Alt+3 Low'
+    prioLabel.style.cssText = reset + 'font-size:12px;color:#b9a8d8;margin-right:2px;'
+    prioRow.appendChild(prioLabel)
+    const prioChips = {}
+    const renderPrio = () => {
+      ;['high', 'normal', 'low'].forEach((p) => {
+        const sel = p === priority
+        prioChips[p].style.cssText =
+          reset +
+          'cursor:pointer;padding:4px 12px;border-radius:16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;transition:0.15s ease;' +
+          (sel
+            ? `background:${prioColors[p]};color:#fff;box-shadow:0 0 10px ${prioColors[p]};`
+            : 'background:rgba(255,255,255,0.06);color:#b9a8d8;border:1px solid rgba(190,150,255,0.25);')
+      })
+    }
+    const prioKey = { high: '1', normal: '2', low: '3' }
+    ;['high', 'normal', 'low'].forEach((p) => {
+      const chip = document.createElement('button')
+      chip.type = 'button'
+      chip.innerHTML = `${p}<span style="opacity:.65;margin-left:5px;font-size:9px;">⌥${prioKey[p]}</span>`
+      chip.title = `Alt+${prioKey[p]}`
+      chip.addEventListener('click', () => {
+        priority = p
+        renderPrio()
+      })
+      prioChips[p] = chip
+      prioRow.appendChild(chip)
+    })
+    renderPrio()
+
+    const footer = document.createElement('div')
+    footer.style.cssText = reset + 'display:flex;align-items:center;justify-content:space-between;gap:10px;'
+    const hint = document.createElement('span')
+    hint.innerHTML =
+      '<b style="color:#b9a8d8;font-weight:600;">Enter</b> save · <b style="color:#b9a8d8;font-weight:600;">Esc</b> cancel'
+    hint.style.cssText = reset + 'font-size:11px;color:#8f7fb0;'
+    const btnRow = document.createElement('div')
+    btnRow.style.cssText = reset + 'display:flex;gap:8px;'
+    const cancelBtn = document.createElement('button')
+    cancelBtn.type = 'button'
+    cancelBtn.textContent = 'Cancel'
+    cancelBtn.style.cssText =
+      reset +
+      'padding:8px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;color:#d9ccf5;' +
+      'background:rgba(255,255,255,0.06);border:1px solid rgba(190,150,255,0.25);'
+    const saveBtn = document.createElement('button')
+    saveBtn.type = 'button'
+    saveBtn.textContent = 'Save'
+    saveBtn.style.cssText =
+      reset +
+      'padding:8px 18px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;color:#fff;border:none;' +
+      'background:linear-gradient(135deg,#c966f8,#8a4fd0);box-shadow:0 4px 14px rgba(138,79,208,0.5);'
+    btnRow.appendChild(cancelBtn)
+    btnRow.appendChild(saveBtn)
+    footer.appendChild(hint)
+    footer.appendChild(btnRow)
+
+    box.appendChild(header)
+    box.appendChild(subtitle)
+    box.appendChild(input)
+    box.appendChild(ctx)
+    box.appendChild(prioRow)
+    box.appendChild(footer)
+    overlay.appendChild(box)
+    document.body.appendChild(overlay)
+    requestAnimationFrame(() => {
+      box.style.opacity = '1'
+      box.style.transform = 'translateY(0) scale(1)'
+    })
+    input.focus()
+
+    const cleanup = (result) => {
+      overlay.remove()
+      resolve(result)
+    }
+    const save = () => cleanup({ text: input.value, includeContext, priority })
+    saveBtn.addEventListener('click', save)
+    cancelBtn.addEventListener('click', () => cleanup(null))
+    overlay.addEventListener('mousedown', (e) => {
+      if (e.target === overlay) cleanup(null)
+    })
+    const onKey = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault()
+        save()
+      } else if (e.key === 'Escape') {
+        e.preventDefault()
+        cleanup(null)
+      } else if (e.altKey && (e.key === '1' || e.key === '2' || e.key === '3')) {
+        e.preventDefault()
+        priority = e.key === '1' ? 'high' : e.key === '2' ? 'normal' : 'low'
+        renderPrio()
+      }
+    }
+    input.addEventListener('keydown', onKey)
+    overlay.addEventListener('keydown', onKey)
+  })
+}
+
+chrome.commands.onCommand.addListener(async (command) => {
+  if (command !== 'capture_brain_dump') return
+  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
+  if (!tab?.id) return
+  try {
+    const [injection] = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: injectedCapturePrompt,
+    })
+    const result = injection?.result
+    if (!result) return
+    const text = result.text?.trim()
+    if (!text) return
+    const url = result.includeContext ? (tab.url ?? null) : null
+    const title = result.includeContext ? (tab.title ?? null) : null
+    await addInboxItem({ text, url, title, priority: result.priority })
+    trackEvent('brain_dump_added', { item: text, source: 'shortcut' })
+    await chrome.notifications.create(`brain-dump-${Date.now()}`, {
+      iconUrl: '/cat.png',
+      message: 'Captured. Decide on it later.',
+      title: 'Added to Brain Dump',
+      type: 'basic',
+      silent: true,
+    })
+  } catch (e) {
+    // Injection is blocked on restricted pages (chrome://, Web Store, other
+    // extension pages). Fall back to our own over page, which we fully control.
+    // Reuse an already-open extension tab if there is one, else open a new tab.
+    console.warn(e)
+    const captureUrl = 'src/newTab/over.html?capture=brain-dump'
+    const fullCaptureUrl = chrome.runtime.getURL(captureUrl)
+    const base = chrome.runtime.getURL('')
+    const extTabs = await chrome.tabs.query({ url: `${base}*` })
+    const target = extTabs.find((t) => t.url?.includes('src/newTab/over.html')) || extTabs[0]
+    if (target?.id) {
+      await chrome.tabs.update(target.id, { url: fullCaptureUrl, active: true })
+      if (target.windowId !== undefined) {
+        await chrome.windows.update(target.windowId, { focused: true })
+      }
+    } else {
+      await chrome.tabs.create({ url: captureUrl, active: true })
+    }
   }
 })
 
@@ -265,6 +551,15 @@ const analyticsHandlers = {
     trackEvent('daily_journal_added', {
       item: request.response.trim(),
     })
+  },
+  BRAIN_DUMP_ADDED: (request) => {
+    trackEvent('brain_dump_added', {
+      item: request.response.trim(),
+      source: request.source,
+    })
+  },
+  BRAIN_DUMP_CHANGED: () => {
+    scheduleNextSnoozeWake()
   },
   MUSIC_PLAYING: (request) => {
     if (musicPlayTimer) {

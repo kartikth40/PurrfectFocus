@@ -20,7 +20,7 @@ body{
 
   --secondary-color-1: rgb(232, 227, 255);
   --secondary-color-2: rgb(197, 184, 255); 
-  --card-bg: #23232385;                      /* Card background — override in .light */
+  --card-bg: #23232385;                      /* Card background - override in .light */
   font-size: 12px;
 }
 
@@ -29,7 +29,7 @@ body{
   --primary-color-2: rgb(204, 187, 255);      /* Soft purple */
   --primary-color-3: rgb(180, 167, 240);     /* Lavender */
   --primary-color-4: rgb(181, 155, 255);
-  --card-bg: #f0eeff;                        /* Soft lavender — use for card backgrounds in light mode */
+  --card-bg: #f0eeff;                        /* Soft lavender - use for card backgrounds in light mode */
 }
 
 ::-webkit-scrollbar {
@@ -191,7 +191,7 @@ p {
   border-bottom-right-radius: 10px;
 }
 
-/* floating-btns is vertical — round top/bottom instead */
+/* floating-btns is vertical - round top/bottom instead */
 .floating-btns > a:first-child,
 .floating-btns > button:first-child {
   border-top-left-radius: 0;
@@ -791,52 +791,126 @@ body.light .poll-btn button {
   z-index: 9999;
 }
 
+@keyframes modal-pop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .modal-content {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--secondary-color-1);
-  padding: 20px;
-  border-radius: 8px;
+  background:
+    radial-gradient(120% 90% at 50% -10%, rgba(201, 102, 248, 0.22), transparent 60%),
+    linear-gradient(160deg, #2c2142, #191022);
+  color: #f3eeff;
+  padding: 28px 26px 24px;
+  border-radius: 20px;
+  border: 1px solid rgba(201, 102, 248, 0.3);
   text-align: center;
-  width: 300px;
+  width: 360px;
   max-width: calc(100vw - 40px);
   box-sizing: border-box;
   overflow: hidden;
-  box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 0 40px rgba(138, 79, 208, 0.25);
   z-index: 100;
+  animation: modal-pop-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* gradient accent bar across the top - card clips it to its rounded corners */
+.modal-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #c966f8, #8a4fd0, #6a5cff);
+}
+.light .modal-content {
+  background:
+    radial-gradient(120% 90% at 50% -10%, rgba(201, 102, 248, 0.18), transparent 60%),
+    linear-gradient(160deg, #ffffff, var(--secondary-color-1));
+  color: #1a1026;
+  border-color: var(--primary-color-3);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.28),
+    0 0 30px rgba(138, 79, 208, 0.18);
 }
 
 #alertTitle, #promptTitle {
   text-decoration: none;
   border: none;
-  color: var(--primary-color);
   width: 100%;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #e9b8ff, #b07bff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.light #alertTitle, .light #promptTitle {
+  background: linear-gradient(135deg, #6b21a8, #9333ea);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .modal input {
   width: 100%;
-  padding: 8px;
+  padding: 10px 12px;
   margin: 10px 0;
+  border-radius: 10px;
+  border: 1px solid rgba(190, 150, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #f3eeff;
+}
+.light .modal input {
+  background-color: #fff;
+  color: #1a1026;
+  border-color: var(--primary-color-3);
 }
 
 .modal-buttons {
   display: flex;
-  justify-content: space-between;
-  gap: 10px;
+  justify-content: flex-end;
+  gap: 8px;
   width: 100%;
+  margin-top: 6px;
 
   & button {
-    padding: 8px 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 22px;
     border: none;
     cursor: pointer;
-    border-radius: 5px;
-    width: 100%;
-    transition: .3s all;
+    border-radius: 11px;
+    width: auto;
+    min-width: 96px;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: .3px;
+    transition: transform .15s ease, box-shadow .2s ease, filter .2s ease;
     &:hover {
-      box-shadow: 0 0 10px var(--secondary-color-2);
-      border-radius: 20px;
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+    }
+    &:active {
+      transform: translateY(0) scale(0.97);
     }
   }
 }
@@ -852,28 +926,38 @@ body.light .poll-btn button {
 
 #promptMessage {
   display: block;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+  opacity: 0.85;
 }
-#promptOk {
-  background: #cbffcd;
-  border: 2px solid #00ba06;
-  width: 100%;
-  color: black;
+#promptOk, #alertOk {
+  background: linear-gradient(135deg, #c966f8, #8a4fd0);
+  border: none;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(138, 79, 208, 0.5);
 }
-
-#alertOk {
-  width: 100%;
-  background: #cbffcd;
-  border: 2px solid #00a706;
-  color: black;
+#promptOk:hover, #alertOk:hover {
+  box-shadow: 0 8px 24px rgba(201, 102, 248, 0.6);
 }
-
 #promptCancel, #alertNo {
-  background: #ffc4c0;
-  border: 2px solid #c00d00;
-  width: 100%;
-  color: black;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(190, 150, 255, 0.3);
+  color: #d9ccf5;
+}
+#promptCancel:hover, #alertNo:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(201, 102, 248, 0.5);
+}
+.light #promptCancel, .light #alertNo {
+  background: #ffffffdd;
+  border: 1px solid var(--primary-color-3);
+  color: var(--primary-color);
+}
+.light #promptCancel:hover, .light #alertNo:hover {
+  background: #fff;
+  border-color: var(--primary-color);
 }
 #promptSelect {
   margin-bottom: 10px;
@@ -904,17 +988,51 @@ body.light .poll-btn button {
   min-width: 90px;
   text-align: left;
   flex-shrink: 0;
+  color: #b9a8d8;
+}
+.light .prompt-field-row label {
+  color: #6b5b8e;
 }
 .prompt-field-row input,
 .prompt-field-row select {
   flex: 1;
   min-width: 0;
   max-width: 100%;
-  padding: 4px 6px;
-  font-size: 0.8rem;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  border-radius: 11px;
+  border: 1px solid rgba(190, 150, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #f3eeff;
   overflow: hidden;
   text-overflow: ellipsis;
   margin: 0;
+  transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+.prompt-field-row input:hover,
+.prompt-field-row select:hover {
+  border-color: rgba(201, 102, 248, 0.55);
+}
+.prompt-field-row input:focus,
+.prompt-field-row select:focus {
+  outline: none;
+  border-color: rgba(201, 102, 248, 0.9);
+  box-shadow: 0 0 0 3px rgba(201, 102, 248, 0.22);
+  background-color: rgba(255, 255, 255, 0.09);
+}
+.light .prompt-field-row input,
+.light .prompt-field-row select {
+  background-color: #fff;
+  color: #1a1026;
+  border-color: var(--primary-color-3);
+}
+.light .prompt-field-row input:focus,
+.light .prompt-field-row select:focus {
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(138, 79, 208, 0.18);
+}
+.prompt-field-row select option {
+  color: #1a1026;
 }
 
 .coming-soon{
@@ -1592,4 +1710,183 @@ body.light .poll-btn button {
   &::after {
     transform: translate(-48%, -50%) rotate(90deg);
   }
+}
+
+#brain-dump-controls {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 250px;
+  box-sizing: border-box;
+  z-index: 10;
+  display: none;
+  align-items: stretch;
+  gap: 8px;
+
+  &.show {
+    display: flex;
+  }
+}
+
+#brain-dump-capture-btn {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 11px 16px;
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: .3px;
+  color: #000;
+  cursor: pointer;
+  border: 2px solid #000;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--secondary-color-1), var(--secondary-color-2));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 3px 8px rgba(0, 0, 0, 0.35);
+  transition: .2s all ease;
+
+  /* CSS-drawn plus badge echoing the journal add button */
+  & .brain-dump-btn-plus {
+    position: relative;
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    background-color: #000;
+    border-radius: 5px;
+    box-shadow: 0 0 2px var(--primary-color);
+    transition: .2s all ease;
+
+    &::before, &::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 60%;
+      height: 2.5px;
+      background-color: var(--secondary-color-1);
+      transform: translate(-50%, -50%);
+      border-radius: 2px;
+    }
+    &::after {
+      transform: translate(-50%, -50%) rotate(90deg);
+    }
+  }
+
+  &:hover {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 16px var(--primary-color), 0 3px 10px rgba(0, 0, 0, 0.4);
+    transform: translateY(-1px);
+    & .brain-dump-btn-plus {
+      border-radius: 50%;
+    }
+  }
+  &:active {
+    transform: translateY(0) scale(.98);
+  }
+}
+
+.light #brain-dump-capture-btn {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 2px 8px rgba(0, 0, 0, 0.15);
+  &:hover {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 0 16px var(--primary-color-4), 0 2px 10px rgba(0, 0, 0, 0.2);
+  }
+}
+
+#brain-dump-view-btn {
+  position: relative;
+  flex-shrink: 0;
+  width: 42px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 2px solid #000;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--secondary-color-1), var(--secondary-color-2));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 3px 8px rgba(0, 0, 0, 0.35);
+  transition: .2s all ease;
+
+  /* CSS-drawn eye glyph */
+  & .brain-dump-view-icon {
+    position: relative;
+    display: inline-block;
+    width: 20px;
+    height: 12px;
+    border: 2px solid #000;
+    border-radius: 75% 15%;
+    transform: rotate(45deg);
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 6px;
+      height: 6px;
+      background-color: #000;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+  }
+
+  &:hover {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 16px var(--primary-color), 0 3px 10px rgba(0, 0, 0, 0.4);
+    transform: translateY(-1px);
+    & .tooltip {
+      opacity: 1;
+      transform: translate(-50%, 0) scale(1);
+    }
+  }
+  &:active {
+    transform: translateY(0) scale(.98);
+  }
+
+  & .tooltip {
+    bottom: unset;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translate(-50%, 4px) scale(.9);
+    &::before {
+      top: unset;
+      bottom: 100%;
+      border-top: transparent 5px solid;
+      border-bottom: var(--secondary-color-2) 5px solid;
+    }
+  }
+}
+
+.light #brain-dump-view-btn {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 2px 8px rgba(0, 0, 0, 0.15);
+  &:hover {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 0 16px var(--primary-color-4), 0 2px 10px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.brain-dump-view-badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  box-sizing: border-box;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  border-radius: 10px;
+  border: 2px solid var(--secondary-color-1);
+  background: linear-gradient(135deg, #c966f8, #8a4fd0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.brain-dump-view-badge.show {
+  display: flex;
 }

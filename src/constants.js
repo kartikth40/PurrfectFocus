@@ -49,6 +49,7 @@ export const NEWTABHISTORYIDKEY = 'newTabHistoryId'
 export const NEWTABSTREAKIDKEY = 'newTabStreakId'
 export const TASKSALIASKEY = 'tasks_alias'
 export const DAILYJOURNALLISTKEY = 'dailyJournalList'
+export const DISTRACTIONINBOXKEY = 'distraction_inbox'
 
 // others
 export const showSurvey = true
@@ -159,7 +160,7 @@ export const breakQuotes = [
   'Resting is immensely powerful to ignite the glorious star within you. Power yourself by powering up your relaxing game.',
   'A short pause now can save a long struggle later.',
   'Rest is not a reward; it is part of the process.',
-  'Step back for a moment—clarity likes quiet spaces.',
+  'Step back for a moment-clarity likes quiet spaces.',
   'Breathe deeply, unclench your mind, and begin again.',
   'Breaks are where your next good idea catches up to you.',
   'Even strong focus needs gentle recovery.',
@@ -194,7 +195,7 @@ export const focusQuotes = [
   'Time and energy are limited. Any successful person has to decide what to do in part by deciding what not to do.',
   'Small focused steps beat scattered effort every time.',
   'Start with one clear task and let momentum do the rest.',
-  'Attention is your superpower—use it on purpose.',
+  'Attention is your superpower-use it on purpose.',
   'The hardest minute is the first one. Begin there.',
   'Consistency turns ordinary sessions into extraordinary results.',
   'Protect your focus like it is your most valuable asset.',
