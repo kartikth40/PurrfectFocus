@@ -343,8 +343,51 @@ async function setupBrainDumpTabs() {
 
   document.getElementById('brain-dump-clear-done').addEventListener('click', clearDoneWithUndo)
 
+  const changeBtn = document.getElementById('brain-dump-shortcut-change')
+  changeBtn.addEventListener('click', async () => {
+    try {
+      await chrome.tabs.create({ url: 'chrome://extensions/shortcuts' })
+    } catch (e) {
+      console.warn(e)
+    }
+  })
+
+  await renderCaptureShortcut()
+
   const initialTab = new URL(window.location.href).searchParams.get('tab')
   if (initialTab) await activateTab(initialTab, false)
+}
+
+// Read the capture shortcut live from the browser (the user can rebind or clear
+// it on chrome://extensions/shortcuts, so never hardcode it). The shortcut can
+// be empty when unassigned - show a prompt to set one in that case.
+async function renderCaptureShortcut() {
+  const keyEle = document.getElementById('brain-dump-shortcut-key')
+  const popoverKeyEle = document.getElementById('brain-dump-popover-key')
+  const hintEle = document.getElementById('brain-dump-popover-hint')
+  if (!keyEle) return
+  let shortcut = ''
+  try {
+    const commands = await chrome.commands.getAll()
+    shortcut = commands.find((c) => c.name === 'capture_brain_dump')?.shortcut || ''
+  } catch (e) {
+    console.warn(e)
+  }
+  if (shortcut) {
+    keyEle.textContent = shortcut
+    keyEle.classList.remove('unset')
+    popoverKeyEle.textContent = shortcut
+    popoverKeyEle.classList.remove('unset')
+    hintEle.textContent =
+      'Press it on any website - YouTube, docs, anywhere - to capture a thought without leaving the page or breaking focus.'
+  } else {
+    keyEle.textContent = 'Not set'
+    keyEle.classList.add('unset')
+    popoverKeyEle.textContent = 'Not set'
+    popoverKeyEle.classList.add('unset')
+    hintEle.textContent =
+      'No shortcut yet. Set one to capture a thought on any website - YouTube, docs, anywhere - without leaving the page or breaking focus.'
+  }
 }
 
 function shortenUrl(url) {

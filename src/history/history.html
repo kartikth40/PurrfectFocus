@@ -228,7 +228,29 @@
     <div id="brain-dump-tab-panel" class="history-tab-panel">
       <div class="brain-dump-manager">
         <div class="brain-dump-header">
-          <h1 class="brain-dump-heading">Brain Dump</h1>
+          <div class="brain-dump-title-row">
+            <h1 class="brain-dump-heading">Brain Dump</h1>
+            <div class="brain-dump-shortcut" id="brain-dump-shortcut" tabindex="0" aria-describedby="brain-dump-shortcut-popover">
+              <span class="brain-dump-shortcut-icon"></span>
+              <kbd class="brain-dump-shortcut-key" id="brain-dump-shortcut-key">…</kbd>
+              <div class="brain-dump-shortcut-popover" id="brain-dump-shortcut-popover" role="tooltip">
+                <div class="brain-dump-popover-head">
+                  <span class="brain-dump-popover-title">Quick capture shortcut</span>
+                  <kbd class="brain-dump-popover-key" id="brain-dump-popover-key">…</kbd>
+                </div>
+                <p class="brain-dump-popover-hint" id="brain-dump-popover-hint">Press it on any website - YouTube, docs, anywhere - to capture a thought without leaving the page or breaking focus.</p>
+                <ul class="brain-dump-popover-list">
+                  <li>Works on every tab, even while a timer is running.</li>
+                  <li>A tiny box pops up right where you are - type and hit Enter.</li>
+                  <li>The current page is attached as context (you can turn that off).</li>
+                </ul>
+                <div class="brain-dump-popover-foot">
+                  <button type="button" class="brain-dump-shortcut-change" id="brain-dump-shortcut-change">Change shortcut</button>
+                  <span class="brain-dump-shortcut-path" id="brain-dump-shortcut-path" title="Open this in your address bar to rebind">chrome://extensions/shortcuts</span>
+                </div>
+              </div>
+            </div>
+          </div>
           <p class="brain-dump-subheading">A calm place for stray thoughts. Capture now, decide later - nothing here is a commitment to act.</p>
         </div>
         <div class="brain-dump-summary">
@@ -252,7 +274,7 @@
         <div class="brain-dump-empty">
           <div class="brain-dump-empty-art"></div>
           <h2 class="brain-dump-empty-title">Your mind is clear</h2>
-          <p class="brain-dump-empty-text">Nothing captured yet. Hit <b>Alt+Shift+I</b> on any page, or use the Brain Dump button on the timer, to drop a thought here.</p>
+          <p class="brain-dump-empty-text">Nothing captured yet. Use your quick capture shortcut on any page, or the Brain Dump button on the timer, to drop a thought here.</p>
         </div>
         <div class="brain-dump-no-results">No thoughts match your search.</div>
         <div class="brain-dump-section brain-dump-inbox-section">

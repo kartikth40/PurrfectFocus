@@ -1117,10 +1117,196 @@ footer {
   opacity: 0.75;
 }
 
-/* Summary stats */
+/* Title row: heading beside the live capture shortcut chip */
+.brain-dump-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+.brain-dump-title-row .brain-dump-heading {
+  margin: 0;
+}
+
+/* Capture shortcut chip (hover/focus to reveal the popover) */
+.brain-dump-shortcut {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 16px;
+  cursor: default;
+  outline: none;
+  background-color: var(--primary-color-2);
+  border: 1px solid var(--primary-color-3);
+  color: var(--secondary-color-1);
+  transition: 0.2s all ease;
+}
+.light .brain-dump-shortcut {
+  color: var(--primary-color);
+}
+.brain-dump-shortcut:hover,
+.brain-dump-shortcut:focus-visible {
+  box-shadow: 0 0 0 3px var(--primary-color-3);
+}
+.brain-dump-shortcut-icon {
+  width: 16px;
+  height: 11px;
+  border: 1.5px solid var(--secondary-color-1);
+  border-radius: 3px;
+  flex: none;
+  box-shadow: inset 0 2px 0 var(--secondary-color-1);
+  opacity: 0.8;
+}
+.light .brain-dump-shortcut-icon {
+  border-color: var(--primary-color);
+  box-shadow: inset 0 2px 0 var(--primary-color);
+}
+.brain-dump-shortcut-key {
+  font-family: "Share Tech Mono", monospace;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+.brain-dump-shortcut-key.unset {
+  font-family: "Poppins", sans-serif;
+  font-style: italic;
+  opacity: 0.75;
+}
+
+/* Rich hover popover anchored under the chip */
+.brain-dump-shortcut-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 20;
+  width: 300px;
+  max-width: 86vw;
+  padding: 14px 16px;
+  border-radius: 12px;
+  text-align: left;
+  cursor: default;
+  color: var(--secondary-color-1);
+  background-color: var(--primary-color-1);
+  border: 1px solid var(--primary-color-3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px) scale(0.98);
+  transform-origin: top left;
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+}
+.light .brain-dump-shortcut-popover {
+  color: var(--primary-color);
+  background-color: var(--card-bg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+.brain-dump-shortcut-popover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 22px;
+  border: 7px solid transparent;
+  border-bottom-color: var(--primary-color-1);
+}
+.light .brain-dump-shortcut-popover::before {
+  border-bottom-color: var(--card-bg);
+}
+.brain-dump-shortcut:hover .brain-dump-shortcut-popover,
+.brain-dump-shortcut:focus-within .brain-dump-shortcut-popover,
+.brain-dump-shortcut-popover:hover {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+.brain-dump-popover-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.brain-dump-popover-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.brain-dump-popover-key {
+  font-family: "Share Tech Mono", monospace;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 5px;
+  flex: none;
+  background-color: var(--primary-color-2);
+  border: 1px solid var(--primary-color-3);
+  color: var(--secondary-color-1);
+  box-shadow: 0 2px 0 var(--primary-color-3);
+}
+.light .brain-dump-popover-key {
+  color: var(--primary-color);
+}
+.brain-dump-popover-key.unset {
+  font-family: "Poppins", sans-serif;
+  font-style: italic;
+  background-color: transparent;
+  box-shadow: none;
+  border-style: dashed;
+  opacity: 0.8;
+}
+.brain-dump-popover-hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.55;
+  opacity: 0.85;
+}
+.brain-dump-popover-list {
+  margin: 0 0 12px;
+  padding-left: 16px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  opacity: 0.8;
+}
+.brain-dump-popover-list li {
+  margin-bottom: 4px;
+}
+.brain-dump-popover-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+.brain-dump-shortcut-change {
+  cursor: pointer;
+  font-family: "Poppins", sans-serif;
+  font-size: 11px;
+  padding: 4px 12px;
+  border-radius: 14px;
+  background-color: transparent;
+  border: 1px solid var(--primary-color-3);
+  color: var(--secondary-color-1);
+  transition: 0.2s all ease;
+}
+.light .brain-dump-shortcut-change {
+  color: var(--primary-color);
+}
+.brain-dump-shortcut-change:hover {
+  background-color: var(--primary-color-4);
+  border-color: var(--primary-color-4);
+  color: #fff;
+}
+.brain-dump-shortcut-path {
+  font-family: "Share Tech Mono", monospace;
+  font-size: 10.5px;
+  opacity: 0.65;
+  user-select: all;
+  word-break: break-all;
+}
+
+/* Summary stats — compact pills */
 .brain-dump-summary {
   display: none;
-  gap: 14px;
+  gap: 8px;
   margin-bottom: 10px;
   flex-wrap: wrap;
 }
@@ -1128,23 +1314,20 @@ footer {
   display: flex;
 }
 .brain-dump-stat {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
   align-items: center;
-  min-width: 100px;
-  padding: 16px 20px;
-  border-radius: 14px;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: 20px;
   background-color: #ffffff10;
-  border: 2px solid var(--primary-color-3);
-  box-shadow: inset 0 0 20px #0000003a, 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--primary-color-3);
 }
 .light .brain-dump-stat {
   background-color: #ffffffb0;
   border-color: var(--primary-color-3);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 .brain-dump-stat-count {
-  font-size: 24px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1;
   color: var(--secondary-color-2);
@@ -1153,11 +1336,10 @@ footer {
   color: var(--primary-color);
 }
 .brain-dump-stat-label {
-  margin-top: 4px;
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  opacity: 0.7;
+  letter-spacing: .8px;
+  opacity: 0.65;
 }
 
 /* Toolbar: search + clear done */
@@ -1317,6 +1499,13 @@ footer {
 }
 .brain-dump-done-section .brain-dump-item-text {
   text-decoration: line-through;
+}
+.brain-dump-done-section .brain-dump-item {
+  filter: grayscale(1);
+  transition: filter .2s ease;
+}
+.brain-dump-done-section .brain-dump-item:hover {
+  filter: grayscale(0.3);
 }
 
 /* Items */
