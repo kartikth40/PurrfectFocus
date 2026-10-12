@@ -17,7 +17,6 @@ import {
   DARKTHEME,
   LIGHTTHEME,
   SIMPLETIMERSTYLE,
-  CATWALKTIMERSTYLE,
   SETTINGSKEY,
   TIMERKEY,
   breakQuotes,
@@ -87,9 +86,8 @@ describe('themes', () => {
 })
 
 describe('timer styles', () => {
-  it('has simple and catWalk', () => {
+  it('has simple', () => {
     expect(SIMPLETIMERSTYLE).toBe('simple')
-    expect(CATWALKTIMERSTYLE).toBe('catWalk')
   })
 })
 
@@ -116,7 +114,7 @@ describe('defaultSettings', () => {
 
   it('has valid theme and style defaults', () => {
     expect([DARKTHEME, LIGHTTHEME]).toContain(s.theme)
-    expect([SIMPLETIMERSTYLE, CATWALKTIMERSTYLE]).toContain(s.timerStyle)
+    expect(s.timerStyle).toBe(SIMPLETIMERSTYLE)
   })
 
   it('has valid mode default', () => {
@@ -127,12 +125,12 @@ describe('defaultSettings', () => {
 describe('quotes', () => {
   it('has break quotes', () => {
     expect(breakQuotes.length).toBeGreaterThan(0)
-    breakQuotes.forEach(q => expect(typeof q).toBe('string'))
+    breakQuotes.forEach((q) => expect(typeof q).toBe('string'))
   })
 
   it('has focus quotes', () => {
     expect(focusQuotes.length).toBeGreaterThan(0)
-    focusQuotes.forEach(q => expect(typeof q).toBe('string'))
+    focusQuotes.forEach((q) => expect(typeof q).toBe('string'))
   })
 })
 

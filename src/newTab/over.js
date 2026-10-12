@@ -8,7 +8,6 @@ import {
   PAUSE,
   PLAY,
   LIGHTTHEME,
-  SIMPLETIMERSTYLE,
   TASKS,
   TASKSALIASKEY,
   CURRENTTASKKEY,
@@ -48,6 +47,7 @@ import {
   applyAnnouncementBanner,
   applyFeatureHighlight,
 } from '../utils.js'
+import { openPipTimer } from '../pip/pip.js'
 
 const container = document.querySelector('.container')
 const focusTitle = document.querySelector('.focus-title')
@@ -65,6 +65,7 @@ const breakActivitiesSuggestions = document.querySelector('.break-suggestions-co
 const settingsBtn = document.querySelector('.settings-tab-btn')
 const historyBtn = document.querySelector('.history-tab-btn')
 const streakBtn = document.querySelector('.streak-tab-btn')
+const pipBtn = document.querySelector('.pip-pop-out')
 const taskSelect = document.getElementById('tasks-select')
 const taskEdit = document.querySelector('.task-edit')
 const timerEdit = document.querySelector('.timer-edit')
@@ -84,6 +85,7 @@ supportBtn.href = CONFIG.SUPPORT_URL
 
 let audio = null
 let settings
+let pipHandle = null
 let musicPlayerInitialized = false
 let musicDataCache = null
 let isLoopingTrack = localStorage.getItem('loopCurrentTrack') === 'true'
@@ -120,6 +122,15 @@ const sendRuntimeMessageSafely = async (message) => {
   } catch (e) {
     console.warn(e)
   }
+}
+
+// Elapsed fraction (0..1) of the current Pomodoro leg for the PiP progress bar.
+// Returns null for Stopwatch (no fixed total) so the bar hides.
+function pipProgressFraction(t, s) {
+  if (!t || s?.mode !== modes.POMODORO) return null
+  const total = timerDuration(t.type, s) * 60
+  if (!total) return null
+  return (total - t.time) / total
 }
 
 const print = printer()
@@ -576,6 +587,7 @@ function addEventListeners() {
     // tick with timer
     if (request.time) {
       changeTextTo(timerEle, request.time)
+      if (pipHandle) pipHandle.updateTick(request.time, pipProgressFraction(timer?.timer, settings))
       if (settings.musicPlayer && settings.musicPlayerAutoStart && !audio) await loadTrack()
     }
     if (request.timerStarted) {
@@ -588,13 +600,31 @@ function addEventListeners() {
       nextBtn.classList.add('active')
       if (isPomodoro) doneBtn.classList.add('active')
       if (timer?.timer) changeTextTo(focusTitle, timer?.timer?.type)
+      if (pipHandle) {
+        pipHandle.setPrimaryLabel(isPomodoro ? 'Pause' : 'Running...')
+        pipHandle.setActive(true)
+        if (timer?.timer) {
+          pipHandle.setPhase(timer.timer.type)
+          pipHandle.applyPhase(timer.timer.type === FOCUS)
+        }
+      }
       if (settings.musicPlayer && settings.musicPlayerAutoStart) await loadTrack()
     } else if (request.timerPaused) {
       changeTextTo(focusBtnText, 'Resume')
       changeTextTo(focusTitle, timer.timer.type)
+      if (pipHandle) pipHandle.setPrimaryLabel('Resume')
       await pauseMusic()
     } else if (request.updateNextTimer) {
       await updateNextTimer()
+      if (pipHandle) {
+        const timerObj = await getSessionStorage(TIMERKEY)
+        pipHandle.setPrimaryLabel(focusBtnText.innerText)
+        pipHandle.updateTick(timerEle.innerText, pipProgressFraction(timerObj?.timer, settings))
+        if (timerObj?.timer) {
+          pipHandle.setPhase(timerObj.timer.type)
+          pipHandle.applyPhase(timerObj.timer.type === FOCUS)
+        }
+      }
       await pauseMusic()
     } else if (request.timerStopped) {
       changeTextTo(focusBtnText, 'Start Focusing')
@@ -604,6 +634,13 @@ function addEventListeners() {
       doneBtn.classList.remove('active')
       if (isPomodoro) changeTextTo(timerEle, getTimeString(store.settings.focus.time * 60, false))
       else changeTextTo(timerEle, getTimeString(0, false))
+      if (pipHandle) {
+        pipHandle.setPrimaryLabel('Start Focusing')
+        pipHandle.setActive(false)
+        pipHandle.updateTick(timerEle.innerText, isPomodoro ? 0 : null)
+        pipHandle.setPhase(FOCUS)
+        pipHandle.applyPhase(true)
+      }
       await handleUntilLongBreakCount(store.settings, null)
       await setFocusOptionForTasks()
       await pauseMusic()
@@ -630,11 +667,24 @@ function addEventListeners() {
         nextBtn.classList.remove('active')
         doneBtn.classList.remove('active')
       }
+      if (pipHandle) {
+        pipHandle.setPrimaryLabel(focusBtnText.innerText)
+        pipHandle.updateTick(timerEle.innerText, isPomodoro ? 0 : null)
+        if (timer) pipHandle.applyPhase(timer.type === FOCUS)
+        if (!timer) {
+          pipHandle.applyPhase(true)
+          pipHandle.setActive(false)
+        }
+      }
     } else if (request.saveSettings) {
       const timerObj = await getSessionStorage(TIMERKEY)
       const timer = timerObj[TIMERKEY]
       await loadSettings(settings)
       !timer || timer?.type === FOCUS ? await setFocusOptionForTasks() : await setRestOptionForTasks()
+      if (pipHandle) {
+        pipHandle.applyTheme(settings?.theme === LIGHTTHEME)
+        pipHandle.applyMode(isPomodoro)
+      }
     } else if (request.taskChange) {
       taskSelect.value = request.taskChange
     } else if (request.taskAliasUpdated) {
@@ -644,11 +694,17 @@ function addEventListeners() {
     }
     if (request.switchToStopwatch) {
       applyTimerModeControls(false)
+      if (pipHandle) pipHandle.applyMode(false)
     } else if (request.switchToPomodoro) {
       applyTimerModeControls(true)
+      if (pipHandle) pipHandle.applyMode(true)
     }
     if (request.invalidSession) {
       showToast('Session Not Saved!', 'Session duration must be at least one minute.', TOASTIFY.colors.orange)
+    }
+    if (request.fireConfetti) {
+      await chrome.storage.session.set({ notificationTriggered: false })
+      fireConfetti()
     }
   })
 
@@ -698,6 +754,51 @@ function addEventListeners() {
   streakBtn?.addEventListener('click', async () => {
     openStreakInCurrentTab()
   })
+
+  if ('documentPictureInPicture' in window) {
+    pipBtn.style.display = ''
+    pipBtn.addEventListener('click', async () => {
+      pipHandle = await openPipTimer({
+        seed: async () => {
+          const store = await getSyncStorage(SETTINGSKEY)
+          const timerObj = await getSessionStorage(TIMERKEY)
+          return { timer: timerObj?.timer, settings: store.settings }
+        },
+        onExpand: async () => {
+          await createNewTabForTimers(false, true)
+        },
+        onPrimary: async () => {
+          const isPomodoro = settings.mode === modes.POMODORO
+          const timer = await getSessionStorage(TIMERKEY)
+          if (!isPomodoro && timer?.timer?.status === PLAY) return
+          if (timer?.timer) {
+            if (timer.timer.status !== PAUSE) {
+              await pause(timer.timer)
+              await pauseMusic()
+            } else {
+              await resume(timer.timer)
+            }
+          } else {
+            await initiateTimer()
+          }
+        },
+        onStop: async () => {
+          const store = await getSyncStorage(SETTINGSKEY)
+          await stopTimer(store.settings)
+          await pauseMusic()
+        },
+        onNext: async () => {
+          await nextTimer()
+        },
+        onFinish: async () => {
+          await finishTimer()
+        },
+        onClose: () => {
+          pipHandle = null
+        },
+      })
+    })
+  }
 
   taskSelect.addEventListener('change', async (event) => {
     const selectedTask = event.target.value
@@ -927,15 +1028,7 @@ async function loadSettings(settings) {
     document.body.classList.remove('light')
     container.classList.remove('light')
   }
-  if (settings?.timerStyle === SIMPLETIMERSTYLE) {
-    timerTag.classList.remove('cat-walk')
-    timerTag.classList.add('simple')
-    mode.classList.remove('cat-walk')
-  } else {
-    timerTag.classList.remove('simple')
-    timerTag.classList.add('cat-walk')
-    mode.classList.add('cat-walk')
-  }
+  timerTag.classList.add('simple')
   const isPomodoro = settings.mode === modes.POMODORO
   if (isPomodoro) changeTextTo(timerEle, getTimeString(timerDuration(timer?.timer?.type, settings) * 60, false))
   else changeTextTo(timerEle, getTimeString(0, false))
@@ -1173,13 +1266,16 @@ async function showFocusModal(url) {
 }
 
 async function maybeFireSessionConfetti() {
-  /* global confetti */
-  if (typeof confetti === 'undefined') return
   const result = await getSessionStorage('notificationTriggered')
   if (!result?.notificationTriggered) return
   // clear the flag so it doesn't fire again on reload
   await chrome.storage.session.set({ notificationTriggered: false })
+  fireConfetti()
+}
 
+function fireConfetti() {
+  /* global confetti */
+  if (typeof confetti === 'undefined') return
   const myConfetti = confetti.create(null, { resize: true, useWorker: true })
   // cannon from both sides
   myConfetti({

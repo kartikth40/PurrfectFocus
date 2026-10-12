@@ -1,5 +1,4 @@
 import {
-  CATWALKTIMERSTYLE,
   DARKTHEME,
   FOCUS,
   LIGHTTHEME,
@@ -363,7 +362,7 @@ export async function createNewTabForTimers(notify = true, openNewTab = true, re
 
   const res = await getSessionStorage(NEWTABTIMERIDKEY)
 
-  async function callback() {
+  async function callback(existingTab) {
     if (removeAllOthers) {
       await chrome.tabs.query({ active: true, currentWindow: true }, async function (tabs) {
         const currentTabId = tabs && tabs.length > 0 && tabs[0]?.id
@@ -394,10 +393,22 @@ export async function createNewTabForTimers(notify = true, openNewTab = true, re
         }
       })
     } else {
-      // Tab exists - make sure it shows the timer/over page even if the user
-      // navigated it elsewhere via same-tab navigation.
-      await chrome.tabs.update(res[NEWTABTIMERIDKEY], { active: true, url: 'src/newTab/over.html' }, async (tab) => {
+      // Tab exists. If it is already on the over page, just focus it (do NOT
+      // re-navigate) so its JS context - and any Document PiP it owns - stays
+      // alive. Fire the completion effects live via a flag + runtime message.
+      // Only re-navigate when the user moved the tab elsewhere.
+      const onOverPage = existingTab?.url?.includes('src/newTab/over.html')
+      const updateProps = onOverPage ? { active: true } : { active: true, url: 'src/newTab/over.html' }
+      await chrome.tabs.update(res[NEWTABTIMERIDKEY], updateProps, async (tab) => {
         if (notify) {
+          await chrome.storage.session.set({ notificationTriggered: true })
+          if (onOverPage) {
+            try {
+              await chrome.runtime.sendMessage({ fireConfetti: true })
+            } catch (e) {
+              console.warn(e)
+            }
+          }
           try {
             await playNotificationSound(sound)
           } catch (e) {
@@ -617,7 +628,7 @@ export const setNewSettings = async (formValues) => {
         autoStart: isPomodoro ? formValues.longBreakDesktopAutoStart === 'on' : store.settings.longBreak.autoStart,
         sound: formValues.longBreakTimerSound ?? store.settings.longBreak.sound,
       },
-      timerStyle: formValues.timerStyle,
+      timerStyle: SIMPLETIMERSTYLE,
       theme: formValues.theme === 'light' ? LIGHTTHEME : DARKTHEME,
       musicPlayer: formValues.musicPlayer === 'on',
       musicPlayerAutoStart: formValues.musicPlayerAutoStart === 'on',
@@ -644,9 +655,6 @@ export const setFormValues = (data) => {
   document.querySelector('#long-break-desktop-notification').checked = settings.longBreak.notifications
   document.querySelector('#long-break-desktop-auto-start').checked = settings.longBreak.autoStart
   document.querySelector('#long-break-timer-sound').value = settings.longBreak.sound
-  document.querySelector('#cat-walk-style').checked = settings.timerStyle === CATWALKTIMERSTYLE
-  document.querySelector('#simple-style').checked =
-    settings.timerStyle === SIMPLETIMERSTYLE || settings.timerStyle !== CATWALKTIMERSTYLE
   document.querySelector('#app-theme-light').checked = settings.theme === LIGHTTHEME
   document.querySelector('#app-theme-dark').checked = settings.theme === DARKTHEME
   document.querySelector('#music-player').checked = settings.musicPlayer

@@ -17,6 +17,7 @@ export default defineConfig({
         streak: 'src/streak/streak.html',
         userGuide: 'src/userGuide/userGuide.html',
         background: 'src/background.js',
+        pip: 'src/pip/pip.js',
       },
       output: {
         // Keeps filenames predictable

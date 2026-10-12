@@ -1303,7 +1303,7 @@ footer {
   word-break: break-all;
 }
 
-/* Summary stats — compact pills */
+/* Summary stats - compact pills */
 .brain-dump-summary {
   display: none;
   gap: 8px;

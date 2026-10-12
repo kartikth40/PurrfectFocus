@@ -67,12 +67,11 @@ p.until-long {
   transition: .25s all;
   font-family: "Poppins", sans-serif;
   transform: scale(1);
+  position: relative;
+  z-index: 2;
 }
 .timer-tag:hover, .timer-tag:focus-visible{
   transform: scale(1.05);
-}
-.timer-tag.simple:hover, .timer-tag.simple:focus-visible {
-  box-shadow:inset -7px 7px 5px var(--secondary-color-2),inset 5px -5px 10px var(--primary-color), 0 0 10px var(--primary-color);
 }
 .timer-tag:active {
   transform: scale(.9);
@@ -85,11 +84,27 @@ p.until-long {
 .timer-edit {
   top: 40px;
   right: -10px;
-  background-color: var(--secondary-color-2);
+  width: 22px;
+  height: 22px;
+  box-sizing: border-box;
+  aspect-ratio: 1;
+  background: var(--secondary-color-2);
+  &:hover {
+    border-radius: 5px;
+    transform: scale(1.1);
+  }
+  & img {
+    position: relative;
+    z-index: 1;
+  }
+  &:hover img {
+    transform: none;
+  }
   &::after {
-    top: 50%;
-    width: 200%;
-    left: -170%;
+    top: 5px;
+    width: 20px;
+    left: auto;
+    right: 100%;
   }
 }
 
@@ -106,12 +121,6 @@ p.until-long {
   pointer-events: none;
   background: var(--primary-color);
   box-shadow: 0 0 10px var(--primary-color);
-  &.cat-walk {
-    background-color: transparent;
-    backdrop-filter: blur(15px);
-    font-weight: 700;
-    color: black;
-  }
 }
 
 .poll-btn {
@@ -128,4 +137,12 @@ p.until-long {
     bottom: -4px;
     border-radius: 5px;
   }
+}
+
+/* Slightly smaller OK/Cancel buttons in the popup's modals (narrow panel) */
+.modal-buttons button {
+  padding: 7px 16px;
+  min-width: 76px;
+  font-size: 12px;
+  border-radius: 9px;
 }

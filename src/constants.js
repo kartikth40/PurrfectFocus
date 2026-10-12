@@ -9,7 +9,7 @@ export const DEVELOPING = import.meta.env.MODE === 'development'
 
 // When DEVELOPING is true, focus sessions complete after this many seconds
 // but save to history as DEV_SESSION_DURATION_MINS minutes
-export const DEV_TIMER_SECONDS = 5
+export const DEV_TIMER_SECONDS = 10
 export const DEV_SESSION_DURATION_MINS = 20
 
 // status
@@ -30,7 +30,6 @@ const defaultLongBreakTime = 15
 const defaultInterval = 3
 
 // timer styles
-export const CATWALKTIMERSTYLE = 'catWalk'
 export const SIMPLETIMERSTYLE = 'simple'
 
 // themes

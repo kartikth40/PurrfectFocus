@@ -48,12 +48,6 @@ body.light .timer-tag.simple {
   border: none;
   box-shadow: 0 0 20px var(--primary-color);
 }
-.timer-tag.cat-walk .timer{
-  border-radius: 10px;
-  box-shadow: 0 0 5px black;
-  border: 1px solid black;
-  backdrop-filter: blur(5px);
-}
 .timer{
   position: relative;
   font-weight: bolder;
@@ -524,13 +518,6 @@ body.light .timer-tag.simple {
   }
 }
 
-.timer-tag.cat-walk .timer-edit {
-  backdrop-filter: blur(5px);
-  top: 0;
-  border-radius: 10px;
-  border: 1px solid black;
-}
-
 .mode {
   position: absolute;
   z-index: 10;
@@ -542,10 +529,34 @@ body.light .timer-tag.simple {
   padding: 0px 5px;
   pointer-events: none;
   background: var(--primary-color);
-  &.cat-walk {
-    background-color: transparent;
-    backdrop-filter: blur(15px);
-    font-weight: 700;
-    color: black;
+}
+
+.pip-pop-out {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  background: var(--secondary-color-2);
+  border: 1px solid var(--primary-color);
+  box-shadow: inset -3px 3px 10px var(--secondary-color-2), inset 5px -5px 20px var(--primary-color);
+  transition: .25s all;
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 7px var(--primary-color);
+  }
+  &:hover .tooltip {
+    opacity: 1;
+    transform: translate(-50%, 50%) scale(1);
+  }
+  & img {
+    display: block;
+    width: 20px;
+    height: 20px;
   }
 }

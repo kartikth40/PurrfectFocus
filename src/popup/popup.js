@@ -25,7 +25,6 @@ import {
   PAUSE,
   FOCUS,
   LONGBREAK,
-  SIMPLETIMERSTYLE,
   LIGHTTHEME,
   TIMERKEY,
   SETTINGSKEY,
@@ -127,13 +126,7 @@ chrome.runtime.onMessage.addListener(async function (request, sender, sendRespon
     if (store?.settings?.theme === LIGHTTHEME) {
       document.body.classList.add('light')
     } else document.body.classList.remove('light')
-    if (store?.settings?.timerStyle === SIMPLETIMERSTYLE) {
-      timerTag.classList.remove('cat-walk')
-      timerTag.classList.add('simple')
-    } else {
-      timerTag.classList.remove('simple')
-      timerTag.classList.add('cat-walk')
-    }
+    timerTag.classList.add('simple')
     applyTimerModeControls(isPomodoro)
   } else if (request.taskChange) {
     taskSelect.value = request.taskChange
@@ -189,15 +182,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (settings?.theme === LIGHTTHEME) {
     document.body.classList.add('light')
   } else document.body.classList.remove('light')
-  if (settings?.timerStyle === SIMPLETIMERSTYLE) {
-    timerTag.classList.remove('cat-walk')
-    timerTag.classList.add('simple')
-    mode.classList.remove('cat-walk')
-  } else {
-    timerTag.classList.remove('simple')
-    timerTag.classList.add('cat-walk')
-    mode.classList.add('cat-walk')
-  }
+  timerTag.classList.add('simple')
   const sessionStore = await getSessionStorage(TIMERKEY)
   if (isPomodoro) changeTextTo(timerEle, getTimeString(timerDuration(sessionStore?.timer?.type, settings) * 60, false))
   else changeTextTo(timerEle, getTimeString(0, false))

@@ -424,9 +424,6 @@ input:hover, select:hover {
   border-radius: 150px;
   color: var(--secondary-color-2);
   overflow: hidden;
-  background-image: url('../../public/cat_sq.png');
-  background-size: 15% 15%;
-  background-position: center center;
   border: 5px solid var(--secondary-color-2);
   box-shadow:inset 0 0 5px black;
 }
@@ -440,10 +437,6 @@ input:hover, select:hover {
   animation: jiggle .1s forwards linear;  
 }
 
-.changingTimer .timer-tag.cat-walk {
-  animation: catWalk .8s forwards cubic-bezier(0.6, 0.04, 0.98, 0.335);
-}
-
 .timer {
   font-weight: 900;
   font-family: "Share Tech Mono", monospace;
@@ -453,13 +446,6 @@ input:hover, select:hover {
   width: max-content;
   padding: 5px 20px;
   color: #000;
-}
-
-.timer-tag.cat-walk .timer {
-  font-size: 55px;
-  padding: 5px 20px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 0 15px rgb(154, 154, 154), inset 0 0 5px rgb(159, 159, 159);
 }
 
 @keyframes loading {
@@ -497,18 +483,6 @@ input:hover, select:hover {
   100% {
     opacity: 1;
     transform: scaleY(1);
-  }
-}
-
-@keyframes catWalk {
-  0%{
-    background-position: 100%;
-  }
-  50% {
-    background-position: -100%;
-  }
-  100% {
-    background-position: 100%;
   }
 }
 
